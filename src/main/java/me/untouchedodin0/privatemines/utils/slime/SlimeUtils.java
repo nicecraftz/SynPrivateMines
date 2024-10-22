@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 
 public class SlimeUtils {
 
-    private final PrivateMines privateMines = PrivateMines.getPrivateMines();
+    private final PrivateMines privateMines = PrivateMines.getInstance();
     private SlimePlugin slimePlugin;
     private Map<UUID, SlimePropertyMap> slimeMap = new HashMap<>();
 

@@ -24,60 +24,61 @@ package me.untouchedodin0.privatemines.mine;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import me.untouchedodin0.kotlin.mine.type.MineType;
 import me.untouchedodin0.privatemines.PrivateMines;
 
 public class MineTypeManager {
 
-  private final LinkedHashMap<String, MineType> mineTypes = new LinkedHashMap<>();
-  private final PrivateMines privateMines;
+    private final LinkedHashMap<String, MineType> mineTypes = new LinkedHashMap<>();
+    private final PrivateMines privateMines;
 
-  public MineTypeManager(PrivateMines privateMines) {
-    this.privateMines = privateMines;
-  }
-
-  public void registerMineType(MineType mineType) {
-    if (mineType == null) {
-      privateMines.getLogger().info("MineType was null!");
+    public MineTypeManager(PrivateMines privateMines) {
+        this.privateMines = privateMines;
     }
-    if (mineType != null) {
-      mineTypes.put(mineType.getName(), mineType);
-    }
-  }
 
-  public MineType getMineType(MineType name) {
-    return mineTypes.get(name.getName());
-  }
-
-  public MineType getMineType(String string) {
-    return mineTypes.get(string);
-  }
-
-  public MineType getDefaultMineType() {
-    if (mineTypes.isEmpty()) {
-      privateMines.getLogger().info(
-          "No default mine type was found!\nCreate a mine type in the mineTypes section of the config.yml\nPlease ask in the discord server if you need help");
-      throw new RuntimeException();
-    }
-    return mineTypes.entrySet().stream().findFirst().get().getValue();
-  }
-
-  public MineType getNextMineType(MineType current) {
-    Iterator<Map.Entry<String, MineType>> iterator = mineTypes.entrySet().iterator();
-    while (iterator.hasNext()) {
-      Map.Entry<String, MineType> entry = iterator.next();
-      if (entry.getValue().equals(current)) {
-        if (iterator.hasNext()) {
-          return iterator.next().getValue();
-        } else {
-          return current;
+    public void registerMineType(MineType mineType) {
+        if (mineType == null) {
+            privateMines.getLogger().info("MineType was null!");
         }
-      }
+        if (mineType != null) {
+            mineTypes.put(mineType.getName(), mineType);
+        }
     }
-    return null;
-  }
 
-  public LinkedHashMap<String, MineType> getMineTypes() {
-    return mineTypes;
-  }
+    public MineType getMineType(MineType name) {
+        return mineTypes.get(name.getName());
+    }
+
+    public MineType getMineType(String string) {
+        return mineTypes.get(string);
+    }
+
+    public MineType getDefaultMineType() {
+        if (mineTypes.isEmpty()) {
+            privateMines.getLogger().info(
+                    "No default mine type was found!\nCreate a mine type in the mineTypes section of the config.yml\nPlease ask in the discord server if you need help");
+            throw new RuntimeException();
+        }
+        return mineTypes.entrySet().stream().findFirst().get().getValue();
+    }
+
+    public MineType getNextMineType(MineType current) {
+        Iterator<Map.Entry<String, MineType>> iterator = mineTypes.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, MineType> entry = iterator.next();
+            if (entry.getValue().equals(current)) {
+                if (iterator.hasNext()) {
+                    return iterator.next().getValue();
+                } else {
+                    return current;
+                }
+            }
+        }
+        return null;
+    }
+
+    public LinkedHashMap<String, MineType> getMineTypes() {
+        return mineTypes;
+    }
 }

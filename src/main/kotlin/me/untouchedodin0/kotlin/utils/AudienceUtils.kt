@@ -31,7 +31,7 @@ import org.bukkit.entity.Player
 
 class AudienceUtils {
 
-    var privateMines: PrivateMines = PrivateMines.getPrivateMines()
+    var privateMines: PrivateMines = PrivateMines.getInstance()
 
     fun sendMessage(player: Player, message: String) {
 

@@ -31,7 +31,7 @@ import java.util.*
 
 class MineStorage {
     var mines: MutableMap<UUID, Mine> = HashMap()
-    var privateMines: PrivateMines = PrivateMines.getPrivateMines()
+    var privateMines: PrivateMines = PrivateMines.getInstance()
     private var mineWorldManager: MineWorldManager = privateMines.mineWorldManager
     var world: World = mineWorldManager.minesWorld
     private val logger = privateMines.logger

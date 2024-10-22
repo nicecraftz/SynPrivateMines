@@ -16,7 +16,7 @@ import redempt.redlib.misc.Task
 
 class FlagUtils {
 
-    val privateMines: PrivateMines = PrivateMines.getPrivateMines()
+    val privateMines: PrivateMines = PrivateMines.getInstance()
     val mineWorldManager: MineWorldManager = privateMines.mineWorldManager
     val world: World = BukkitAdapter.adapt(mineWorldManager.minesWorld)
     private var container: RegionContainer = WorldGuard.getInstance().platform.regionContainer

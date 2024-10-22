@@ -79,7 +79,7 @@ import redempt.redlib.sql.SQLHelper;
 @CommandAlias("privatemine|privatemines|pmine")
 public class PrivateMinesCommand extends BaseCommand {
 
-  PrivateMines privateMines = PrivateMines.getPrivateMines();
+  PrivateMines privateMines = PrivateMines.getInstance();
   MineStorage mineStorage = privateMines.getMineStorage();
   MineTypeManager mineTypeManager = privateMines.getMineTypeManager();
   AudienceUtils audienceUtils = new AudienceUtils();

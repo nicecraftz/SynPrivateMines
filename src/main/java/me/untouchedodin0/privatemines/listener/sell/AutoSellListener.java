@@ -42,7 +42,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 public class AutoSellListener implements Listener {
-    PrivateMines privateMines = PrivateMines.getPrivateMines();
+    PrivateMines privateMines = PrivateMines.getInstance();
     MineStorage mineStorage = privateMines.getMineStorage();
     MineWorldManager mineWorldManager = privateMines.getMineWorldManager();
 

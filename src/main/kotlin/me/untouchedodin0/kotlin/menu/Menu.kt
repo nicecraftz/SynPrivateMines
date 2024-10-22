@@ -45,7 +45,7 @@ class Menu {
     private val title: String? = null
     val rows: Int = 1
     var items: Map<String, MenuItem> = LinkedHashMap()
-    var privateMines: PrivateMines = PrivateMines.getPrivateMines()
+    var privateMines: PrivateMines = PrivateMines.getInstance()
 
     fun open(player: Player) {
         val slots = rows * 9

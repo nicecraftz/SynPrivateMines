@@ -50,7 +50,7 @@ public class SchematicIterator {
   }
 
   public MineBlocks findRelativePoints(File file) {
-    PrivateMines privateMines = PrivateMines.getPrivateMines();
+    PrivateMines privateMines = PrivateMines.getInstance();
     MineBlocks mineBlocks = new MineBlocks();
     mineBlocks.corners = new BlockVector3[2];
 

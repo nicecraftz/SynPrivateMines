@@ -49,17 +49,17 @@ public class MineWorldManager {
       this.minesWorld = Bukkit.getWorld("privatemines");
     }
 
-    int yLevel = PrivateMines.getPrivateMines().getConfig().getInt("mineYLevel");
-    this.borderDistance = PrivateMines.getPrivateMines().getConfig().getInt("mineDistance");
+    int yLevel = PrivateMines.getInstance().getConfig().getInt("mineYLevel");
+    this.borderDistance = PrivateMines.getInstance().getConfig().getInt("mineDistance");
 
     if (minesWorld != null) {
-      PrivateMines privateMines = PrivateMines.getPrivateMines();
+      PrivateMines privateMines = PrivateMines.getInstance();
       if (yLevel > minesWorld.getMaxHeight()) {
         privateMines.getLogger().info(String.format(
             "Mine Y level was set to %d but the max height of the world is %d Mine Y level has been set to %d!",
             yLevel, minesWorld.getMaxHeight(), 50));
         yLevel = 50;
-        PrivateMines.getPrivateMines().getConfig().set("mineYLevel", 50);
+        PrivateMines.getInstance().getConfig().set("mineYLevel", 50);
         privateMines.saveConfig();
       }
     }

@@ -9,7 +9,7 @@ import org.bukkit.Location;
 
 public class PastedMine {
 
-  PrivateMines privateMines = PrivateMines.getPrivateMines();
+  PrivateMines privateMines = PrivateMines.getInstance();
   SchematicStorage schematicStorage = privateMines.getSchematicStorage();
   File file;
   BlockVector3 pasteLocation;

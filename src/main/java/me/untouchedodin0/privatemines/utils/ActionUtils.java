@@ -33,7 +33,7 @@ public class ActionUtils {
 
   public static void handleClick(Player player, String clickAction) {
     ActionType actionType = ActionType.getByStart(clickAction);
-    MineStorage mineStorage = PrivateMines.getPrivateMines().getMineStorage();
+    MineStorage mineStorage = PrivateMines.getInstance().getMineStorage();
     Mine mine = mineStorage.get(player.getUniqueId());
     Menu ownMine = MenuConfig.getMenus().get("personalMenu");
     Menu publicMines = MenuConfig.getMenus().get("publicMines");

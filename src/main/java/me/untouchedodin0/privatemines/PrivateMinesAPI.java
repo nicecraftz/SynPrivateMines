@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PrivateMinesAPI {
 
-  PrivateMines privateMines = PrivateMines.getPrivateMines();
+  PrivateMines privateMines = PrivateMines.getInstance();
   MineStorage mineStorage = privateMines.getMineStorage();
   MineFactory mineFactory = privateMines.getMineFactory();
 
@@ -65,7 +65,7 @@ public class PrivateMinesAPI {
   }
 
   public void loadAddon(File file) {
-    AddonManager addonManager = PrivateMines.getPrivateMines().getAddonManager();
+    AddonManager addonManager = PrivateMines.getInstance().getAddonManager();
     CompletableFuture<@Nullable Class<? extends Addon>> addon = AddonManager.findExpansionInFile(
         file);
 

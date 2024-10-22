@@ -56,7 +56,7 @@ import redempt.redlib.misc.Task;
 
 public class MineFactory {
 
-  PrivateMines privateMines = PrivateMines.getPrivateMines();
+  PrivateMines privateMines = PrivateMines.getInstance();
   MineStorage mineStorage = privateMines.getMineStorage();
 
   /**

@@ -474,7 +474,7 @@ public class Mine {
       resetItemsAdder();
     }
 
-    World world = PrivateMines.getPrivateMines().getMineWorldManager().getMinesWorld();
+    World world = PrivateMines.getInstance().getMineWorldManager().getMinesWorld();
     BlockVector3 corner1 = BukkitAdapter.asBlockVector(mineData.getMinimumMining());
     BlockVector3 corner2 = BukkitAdapter.asBlockVector(mineData.getMaximumMining());
 

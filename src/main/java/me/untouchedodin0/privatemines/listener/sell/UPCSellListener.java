@@ -45,7 +45,7 @@ import org.bukkit.event.Listener;
 
 public class UPCSellListener implements Listener {
 
-  PrivateMines privateMines = PrivateMines.getPrivateMines();
+  PrivateMines privateMines = PrivateMines.getInstance();
   MineStorage mineStorage = privateMines.getMineStorage();
   MineWorldManager mineWorldManager = privateMines.getMineWorldManager();
   double taxForOwner = 0;

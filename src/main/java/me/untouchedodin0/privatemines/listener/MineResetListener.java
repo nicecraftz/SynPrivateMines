@@ -33,7 +33,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 public class MineResetListener implements Listener {
 
-  PrivateMines privateMines = PrivateMines.getPrivateMines();
+  PrivateMines privateMines = PrivateMines.getInstance();
   MineStorage mineStorage = privateMines.getMineStorage();
 
   @EventHandler

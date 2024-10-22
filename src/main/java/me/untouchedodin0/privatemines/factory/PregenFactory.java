@@ -37,7 +37,7 @@ import redempt.redlib.misc.Task;
 
 public class PregenFactory {
 
-  public static PrivateMines privateMines = PrivateMines.getPrivateMines();
+  public static PrivateMines privateMines = PrivateMines.getInstance();
   public static MineTypeManager mineTypeManager = privateMines.getMineTypeManager();
   private static Clipboard clipboard;
   private static ClipboardHolder clipboardHolder;

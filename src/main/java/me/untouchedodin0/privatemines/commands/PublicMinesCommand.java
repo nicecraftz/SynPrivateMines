@@ -44,7 +44,7 @@ import org.bukkit.entity.Player;
 @CommandAlias("publicmines")
 public class PublicMinesCommand extends BaseCommand {
 
-  PrivateMines privateMines = PrivateMines.getPrivateMines();
+  PrivateMines privateMines = PrivateMines.getInstance();
   MineStorage mineStorage = privateMines.getMineStorage();
 
   @Default

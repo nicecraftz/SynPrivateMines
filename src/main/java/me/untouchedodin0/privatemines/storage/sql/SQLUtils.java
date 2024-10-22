@@ -23,12 +23,12 @@ import redempt.redlib.sql.SQLHelper.Results;
 
 public class SQLUtils {
 
-  private static final PrivateMines privateMines = PrivateMines.getPrivateMines();
+  private static final PrivateMines privateMines = PrivateMines.getInstance();
   private static final SQLHelper sqlHelper = privateMines.getSqlHelper();
   static PregenStorage pregenStorage = privateMines.getPregenStorage();
 
   public static Location getCurrentLocation() {
-    MineWorldManager mineWorldManager = PrivateMines.getPrivateMines().getMineWorldManager();
+    MineWorldManager mineWorldManager = PrivateMines.getInstance().getMineWorldManager();
     SQLHelper sqlHelper = privateMines.getSqlHelper();
     Results results = sqlHelper.queryResults("SELECT * FROM privatemines;");
     var ref = new Object() {

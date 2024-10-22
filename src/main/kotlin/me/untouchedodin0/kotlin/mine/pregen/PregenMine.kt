@@ -22,11 +22,8 @@
 package me.untouchedodin0.kotlin.mine.pregen
 
 import me.untouchedodin0.privatemines.PrivateMines
-import me.untouchedodin0.privatemines.utils.Utils
 import org.bukkit.Location
-import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
-import redempt.redlib.misc.LocationUtils
 import java.io.File
 
 class PregenMine {
@@ -38,7 +35,7 @@ class PregenMine {
     var fullMin: Location? = null
     var fullMax: Location? = null
     var file: File? = null
-    var privateMines: PrivateMines = PrivateMines.getPrivateMines()
+    var privateMines: PrivateMines = PrivateMines.getInstance()
 
 
     fun teleport(player: Player) {

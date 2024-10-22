@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Quarry {
 
-    PrivateMines privateMines = PrivateMines.getPrivateMines();
+    PrivateMines privateMines = PrivateMines.getInstance();
     public UUID owner;
     public Mine mine;
     public Location location;

@@ -10,7 +10,7 @@ import me.untouchedodin0.privatemines.PrivateMines;
 
 public class SQLite extends Database {
 
-  PrivateMines privateMines = PrivateMines.getPrivateMines();
+  PrivateMines privateMines = PrivateMines.getInstance();
   String databaseName = "privatemines";
 
   // SQL creation stuff, You can leave the blow stuff untouched.

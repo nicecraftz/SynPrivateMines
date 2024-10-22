@@ -1,0 +1,7 @@
+name: PrivateMines
+version: '1.0'
+main: me.untouchedodin0.privatemines.PrivateMines
+description: PrivateMines plugin
+api-version: '1.21.1'
+bootstrapper: me.untouchedodin0.privatemines.PrivateMinesBootstrapper
+loader: me.untouchedodin0.privatemines.PrivateMinesLoader

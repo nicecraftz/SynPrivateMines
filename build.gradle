@@ -9,20 +9,20 @@ plugins {
 }
 
 group 'me.untouchedodin0.privatemines'
-version = pluginVersion
-
+version = "1.0"
 
 def devBuild = false
-
-if (devBuild) {
-    version = version + "-DEV"
-}
+if (devBuild) version = version + "-DEV"
 
 repositories {
     mavenLocal()
     mavenCentral()
 
-    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+    maven {
+        name = "papermc"
+        url = uri("https://repo.papermc.io/repository/maven-public/")
+    }
+
     maven { url = 'https://maven.enginehub.org/repo/' }
     maven { url = 'https://repo.aikar.co/content/groups/aikar/' }
     maven { url = 'https://repo.rapture.pw/repository/maven-releases/' }
@@ -42,36 +42,40 @@ repositories {
 }
 
 dependencies {
+    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
-    compileOnly 'org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT'
+
     compileOnly 'com.fastasyncworldedit:FastAsyncWorldEdit-Core:2.6.2'
     compileOnly 'com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit:2.6.3'
+
     compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.8'
     compileOnly 'com.grinderwolf:slimeworldmanager-api:2.7.0-SNAPSHOT'
+
     compileOnly 'com.github.MilkBowl:VaultAPI:1.7.1'
     compileOnly 'com.mojang:authlib:1.11'
     compileOnly 'me.clip:placeholderapi:2.11.6'
-    compileOnly 'com.github.oraxen:oraxen:1.157.2'
-    compileOnly 'com.github.LoneDev6:API-ItemsAdder:3.4.1-r4'
-    compileOnly 'com.google.code.gson:gson:2.10'
-    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.15.0' // i think this is the big thing?
 
-    compileOnly files('libs/XPrison-1.12.11-RELEASE.jar')
-    compileOnly files('libs/AutoSellAPI-1.2.0.jar')
+//    compileOnly 'com.github.oraxen:oraxen:1.157.2'
+//    compileOnly 'com.github.LoneDev6:API-ItemsAdder:3.4.1-r4'
+
+//    compileOnly 'com.google.code.gson:gson:2.10'
+//    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.15.0' // i think this is the big thing?
+
+//    compileOnly files('libs/XPrison-1.12.11-RELEASE.jar')
+//    compileOnly files('libs/AutoSellAPI-1.2.0.jar')
 
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+
     implementation 'com.github.Redempt:RedLib:6.5.8'
     implementation 'org.bstats:bstats-bukkit:3.0.0'
-    implementation 'net.kyori:adventure-text-minimessage:4.14.0'
-    implementation 'net.kyori:adventure-platform-bukkit:4.3.0'
-    implementation 'co.aikar:acf-paper:0.5.1-SNAPSHOT'
+
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
     implementation "dev.triumphteam:triumph-gui:3.1.2" // Replace version here
     implementation 'io.papermc:paperlib:1.0.7'
     implementation 'com.convallyria.languagy:api:3.0.2'
 
-    implementation files('libs/PrivateMinesAPI-1.3-SNAPSHOT.jar')
+//    implementation files('libs/PrivateMinesAPI-1.3-SNAPSHOT.jar')
 }
 
 shadowJar {
@@ -86,9 +90,8 @@ shadowJar {
 }
 
 bukkit {
-    // Plugin main class (required)
     main = 'me.untouchedodin0.privatemines.PrivateMines'
-    version = pluginVersion
+    version = "1.0"
 
     // API version (should be set for 1.13+)
     apiVersion = '1.13'
@@ -100,6 +103,10 @@ bukkit {
 tasks.register('copyTo_DevServer', Copy) {
     from shadowJar
     into "E:/Coding/Spigot Test Servers/1.19.2 Privates Mines (Paper)/plugins"
+}
+
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 }
 
 test {

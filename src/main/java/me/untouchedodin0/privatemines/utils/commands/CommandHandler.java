@@ -53,7 +53,7 @@ public class CommandHandler {
     try {
       c = PluginCommand.class.getDeclaredConstructor(String.class, Plugin.class);
       c.setAccessible(true);
-      pluginCommand = c.newInstance(commandName, PrivateMines.getPrivateMines());
+      pluginCommand = c.newInstance(commandName, PrivateMines.getInstance());
       register(pluginCommand);
 
 //      commandMap.register("privatemines", pluginCommand);

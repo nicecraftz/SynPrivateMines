@@ -30,7 +30,7 @@ import redempt.redlib.misc.Task;
 
 public class QueueUtils {
 
-  PrivateMines privateMines = PrivateMines.getPrivateMines();
+  PrivateMines privateMines = PrivateMines.getInstance();
   MineTypeManager mineTypeManager = privateMines.getMineTypeManager();
 
   public Queue<UUID> queue = new LinkedList<>();
