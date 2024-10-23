@@ -54,6 +54,9 @@ public class AddonsCommand {
     private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.getInstance();
     private static final String ADDONS_LIST_FORMAT = "<green>Name: %s\n<aqua>Version: %s\n<aqua>Description: %s";
 
+    private AddonsCommand() {
+    }
+
     public static void registerCommands() {
         LifecycleEventManager<Plugin> lifecycleManager = PLUGIN_INSTANCE.getLifecycleManager();
         lifecycleManager.registerEventHandler(
@@ -65,8 +68,8 @@ public class AddonsCommand {
     private static LiteralCommandNode<CommandSourceStack> buildCommand() {
         return literal("addons").executes(noArgsCommand())
                 .then(addonsLoadWithSearchLogic())
-                .then(reloadCommand())
-                .then(disableCommand())
+                .then(reloadCommandLogic())
+                .then(disableCommandLogic())
                 .build();
     }
 
@@ -100,7 +103,7 @@ public class AddonsCommand {
         };
     }
 
-    private static ArgumentBuilder<CommandSourceStack, ?> disableCommand() {
+    private static ArgumentBuilder<CommandSourceStack, ?> disableCommandLogic() {
         return literal("disable").then(argument("addon", StringArgumentType.word())).executes(context -> {
             CommandSender sender = context.getSource().getSender();
             String addonNameInput = context.getArgument("addon", String.class);
@@ -115,7 +118,7 @@ public class AddonsCommand {
         });
     }
 
-    private static ArgumentBuilder<CommandSourceStack, ?> reloadCommand() {
+    private static ArgumentBuilder<CommandSourceStack, ?> reloadCommandLogic() {
         return literal("reload").then(argument("addonList", StringArgumentType.word())).executes(context -> {
             CommandSender sender = context.getSource().getSender();
 

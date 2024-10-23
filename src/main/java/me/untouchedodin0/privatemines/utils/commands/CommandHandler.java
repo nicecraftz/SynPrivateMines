@@ -142,12 +142,9 @@ public class CommandHandler {
   }
 
   public static void register(PluginCommand pluginCommand) {
-    Field field;
-    try {
-      field = Bukkit.getServer().getClass().getDeclaredField("commandMap");
-
-      field.setAccessible(true);
-
+      try {
+          Field field = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+          field.setAccessible(true);
       CommandMap commandMap = (CommandMap) field.get(Bukkit.getServer());
       commandMap.register("privatemines", pluginCommand);
     } catch (NoSuchFieldException | IllegalAccessException e) {
