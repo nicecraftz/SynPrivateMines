@@ -8,12 +8,10 @@ import java.util.UUID;
 
 public abstract class MineEvent extends Event implements Cancellable {
     private final Mine mine;
-    private final UUID owner;
     private boolean cancelled;
 
-    public MineEvent(Mine mine, UUID owner) {
+    public MineEvent(Mine mine) {
         this.mine = mine;
-        this.owner = owner;
     }
 
     public Mine getMine() {
@@ -21,7 +19,7 @@ public abstract class MineEvent extends Event implements Cancellable {
     }
 
     public UUID getOwner() {
-        return owner;
+        return mine.getMineData().getMineOwner();
     }
 
     @Override

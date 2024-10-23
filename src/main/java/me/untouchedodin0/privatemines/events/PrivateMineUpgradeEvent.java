@@ -35,8 +35,8 @@ public class PrivateMineUpgradeEvent extends MineEvent {
     private final MineType oldType;
     private final MineType newType;
 
-    public PrivateMineUpgradeEvent(Mine mine, UUID owner, MineType oldType, MineType newType) {
-        super(mine, owner);
+    public PrivateMineUpgradeEvent(Mine mine, MineType oldType, MineType newType) {
+        super(mine);
         this.oldType = oldType;
         this.newType = newType;
     }

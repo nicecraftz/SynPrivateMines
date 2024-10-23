@@ -30,9 +30,10 @@ import java.util.UUID;
 public class PrivateMineResetEvent extends MineEvent {
     public static final HandlerList HANDLER_LIST = new HandlerList();
 
-    public PrivateMineResetEvent(Mine mine, UUID owner) {
-        super(mine, owner);
+    public PrivateMineResetEvent(Mine mine) {
+        super(mine);
     }
+
 
     @NotNull
     @Override

@@ -33,10 +33,11 @@ public class PrivateMineExpandEvent extends MineEvent {
 
     private final MineExpandEventRegion mineExpandEventRegion;
 
-    public PrivateMineExpandEvent(Mine mine, UUID owner, MineExpandEventRegion mineExpandEventRegion) {
-        super(mine, owner);
+    public PrivateMineExpandEvent(Mine mine, MineExpandEventRegion mineExpandEventRegion) {
+        super(mine);
         this.mineExpandEventRegion = mineExpandEventRegion;
     }
+
 
     public MineExpandEventRegion getRegion() {
         return mineExpandEventRegion;

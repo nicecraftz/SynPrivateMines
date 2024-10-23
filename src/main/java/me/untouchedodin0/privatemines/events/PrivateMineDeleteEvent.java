@@ -25,14 +25,13 @@ import me.untouchedodin0.privatemines.mine.Mine;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.UUID;
-
 public class PrivateMineDeleteEvent extends MineEvent {
     public static final HandlerList HANDLER_LIST = new HandlerList();
 
-    public PrivateMineDeleteEvent(Mine mine, UUID owner) {
-        super(mine, owner);
+    public PrivateMineDeleteEvent(Mine mine) {
+        super(mine);
     }
+
 
     @NotNull
     @Override

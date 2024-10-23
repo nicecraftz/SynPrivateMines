@@ -30,8 +30,8 @@ import java.util.UUID;
 public class PrivateMineCreationEvent extends MineEvent {
     public static final HandlerList HANDLER_LIST = new HandlerList();
 
-    public PrivateMineCreationEvent(Mine mine, UUID owner) {
-        super(mine, owner);
+    public PrivateMineCreationEvent(Mine mine) {
+        super(mine);
     }
 
     @NotNull
