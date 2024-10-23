@@ -80,8 +80,10 @@ public class Mine {
     private BlockVector3 location;
     private MineData mineData;
     private boolean canExpand = true;
+
     private Task task;
     private Task percentageTask = null;
+
     private int airBlocks;
     AudienceUtils audienceUtils = new AudienceUtils();
 
@@ -762,7 +764,7 @@ public class Mine {
         }
         if (player != null) {
             if (!Objects.equals(currentType.getFile(), nextType.getFile())) {
-                PrivateMines.getEconomy().withdrawPlayer(player, nextType.getUpgradeCost());
+                EC.withdrawPlayer(player, nextType.getUpgradeCost());
 
                 String mineRegionName = String.format("mine-%s", player.getUniqueId());
                 String fullRegionName = String.format("full-mine-%s", player.getUniqueId());
@@ -824,6 +826,7 @@ public class Mine {
                     mineData.setMaximumMining(corner2);
                     mineData.setMinimumFullRegion(minimum);
                     mineData.setMaximumFullRegion(maximum);
+
                     setMineData(mineData);
                     handleReset();
                     Task.asyncDelayed(() -> {
@@ -831,20 +834,6 @@ public class Mine {
                     });
                     Task.syncDelayed(() -> spawn.getBlock().setType(Material.AIR, false));
 
-                    if (Bukkit.getPluginManager().isPluginEnabled("XPrison")) {
-                        XPrisonAutoSell autoSell = XPrisonAutoSell.getInstance();
-                        SellRegion sellRegion = autoSell.getManager().getAutoSellRegion(mineLocation);
-
-                        if (nextType.getPrices() != null) {
-                            nextType.getPrices().forEach((material, aDouble) -> {
-                                CompMaterial compMaterial = CompMaterial.fromMaterial(material);
-                                sellRegion.addSellPrice(compMaterial, aDouble);
-                            });
-
-                            autoSell.getManager().updateSellRegion(sellRegion);
-                            autoSell.getAutoSellConfig().saveSellRegion(sellRegion);
-                        }
-                    }
                 });
             }
         }
