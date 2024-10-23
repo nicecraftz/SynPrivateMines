@@ -1,50 +1,53 @@
 # The different Materials to look for within the mine structure.
-spawnPoint: SPONGE
-mineCorner: POWERED_RAIL
-sellNpc: WHITE_WOOL
-upgradeMaterial: OBSIDIAN
-quarryMaterial: SHULKER_BOX
-mineDistance: 150
-mineYLevel: 50
-teleportDelay: 5
-addWallGap: true
-wallsGap: 1
-shouldWallsGoUp: false
-giveMineOnFirstJoin: true
-preLoginGiveMine: true
+locale: "en_US"
+
+settings:
+  taxes: true
+  menu: true
+  storage: "YAML" # Or SQLite
+
+materials:
+  spawn-point: SPONGE
+  mine-corner: POWERED_RAIL
+  sell-npc: WHITE_WOOL
+  upgrade: OBSIDIAN
+  quarry: SHULKER_BOX
+
+mine:
+  first-join-creation: true
+  is-closed-by-default: true
+  distance: 150
+  y-level: 50
+  tp-delay: 5
+  reset-cooldown: 15
+  configuration:
+    should-create-wall-gap: true
+    walls-go-up: false
+    gap: 1
+
 onlyReplaceAir: true
 borderUpgrade: true
-locale: en_US
-useAdventure: true
-enableMenu: true
-enableTax: true
-sendTaxMessages: true
 defaultClosed: true
-storageType: YAML # Supports YAML, SQLite (Important: DO NOT CHANGE ONCE YOU START USING ONE)
-resetCooldown: 15
-formatResetMessage: true
 
 mineTypes:
-  Test:
-    file: minewithgap.schem
-    resetTime: 5
+  default:
+    file: defaultmine.schem
+    reset:
+      time: 5
+      percentage: 15
     expand: 1
-    resetPercentage: 15
     upgradeCost: 1.0
-    upgradeCurrency: VAULT # Supported currencies: VAULT, ULTRAPRISONCORE (Coming soon, hopefully...)
-    useOraxen: false
-    useItemsAdder: false
+    hooks:
+      oraxen: false
+      itemsAdder: false
     materials:
-      COBBLESTONE: 100.0
-    oraxen:
-      orax_ore: 0.5
-      ruby_ore: 0.5
-    itemsAdder:
-      nice_stone: 1.0
-    flags:
+      cobblestone: 100.0
+      oraxen_your_block_id: 0.5
+      itemsadder_your_block_id: 0.5
+    default-flags:
       block-break: true
       upc-enchants: true
-    fullFlags:
+    full-flags:
       block-place: false
     prices:
       COBBLESTONE: 1.0

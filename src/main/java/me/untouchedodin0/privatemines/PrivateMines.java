@@ -405,4 +405,12 @@ public class PrivateMines extends JavaPlugin {
     public MineStorage getMineStorage() {
         return mineStorage;
     }
+
+    public File getAddonsDirectory() {
+        return addonsDirectory;
+    }
+
+    public File getSchematicsDirectory() {
+        return schematicsDirectory;
+    }
 }

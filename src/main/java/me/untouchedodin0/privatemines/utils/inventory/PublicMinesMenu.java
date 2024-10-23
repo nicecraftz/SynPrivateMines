@@ -95,6 +95,7 @@ public class PublicMinesMenu {
                   + "%");
             });
       }
+
       lore.add("lore");
       lore.add("lore");
 

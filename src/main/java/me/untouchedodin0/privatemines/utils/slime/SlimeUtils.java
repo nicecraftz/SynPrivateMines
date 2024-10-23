@@ -35,8 +35,8 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 public class SlimeUtils {
+    private final PrivateMines PLUGIN_INSTANCE = PrivateMines.getInstance();
 
-    private final PrivateMines privateMines = PrivateMines.getInstance();
     private SlimePlugin slimePlugin;
     private Map<UUID, SlimePropertyMap> slimeMap = new HashMap<>();
 
@@ -47,9 +47,10 @@ public class SlimeUtils {
 
     /**
      * Creates a slime world.
-     * @param worldName the name of the new world
-     * @param loaderName the name of the loader to use
-     * @param readOnly whether the world should be read-only or not
+     *
+     * @param worldName   the name of the new world
+     * @param loaderName  the name of the loader to use
+     * @param readOnly    whether the world should be read-only or not
      * @param propertyMap a map of properties to configure the world
      * @throws IllegalStateException if the world was not created
      */
@@ -62,10 +63,11 @@ public class SlimeUtils {
 
     /**
      * Creates a slime world, and registers a consumer for the created {@link SlimeWorld} object.
-     * @param worldName the name of the new world
-     * @param loaderName the name of the loader to use
-     * @param readOnly whether the world should be read-only or not
-     * @param propertyMap a map of properties to configure the world
+     *
+     * @param worldName          the name of the new world
+     * @param loaderName         the name of the loader to use
+     * @param readOnly           whether the world should be read-only or not
+     * @param propertyMap        a map of properties to configure the world
      * @param slimeWorldConsumer the consumer to pass the created world to
      * @throws IllegalStateException if the world was not created
      */
@@ -78,17 +80,19 @@ public class SlimeUtils {
 
     /**
      * Generates the given {@link SlimeWorld} on the main server thread.
+     *
      * @param slimeWorld the slime world to generate
      */
     public void generateSlimeWorld(SlimeWorld slimeWorld) {
-        Bukkit.getScheduler().runTask(privateMines, () -> slimePlugin.generateWorld(slimeWorld));
+        Bukkit.getScheduler().runTask(PLUGIN_INSTANCE, () -> slimePlugin.generateWorld(slimeWorld));
     }
 
     /**
      * Loads a slime world
-     * @param worldName the name of the world to load
-     * @param loaderName the name of the loader to use
-     * @param readOnly whether the world should be read-only or not
+     *
+     * @param worldName   the name of the world to load
+     * @param loaderName  the name of the loader to use
+     * @param readOnly    whether the world should be read-only or not
      * @param propertyMap a map of properties to configure the world
      * @throws IllegalStateException if the world was not loaded successfully
      */
@@ -101,10 +105,11 @@ public class SlimeUtils {
 
     /**
      * Loads a slime world, and registers a consumer for the loaded {@link SlimeWorld} object.
-     * @param worldName the name of the world to load
-     * @param loaderName the name of the loader to use
-     * @param readOnly whether the world should be read-only or not
-     * @param propertyMap a map of properties to configure the world
+     *
+     * @param worldName          the name of the world to load
+     * @param loaderName         the name of the loader to use
+     * @param readOnly           whether the world should be read-only or not
+     * @param propertyMap        a map of properties to configure the world
      * @param slimeWorldConsumer the consumer to pass the loaded world to
      * @throws IllegalStateException if the world was not loaded successfully
      */
@@ -117,9 +122,10 @@ public class SlimeUtils {
 
     /**
      * Wrapper method to create a new slime world and generate it.
-     * @param worldName the name of the world to create
-     * @param loaderName the name of the loader to use
-     * @param readOnly whether the world should be read-only or not
+     *
+     * @param worldName   the name of the world to create
+     * @param loaderName  the name of the loader to use
+     * @param readOnly    whether the world should be read-only or not
      * @param propertyMap a map of properties to configure the world
      * @throws IllegalStateException if the world is not created successfully
      */
@@ -129,9 +135,10 @@ public class SlimeUtils {
 
     /**
      * Wrapper method to load an existing slime world and generate it.
-     * @param worldName the name of the world to load
-     * @param loaderName the name of the loader to use
-     * @param readOnly whether the world should be read-only or not
+     *
+     * @param worldName   the name of the world to load
+     * @param loaderName  the name of the loader to use
+     * @param readOnly    whether the world should be read-only or not
      * @param propertyMap a map of properties to configure the world
      * @throws IllegalStateException if the world is not loaded successfully
      */
@@ -140,9 +147,9 @@ public class SlimeUtils {
     }
 
     public void setupSlimeWorld(UUID uuid) {
-        privateMines.getLogger().info("Attempting to setup a mine world...");
+        PLUGIN_INSTANCE.getLogger().info("Attempting to setup a mine world...");
         slimePlugin = (SlimePlugin) Bukkit.getPluginManager().getPlugin("SlimeWorldManager");
-        privateMines.getLogger().info("slime: " + slimePlugin);
+        PLUGIN_INSTANCE.getLogger().info("slime: " + slimePlugin);
 
 //        slimePropertyMap = new SlimePropertyMap();
 
@@ -172,7 +179,7 @@ public class SlimeUtils {
                     slimePropertyMap.setValue(SlimeProperties.SPAWN_Y, 1);
                     slimePropertyMap.setValue(SlimeProperties.SPAWN_Z, 1);
                     slimeMap.putIfAbsent(uuid, slimePropertyMap);
-                    privateMines.getLogger().info("slimePropertyMap: " + slimePropertyMap);
+                    PLUGIN_INSTANCE.getLogger().info("slimePropertyMap: " + slimePropertyMap);
                     // Create an empty slime world, using the UUID as the world name
                     createAndGenerateSlimeWorld(uuid.toString(), "file", true, slimePropertyMap);
                 });
