@@ -26,10 +26,13 @@ import me.untouchedodin0.kotlin.mine.storage.MineStorage;
 import me.untouchedodin0.kotlin.mine.storage.PregenStorage;
 import me.untouchedodin0.kotlin.mine.type.MineType;
 import me.untouchedodin0.privatemines.commands.AddonsCommand;
+import me.untouchedodin0.privatemines.commands.PrivateMinesCommand;
+import me.untouchedodin0.privatemines.commands.PublicMinesCommand;
 import me.untouchedodin0.privatemines.config.Config;
 import me.untouchedodin0.privatemines.config.MenuConfig;
 import me.untouchedodin0.privatemines.config.MessagesConfig;
 import me.untouchedodin0.privatemines.config.MineConfig;
+import me.untouchedodin0.privatemines.configuration.ConfigurationProcessor;
 import me.untouchedodin0.privatemines.factory.MineFactory;
 import me.untouchedodin0.privatemines.iterator.SchematicIterator;
 import me.untouchedodin0.privatemines.listener.MineResetListener;
@@ -37,7 +40,6 @@ import me.untouchedodin0.privatemines.listener.PlayerJoinListener;
 import me.untouchedodin0.privatemines.mine.Mine;
 import me.untouchedodin0.privatemines.mine.MineTypeManager;
 import me.untouchedodin0.privatemines.storage.SchematicStorage;
-import me.untouchedodin0.privatemines.storage.StorageType;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import me.untouchedodin0.privatemines.storage.sql.SQLite;
 import me.untouchedodin0.privatemines.utils.QueueUtils;
@@ -49,10 +51,8 @@ import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import redempt.redlib.config.ConfigManager;
 import redempt.redlib.misc.LocationUtils;
 import redempt.redlib.misc.Task;
 import redempt.redlib.sql.SQLCache;
@@ -77,13 +77,11 @@ public class PrivateMines extends JavaPlugin {
     private static PrivateMines instance;
     private static final int PLUGIN_ID = 11413;
 
-    public int Y_LEVEL = 50;
-    public int MINE_DISTANCE = 150;
-
     private File schematicsDirectory;
     private File addonsDirectory;
 
     private final Map<String, SQLCache> caches = new HashMap<>();
+    private final ConfigurationProcessor configurationProcessor = new ConfigurationProcessor(this);
 
     private SchematicStorage schematicStorage;
     private SchematicIterator schematicIterator;
@@ -137,49 +135,26 @@ public class PrivateMines extends JavaPlugin {
         registerListeners();
         handleHooks();
 
+        // todo: register mine types.
 
-        ConfigManager configManager = ConfigManager.create(this)
-                .addConverter(Material.class, Material::valueOf, Material::toString)
-                .addConverter(StorageType.class, StorageType::valueOf, StorageType::toString)
-                .target(Config.class)
-                .saveDefaults()
-                .load();
-        //noinspection unused - This is the way the config manager is designed so stop complaining pls IntelliJ.
-        ConfigManager mineConfig = ConfigManager.create(this)
-                .addConverter(Material.class, Material::valueOf, Material::toString)
-                .target(MineConfig.class)
-                .saveDefaults()
-                .load();
-        //noinspection unused - This is the way the config manager is designed so stop complaining pls IntelliJ.
-        ConfigManager menuConfig = ConfigManager.create(this, "menus.yml")
-                .addConverter(Material.class, Material::valueOf, Material::toString)
-                .target(MenuConfig.class)
-                .load();
-        //noinspection unused - This is the way the config manager is designed so stop complaining pls IntelliJ.
-        ConfigManager messagesConfig = ConfigManager.create(this, "messages.yml")
-                .target(MessagesConfig.class)
-                .saveDefaults()
-                .load();
-
-        Y_LEVEL = Config.mineYLevel;
-        MINE_DISTANCE = Config.mineDistance;
-
-        MineConfig.getMineTypes().forEach((s, mineType) -> mineTypeManager.registerMineType(mineType));
-        MineConfig.mineTypes.forEach((name, mineType) -> {
-
-            String fileName = mineType.getFile();
-            File schematicFile = new File(schematicsDirectory, fileName);
-
-            if (!schematicFile.exists()) {
-                logInfo(String.format("Schematic fileName for %s does not exist!", fileName));
-                return;
-            }
-
-            SchematicIterator.MineBlocks mineBlocks = schematicIterator.findRelativePoints(schematicFile);
-            schematicStorage.addSchematic(schematicFile, mineBlocks);
-        });
+//        MineConfig.getMineTypes().forEach((s, mineType) -> mineTypeManager.registerMineType(mineType));
+//        MineConfig.mineTypes.forEach((name, mineType) -> {
+//
+//            String fileName = mineType.getFile();
+//            File schematicFile = new File(schematicsDirectory, fileName);
+//
+//            if (!schematicFile.exists()) {
+//                logInfo(String.format("Schematic fileName for %s does not exist!", fileName));
+//                return;
+//            }
+//
+//            SchematicIterator.MineBlocks mineBlocks = schematicIterator.findRelativePoints(schematicFile);
+//            schematicStorage.addSchematic(schematicFile, mineBlocks);
+//        });
 
         AddonsCommand.registerCommands();
+        PublicMinesCommand.registerCommands();
+        PrivateMinesCommand.registerCommands();
         ensureDatabaseFileCreation();
 
 
@@ -204,6 +179,7 @@ public class PrivateMines extends JavaPlugin {
                 maxMineSize INT NOT NULL,
                 materials VARCHAR(50) NOT NULL
                 );""");
+
         sqlHelper.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS pregenmines (
                 location VARCHAR(20),
@@ -249,10 +225,8 @@ public class PrivateMines extends JavaPlugin {
 
     private void ensureDatabaseFileCreation() {
         File databaseFile = new File(instance.getDataFolder(), "privatemines.db");
-
         if (!databaseFile.exists()) {
             databaseFile.getParentFile().mkdirs();
-
             try {
                 databaseFile.createNewFile();
             } catch (IOException e) {
@@ -289,6 +263,7 @@ public class PrivateMines extends JavaPlugin {
             String spawn = result.getString(8);
             double tax = result.get(9);
             int isOpen = result.get(10);
+
 //      String resultsMaterial = result.getString(13);
 //      resultsMaterial = resultsMaterial.substring(1); // remove starting '{'
 //

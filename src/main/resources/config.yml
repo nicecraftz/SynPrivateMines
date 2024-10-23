@@ -27,9 +27,8 @@ mine:
 
 onlyReplaceAir: true
 borderUpgrade: true
-defaultClosed: true
 
-mineTypes:
+mine-types:
   default:
     file: defaultmine.schem
     reset:

@@ -34,18 +34,9 @@ import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
-import dev.drawethree.xprison.autosell.XPrisonAutoSell;
-import dev.drawethree.xprison.autosell.model.SellRegion;
-import dev.drawethree.xprison.utils.compat.CompMaterial;
-import dev.lone.itemsadder.api.CustomBlock;
-import io.th0rgal.oraxen.api.OraxenBlocks;
-import me.untouchedodin0.kotlin.mine.data.MineData;
 import me.untouchedodin0.kotlin.mine.type.MineType;
-import me.untouchedodin0.kotlin.utils.AudienceUtils;
 import me.untouchedodin0.kotlin.utils.FlagUtils;
 import me.untouchedodin0.privatemines.PrivateMines;
-import me.untouchedodin0.privatemines.config.Config;
-import me.untouchedodin0.privatemines.config.MessagesConfig;
 import me.untouchedodin0.privatemines.events.PrivateMineDeleteEvent;
 import me.untouchedodin0.privatemines.events.PrivateMineExpandEvent;
 import me.untouchedodin0.privatemines.events.PrivateMineResetEvent;
@@ -55,7 +46,7 @@ import me.untouchedodin0.privatemines.utils.ExpansionUtils;
 import me.untouchedodin0.privatemines.utils.Utils;
 import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
 import me.untouchedodin0.privatemines.utils.worldedit.PasteHelper;
-import me.untouchedodin0.privatemines.utils.worldedit.objects.PastedMine;
+import me.untouchedodin0.privatemines.utils.worldedit.PastedMine;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -75,51 +66,33 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class Mine {
-
-    private final PrivateMines privateMines;
-    private BlockVector3 location;
-    private MineData mineData;
+    private BlockVector3 mineLocation;
+    private final MineData mineData;
     private boolean canExpand = true;
 
     private Task task;
-    private Task percentageTask = null;
-
+    private Task percentageTask;
     private int airBlocks;
-    AudienceUtils audienceUtils = new AudienceUtils();
 
-    public Mine(PrivateMines privateMines) {
-        this.privateMines = privateMines;
+    public Mine(MineData mineData) {
+        this.mineData = mineData;
     }
 
-    public BlockVector3 getLocation() {
-        return location;
-    }
-
-    public void setLocation(BlockVector3 location) {
-        this.location = location;
-    }
-
-    public Location getSpawnLocation() {
-        return mineData.getSpawnLocation().clone().add(0.5, 0.5, 0.5);
+    public BlockVector3 getMineLocation() {
+        return mineLocation;
     }
 
     public MineData getMineData() {
         return mineData;
     }
 
-    public void setMineData(MineData mineData) {
-        this.mineData = mineData;
-    }
 
     public void teleport(Entity entity) {
-        Block block = getSpawnLocation().getBlock();
+        Location spawnLocation = mineData.getMineStructure().spawnLocation();
+        Block block = spawnLocation.getBlock();
         if (!block.getType().isBlock()) return;
-
         block.setType(Material.AIR, false);
-        entity.teleportAsync(getSpawnLocation());
-        
-        // todo: handle this shitty class
-        audienceUtils.sendMessage(entity, MessagesConfig.teleportedToOwnMine);
+        entity.teleportAsync(spawnLocation);
     }
 
     public void delete(boolean removeStructure) {
@@ -668,6 +641,7 @@ public class Mine {
                         BlockVector3.UNIT_MINUS_Z
                 );
             }
+
             airFillRegion.expand(
                     BlockVector3.UNIT_X,
                     BlockVector3.UNIT_Y,
@@ -675,8 +649,10 @@ public class Mine {
                     BlockVector3.UNIT_MINUS_X,
                     BlockVector3.UNIT_MINUS_Z
             );
+
             Map<Material, Double> materials = mineData.getMineType().getMaterials();
             final RandomPattern randomPattern = new RandomPattern();
+
             if (materials != null) {
                 materials.forEach((material, chance) -> {
                     Pattern pattern = BukkitAdapter.adapt(material.createBlockData());
@@ -685,12 +661,10 @@ public class Mine {
             }
 
             PrivateMineExpandEvent privateMineExpandEvent = new PrivateMineExpandEvent(
-                    mineData.getMineOwner(),
                     this,
-                    mineRegion.getWidth(),
-                    mineRegion.getHeight(),
-                    mineRegion.getLength()
+                    PrivateMineExpandEvent.MineExpandEventRegion.fromWorldguardRegion(mineRegion)
             );
+
             Task.syncDelayed(() -> Bukkit.getPluginManager().callEvent(privateMineExpandEvent));
             if (privateMineExpandEvent.isCancelled()) {
                 return;

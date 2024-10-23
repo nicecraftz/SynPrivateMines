@@ -1,4 +1,4 @@
-package me.untouchedodin0.privatemines.utils.hook;
+package me.untouchedodin0.privatemines.hook;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import me.untouchedodin0.kotlin.mine.data.MineData;

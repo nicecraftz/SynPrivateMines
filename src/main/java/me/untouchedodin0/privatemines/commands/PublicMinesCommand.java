@@ -69,7 +69,7 @@ public class PublicMinesCommand {
         return literal("publicmines").executes(defaultCommand()).build();
     }
 
-    public static Command<CommandSourceStack> defaultCommand() {
+    private static Command<CommandSourceStack> defaultCommand() {
         return context -> {
             CommandSender sender = context.getSource().getSender();
 
