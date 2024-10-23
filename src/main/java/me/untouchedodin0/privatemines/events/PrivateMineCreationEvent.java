@@ -21,44 +21,22 @@
 
 package me.untouchedodin0.privatemines.events;
 
-import java.util.UUID;
 import me.untouchedodin0.privatemines.mine.Mine;
-import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
-public class PrivateMineCreationEvent extends Event {
+import java.util.UUID;
 
-  public static final HandlerList handlers = new HandlerList();
-  public UUID owner;
-  public Mine mine;
-  public boolean cancelled;
+public class PrivateMineCreationEvent extends MineEvent {
+    public static final HandlerList HANDLER_LIST = new HandlerList();
 
-  public PrivateMineCreationEvent(UUID owner, Mine mine) {
-    this.owner = owner;
-    this.mine = mine;
-  }
+    public PrivateMineCreationEvent(Mine mine, UUID owner) {
+        super(mine, owner);
+    }
 
-
-  public UUID getOwner() {
-    return owner;
-  }
-
-  public Mine getMine() {
-    return mine;
-  }
-
-  public boolean isCancelled() {
-    return cancelled;
-  }
-
-  public void setCancelled(boolean cancelled) {
-    this.cancelled = cancelled;
-  }
-
-  @NotNull
-  @Override
-  public HandlerList getHandlers() {
-    return handlers;
-  }
+    @NotNull
+    @Override
+    public HandlerList getHandlers() {
+        return HANDLER_LIST;
+    }
 }

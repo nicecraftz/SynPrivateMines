@@ -21,57 +21,37 @@
 
 package me.untouchedodin0.privatemines.events;
 
-import java.util.UUID;
 import me.untouchedodin0.kotlin.mine.type.MineType;
 import me.untouchedodin0.privatemines.mine.Mine;
-import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
-public class PrivateMineUpgradeEvent extends Event {
+import java.util.UUID;
 
-  public static final HandlerList handlers = new HandlerList();
+public class PrivateMineUpgradeEvent extends MineEvent {
 
-  public UUID owner;
-  public Mine mine;
-  public MineType oldType;
-  public MineType newType;
-  public boolean cancelled;
+    public static final HandlerList HANDLER_LIST = new HandlerList();
 
-  public PrivateMineUpgradeEvent(UUID owner, Mine mine, MineType oldType, MineType newType) {
-    this.owner = owner;
-    this.mine = mine;
-    this.oldType = oldType;
-    this.newType = newType;
-  }
+    private final MineType oldType;
+    private final MineType newType;
 
-  public UUID getOwner() {
-    return owner;
-  }
+    public PrivateMineUpgradeEvent(Mine mine, UUID owner, MineType oldType, MineType newType) {
+        super(mine, owner);
+        this.oldType = oldType;
+        this.newType = newType;
+    }
 
-  public Mine getMine() {
-    return mine;
-  }
+    public MineType getOldType() {
+        return oldType;
+    }
 
-  public MineType getOldType() {
-    return oldType;
-  }
+    public MineType getNewType() {
+        return newType;
+    }
 
-  public MineType getNewType() {
-    return newType;
-  }
-
-  public boolean isCancelled() {
-    return cancelled;
-  }
-
-  public void setCancelled(boolean cancelled) {
-    this.cancelled = cancelled;
-  }
-
-  @NotNull
-  @Override
-  public HandlerList getHandlers() {
-    return handlers;
-  }
+    @NotNull
+    @Override
+    public HandlerList getHandlers() {
+        return HANDLER_LIST;
+    }
 }

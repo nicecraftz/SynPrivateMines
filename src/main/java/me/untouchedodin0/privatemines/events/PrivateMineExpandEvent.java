@@ -21,62 +21,38 @@
 
 package me.untouchedodin0.privatemines.events;
 
-import java.util.UUID;
+import com.sk89q.worldedit.regions.Region;
 import me.untouchedodin0.privatemines.mine.Mine;
-import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
-public class PrivateMineExpandEvent extends Event {
+import java.util.UUID;
 
-  public static final HandlerList handlers = new HandlerList();
+public class PrivateMineExpandEvent extends MineEvent {
+    public static final HandlerList HANDLER_LIST = new HandlerList();
 
-  public UUID owner;
-  public Mine mine;
-  public int width;
-  public int height;
-  public int length;
-  public boolean cancelled;
+    private final MineExpandEventRegion mineExpandEventRegion;
 
-  public PrivateMineExpandEvent(UUID owner, Mine mine, int width, int height, int length) {
-    this.owner = owner;
-    this.mine = mine;
-    this.width = width;
-    this.height = height;
-    this.length = length;
-  }
+    public PrivateMineExpandEvent(Mine mine, UUID owner, MineExpandEventRegion mineExpandEventRegion) {
+        super(mine, owner);
+        this.mineExpandEventRegion = mineExpandEventRegion;
+    }
 
-  public UUID getOwner() {
-    return owner;
-  }
+    public MineExpandEventRegion getRegion() {
+        return mineExpandEventRegion;
+    }
 
-  public Mine getMine() {
-    return mine;
-  }
+    @NotNull
+    @Override
+    public HandlerList getHandlers() {
+        return HANDLER_LIST;
+    }
 
-  public int getWidth() {
-    return width;
-  }
+    public record MineExpandEventRegion(int width, int height, int length) {
 
-  public int getHeight() {
-    return height;
-  }
+        public static MineExpandEventRegion fromWorldguardRegion(Region region) {
+            return new MineExpandEventRegion(region.getWidth(), region.getHeight(), region.getLength());
+        }
 
-  public int getLength() {
-    return length;
-  }
-
-  public boolean isCancelled() {
-    return cancelled;
-  }
-
-  public void setCancelled(boolean cancelled) {
-    this.cancelled = cancelled;
-  }
-
-  @NotNull
-  @Override
-  public HandlerList getHandlers() {
-    return handlers;
-  }
+    }
 }
