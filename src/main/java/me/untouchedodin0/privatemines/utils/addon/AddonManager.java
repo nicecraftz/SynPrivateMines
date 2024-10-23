@@ -13,22 +13,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AddonManager {
-    public static Map<String, Addon> addons = new HashMap<>();
+    private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
+    private static final Map<String, Addon> ADDONS = new HashMap<>();
 
     @NotNull
     public static CompletableFuture<@Nullable Class<? extends Addon>> findExpansionInFile(@NotNull final File file) {
         return CompletableFuture.supplyAsync(() -> {
-            final PrivateMines privateMines = PrivateMines.getInstance();
-
             try {
-                final Class<? extends Addon> addonClass = FileUtil.findClass(file, Addon.class);
+                Class<? extends Addon> addonClass = FileUtil.findClass(file, Addon.class);
 
                 if (addonClass == null) {
-                    privateMines.getLogger().warning(String.format(
-                            "Failed to load addon %s, as it does not have a class which extends Addon",
-                            file.getName()
-                    ));
-                    privateMines.getLogger().warning(String.format(
+                    PRIVATE_MINES.getLogger().warning(String.format(
                             "Failed to load addon %s, as it does not have a class which extends Addon",
                             file.getName()
                     ));
@@ -37,7 +32,7 @@ public class AddonManager {
 
                 return addonClass;
             } catch (VerifyError | NoClassDefFoundError e) {
-                privateMines.getLogger()
+                PRIVATE_MINES.getLogger()
                         .warning(String.format("Failed to load addon %s (is a dependency missing?)", file.getName()));
                 return null;
             } catch (Exception e) {
@@ -48,22 +43,16 @@ public class AddonManager {
 
     public Optional<Addon> register(final CompletableFuture<@Nullable Class<? extends Addon>> clazz) {
         try {
-            final Addon addon = createAddonInstance(clazz);
+            Addon addon = createAddonInstance(clazz);
 
             if (addon == null) {
                 return Optional.empty();
             }
-            addons.put(addon.getName(), addon);
+            ADDONS.put(addon.getName(), addon);
             return Optional.of(addon);
         } catch (LinkageError | NullPointerException ex) {
-            final String reason;
-
-            if (ex instanceof LinkageError) {
-                reason = " (Is a dependency missing?)";
-            } else {
-                reason = " - One of its properties is null which is not allowed!";
-            }
-            final PrivateMines privateMines = PrivateMines.getInstance();
+            String reason = ex instanceof LinkageError ? " (Is a dependency missing?)" : " - One of its properties is null which is not allowed!";
+            PrivateMines privateMines = PrivateMines.getInstance();
 
             try {
                 privateMines.getLogger()
@@ -81,13 +70,13 @@ public class AddonManager {
     }
 
     public Addon createAddonInstance(final CompletableFuture<@Nullable Class<? extends Addon>> clazz) throws LinkageError {
-        final PrivateMines privateMines = PrivateMines.getInstance();
+        PrivateMines privateMines = PrivateMines.getInstance();
 
         try {
             return clazz.get().getDeclaredConstructor().newInstance();
-        } catch (final Exception ex) {
+        } catch (Exception ex) {
             if (ex.getCause() instanceof LinkageError) {
-                throw ((LinkageError) ex.getCause());
+                throw (LinkageError) ex.getCause();
             }
 
             privateMines.getLogger().warning("There was an issue with loading an addon.");
@@ -95,26 +84,15 @@ public class AddonManager {
         }
     }
 
-//  public void loadAddon(File file) {
-//    @NotNull CompletableFuture<@Nullable Class<? extends Addon>> addon = findExpansionInFile(file);
-//    try {
-//      addon.get();
-//    } catch (InterruptedException e) {
-//      throw new RuntimeException(e);
-//    } catch (ExecutionException e) {
-//      throw new RuntimeException(e);
-//    }
-//  }
-
     public static Map<String, Addon> getAddons() {
-        return addons;
+        return ADDONS;
     }
 
     public static Addon get(String name) {
-        return addons.get(name);
+        return ADDONS.get(name);
     }
 
     public static void remove(String name) {
-        addons.remove(name);
+        ADDONS.remove(name);
     }
 }

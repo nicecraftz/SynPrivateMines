@@ -31,7 +31,6 @@ import me.untouchedodin0.kotlin.mine.storage.MineStorage;
 import me.untouchedodin0.kotlin.mine.type.MineType;
 import me.untouchedodin0.kotlin.utils.FlagUtils;
 import me.untouchedodin0.privatemines.PrivateMines;
-import me.untouchedodin0.privatemines.config.Config;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
@@ -78,7 +77,6 @@ public class MineFactory {
         RegionManager regionManager = container.get(BukkitAdapter.adapt(location.getWorld()));
 
         if (!schematicFile.exists()) {
-            PRIVATE_MINES.logError("There was an error whl");
             PRIVATE_MINES.getLogger().warning("Schematic file does not exist: " + schematicFile.getName());
             return;
         }
@@ -191,7 +189,7 @@ public class MineFactory {
             FlagUtils flagUtils = new FlagUtils();
             flagUtils.setFlags(mine);
 
-            PrivateMineCreationEvent creationEvent = new PrivateMineCreationEvent(uuid, mine);
+            PrivateMineCreationEvent creationEvent = new PrivateMineCreationEvent(mine);
             Bukkit.getPluginManager().callEvent(creationEvent);
         });
 
@@ -200,13 +198,14 @@ public class MineFactory {
 
     public void createUpgraded(UUID uuid, Location location, MineType mineType) {
         MineStorage mineStorage = PRIVATE_MINES.getMineStorage();
-        if (mineStorage.hasMine(uuid)) {
-            Mine mine = createMine(Objects.requireNonNull(Bukkit.getPlayer(uuid)), location, mineType);
-            mineStorage.replaceMine(uuid, mine);
-            SQLUtils.replace(mine);
+        if (!mineStorage.hasMine(uuid)) return;
 
-            PrivateMineCreationEvent creationEvent = new PrivateMineCreationEvent(uuid, mine);
-            Bukkit.getPluginManager().callEvent(creationEvent);
-        }
+        Mine mine = createMine(Objects.requireNonNull(Bukkit.getPlayer(uuid)), location, mineType);
+        mineStorage.replaceMine(uuid, mine);
+
+        SQLUtils.replace(mine);
+
+        PrivateMineCreationEvent creationEvent = new PrivateMineCreationEvent(mine);
+        Bukkit.getPluginManager().callEvent(creationEvent);
     }
 }
