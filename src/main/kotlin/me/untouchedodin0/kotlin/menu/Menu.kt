@@ -50,7 +50,7 @@ class Menu {
     fun open(player: Player) {
         val slots = rows * 9
         val inventoryGUI = InventoryGUI(slots, Utils.colorBukkit(title))
-        val mineStorage = privateMines.mineStorage
+        val mineStorage = privateMines.mineService
         var buttonSlot = 0
 
         if (name.equals("publicMines", true)) {

@@ -43,7 +43,7 @@ public class PublicMinesMenu {
   public void open(Player player) {
 
     PrivateMines privateMines = PrivateMines.getInstance();
-    MineStorage mineStorage = privateMines.getMineStorage();
+    MineStorage mineStorage = privateMines.getMineService();
 
     List<UUID> uuidList = new ArrayList<>();
 

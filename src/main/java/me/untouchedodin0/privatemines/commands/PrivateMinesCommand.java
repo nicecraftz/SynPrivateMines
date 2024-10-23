@@ -43,7 +43,7 @@ import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.factory.MineFactory;
 import me.untouchedodin0.privatemines.factory.PregenFactory;
 import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineTypeManager;
+import me.untouchedodin0.privatemines.mine.MineTypeRegistry;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import me.untouchedodin0.privatemines.utils.CooldownManager;
 import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
@@ -74,8 +74,8 @@ public class PrivateMinesCommand {
     private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.getInstance();
     private static final Economy ECONOMY = PLUGIN_INSTANCE.getEconomy();
     private static final SQLHelper SQL_HELPER = PLUGIN_INSTANCE.getSqlHelper();
-    private static final MineStorage MINE_STORAGE = PLUGIN_INSTANCE.getMineStorage();
-    private static final MineTypeManager MINE_TYPE_MANAGER = PLUGIN_INSTANCE.getMineTypeManager();
+    private static final MineStorage MINE_STORAGE = PLUGIN_INSTANCE.getMineService();
+    private static final MineTypeRegistry MINE_TYPE_MANAGER = PLUGIN_INSTANCE.getMineTypeManager();
 
     private final CooldownManager cooldownManager = new CooldownManager();
 
@@ -124,7 +124,7 @@ public class PrivateMinesCommand {
                     MineFactory mineFactory = new MineFactory();
                     MineWorldManager mineWorldManager = PLUGIN_INSTANCE.getMineWorldManager();
                     Location location = mineWorldManager.getNextFreeLocation();
-                    MineType defaultMineType = MINE_TYPE_MANAGER.getDefaultMineType();
+                    MineType defaultMineType = MINE_TYPE_MANAGER.getDefault();
 
 
                     if (MINE_STORAGE.hasMine(target.getUniqueId())) {
@@ -189,7 +189,7 @@ public class PrivateMinesCommand {
                 MineType nextType = MINE_TYPE_MANAGER.getNextMineType(currentType);
 
                 if (currentType == nextType) {
-                    player.sendRichMessage("<green>Your mine is already at max level!");
+                    player.sendRichMessage("<green>Your mine is already at maxMineCorner level!");
                     return SINGLE_SUCCESS;
                 }
 
@@ -522,7 +522,7 @@ public class PrivateMinesCommand {
                 audienceUtils.sendMessage(player, MessagesConfig.allMinesClaimed);
             } else {
                 PregenMine pregenMine = pregenStorage.getAndRemove();
-                MineType mineType = MINE_TYPE_MANAGER.getDefaultMineType();
+                MineType mineType = MINE_TYPE_MANAGER.getDefault();
                 Location location = pregenMine.getLocation();
                 Location spawn = pregenMine.getSpawnLocation();
                 Location corner1 = pregenMine.getLowerRails();

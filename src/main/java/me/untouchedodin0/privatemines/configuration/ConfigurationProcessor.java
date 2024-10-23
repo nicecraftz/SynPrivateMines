@@ -11,7 +11,7 @@ public class ConfigurationProcessor {
         this.javaPlugin = javaPlugin;
     }
 
-    private void refreshFields() {
+    public void refreshFields() {
         for (Object registeredInstance : InstanceRegistry.getRegisteredInstances()) {
             Class<?> clazz = registeredInstance.getClass();
 

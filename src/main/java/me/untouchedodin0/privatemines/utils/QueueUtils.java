@@ -22,7 +22,7 @@ import me.untouchedodin0.kotlin.mine.storage.PregenStorage;
 import me.untouchedodin0.kotlin.mine.type.MineType;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineTypeManager;
+import me.untouchedodin0.privatemines.mine.MineTypeRegistry;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -33,7 +33,7 @@ import redempt.redlib.misc.Task;
 public class QueueUtils {
 
     PrivateMines privateMines = PrivateMines.getInstance();
-    MineTypeManager mineTypeManager = privateMines.getMineTypeManager();
+    MineTypeRegistry mineTypeRegistry = privateMines.getMineTypeManager();
 
     public Queue<UUID> queue = new LinkedList<>();
     public List<UUID> waitingInQueue = new ArrayList<>();
@@ -55,7 +55,7 @@ public class QueueUtils {
     }
 
     public void claim(Player player) {
-        MineStorage mineStorage = privateMines.getMineStorage();
+        MineStorage mineStorage = privateMines.getMineService();
         String mineRegionName = String.format("mine-%s", player.getUniqueId());
         String fullRegionName = String.format("full-mine-%s", player.getUniqueId());
 
@@ -104,7 +104,7 @@ public class QueueUtils {
                 player.sendMessage(ChatColor.GREEN + "Creating your mine.....");
 
                 PregenMine pregenMine = pregenStorage.getAndRemove();
-                MineType mineType = mineTypeManager.getDefaultMineType();
+                MineType mineType = mineTypeRegistry.getDefault();
                 Location location = pregenMine.getLocation();
                 Location spawn = pregenMine.getSpawnLocation();
                 Location corner1 = pregenMine.getLowerRails();

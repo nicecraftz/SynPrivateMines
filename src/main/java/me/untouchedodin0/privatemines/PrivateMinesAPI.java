@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 public class PrivateMinesAPI {
 
   PrivateMines privateMines = PrivateMines.getInstance();
-  MineStorage mineStorage = privateMines.getMineStorage();
+  MineStorage mineStorage = privateMines.getMineService();
   MineFactory mineFactory = privateMines.getMineFactory();
 
   public Mine getMine(UUID uuid) {

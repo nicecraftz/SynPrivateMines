@@ -1,7 +1,6 @@
 package me.untouchedodin0.privatemines.mine;
 
 import com.google.common.collect.ImmutableSet;
-import me.untouchedodin0.kotlin.mine.type.MineType;
 import me.untouchedodin0.privatemines.playershops.Shop;
 import org.bukkit.Material;
 

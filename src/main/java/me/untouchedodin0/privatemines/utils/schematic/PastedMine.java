@@ -1,4 +1,4 @@
-package me.untouchedodin0.privatemines.utils.worldedit;
+package me.untouchedodin0.privatemines.utils.schematic;
 
 import com.sk89q.worldedit.math.BlockVector3;
 import java.io.File;

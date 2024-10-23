@@ -39,8 +39,8 @@ import me.untouchedodin0.privatemines.mine.Mine;
 import me.untouchedodin0.privatemines.mine.MineData;
 import me.untouchedodin0.privatemines.mine.MineStructure;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
-import me.untouchedodin0.privatemines.utils.worldedit.PasteHelper;
-import me.untouchedodin0.privatemines.utils.worldedit.PastedMine;
+import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
+import me.untouchedodin0.privatemines.utils.schematic.PastedMine;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -54,7 +54,7 @@ import java.util.UUID;
 
 public class MineFactory {
     private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
-    private static final MineStorage MINE_STORAGE = PRIVATE_MINES.getMineStorage();
+    private static final MineStorage MINE_STORAGE = PRIVATE_MINES.getMineService();
 
     @ConfigurationEntry(key = "is-closed-by-default", section = "mine", type = ConfigurationValueType.BOOLEAN, value = "true")
     private boolean defaultClosed;
@@ -197,7 +197,7 @@ public class MineFactory {
     }
 
     public void createUpgraded(UUID uuid, Location location, MineType mineType) {
-        MineStorage mineStorage = PRIVATE_MINES.getMineStorage();
+        MineStorage mineStorage = PRIVATE_MINES.getMineService();
         if (!mineStorage.hasMine(uuid)) return;
 
         Mine mine = createMine(Objects.requireNonNull(Bukkit.getPlayer(uuid)), location, mineType);

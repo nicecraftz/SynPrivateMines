@@ -36,7 +36,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 public class PlayerJoinListener implements Listener {
 
   PrivateMines privateMines = PrivateMines.getInstance();
-  MineStorage mineStorage = privateMines.getMineStorage();
+  MineStorage mineStorage = privateMines.getMineService();
 
   @EventHandler(priority = EventPriority.HIGHEST)
   public void onJoin(PlayerJoinEvent playerJoinEvent) {

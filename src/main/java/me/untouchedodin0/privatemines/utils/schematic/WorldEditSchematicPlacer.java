@@ -1,4 +1,4 @@
-package me.untouchedodin0.privatemines.utils.worldedit;
+package me.untouchedodin0.privatemines.utils.schematic;
 
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;

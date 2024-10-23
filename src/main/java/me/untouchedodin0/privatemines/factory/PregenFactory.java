@@ -25,7 +25,7 @@ import me.untouchedodin0.kotlin.mine.storage.PregenStorage;
 import me.untouchedodin0.kotlin.mine.type.MineType;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.iterator.SchematicIterator;
-import me.untouchedodin0.privatemines.mine.MineTypeManager;
+import me.untouchedodin0.privatemines.mine.MineTypeRegistry;
 import me.untouchedodin0.privatemines.storage.SchematicStorage;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import org.bukkit.Chunk;
@@ -38,13 +38,13 @@ import redempt.redlib.misc.Task;
 public class PregenFactory {
 
   public static PrivateMines privateMines = PrivateMines.getInstance();
-  public static MineTypeManager mineTypeManager = privateMines.getMineTypeManager();
+  public static MineTypeRegistry mineTypeRegistry = privateMines.getMineTypeManager();
   private static Clipboard clipboard;
   private static ClipboardHolder clipboardHolder;
 
   public static void pregen(Player player, int amount) {
     Location location;
-    MineType mineType = mineTypeManager.getDefaultMineType();
+    MineType mineType = mineTypeRegistry.getDefault();
     File schematicFile = new File("plugins/PrivateMines/schematics/" + mineType.getFile());
     PregenStorage pregenStorage = privateMines.getPregenStorage();
 
@@ -190,11 +190,11 @@ public class PregenFactory {
 //          .subtract(clipboard.getOrigin());
 //      Vector3 realTo = vector.toVector3()
 //          .add(clipboardHolder.getTransform().apply(clipboardOffset.toVector3()));
-//      Vector3 max = realTo.add(clipboardHolder.getTransform()
+//      Vector3 maxMineCorner = realTo.add(clipboardHolder.getTransform()
 //          .apply(region.getMaximumPoint().subtract(region.getMinimumPoint()).toVector3()));
 //      RegionSelector regionSelector = new CuboidRegionSelector(BukkitAdapter.adapt(location.getWorld()),
 //          realTo.toBlockPoint(),
-//          max.toBlockPoint());
+//          maxMineCorner.toBlockPoint());
 //      newRegion = regionSelector.getRegion();
 //
 //      Location spongeL = new Location(location.getWorld(), vector.getBlockX(),

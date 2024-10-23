@@ -14,7 +14,7 @@ import org.bukkit.event.Listener;
 
 public class AutoSellHook extends Hook implements Listener {
     private static final MineWorldManager MINE_WORLD_MANAGER = PLUGIN_INSTANCE.getMineWorldManager();
-    private static final MineStorage MINE_STORAGE = PLUGIN_INSTANCE.getMineStorage();
+    private static final MineStorage MINE_STORAGE = PLUGIN_INSTANCE.getMineService();
     private static final Economy ECONOMY = PLUGIN_INSTANCE.getEconomy();
 
     @Override

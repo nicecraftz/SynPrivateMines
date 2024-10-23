@@ -45,8 +45,8 @@ import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import me.untouchedodin0.privatemines.utils.ExpansionUtils;
 import me.untouchedodin0.privatemines.utils.Utils;
 import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
-import me.untouchedodin0.privatemines.utils.worldedit.PasteHelper;
-import me.untouchedodin0.privatemines.utils.worldedit.PastedMine;
+import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
+import me.untouchedodin0.privatemines.utils.schematic.PastedMine;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -66,7 +66,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class Mine {
-    private BlockVector3 mineLocation;
+    private Location mineLocation;
     private final MineData mineData;
     private boolean canExpand = true;
 
@@ -78,7 +78,7 @@ public class Mine {
         this.mineData = mineData;
     }
 
-    public BlockVector3 getMineLocation() {
+    public Location getMineLocation() {
         return mineLocation;
     }
 
@@ -106,9 +106,11 @@ public class Mine {
 
         MineData mineData = getMineData();
 
-        Location corner1 = mineData.getMinimumFullRegion();
+        Location minCorner = mineData.getMineStructure().minMineCorner();
+
         BlockVector3 corner1BV3 = BukkitAdapter.asBlockVector(mineData.getMinimumFullRegion());
         BlockVector3 corner2BV3 = BukkitAdapter.asBlockVector(mineData.getMaximumFullRegion());
+
         redempt.redlib.region.CuboidRegion cuboidRegion = new redempt.redlib.region.CuboidRegion(
                 mineData.getMinimumMining(),
                 mineData.getMaximumMining()
@@ -117,7 +119,7 @@ public class Mine {
         String regionName = String.format("mine-%s", uuid);
         String fullRegionName = String.format("full-mine-%s", uuid);
 
-        World world = corner1.getWorld();
+        World world = minCorner.getWorld();
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionManager regionManager = container.get(BukkitAdapter.adapt(Objects.requireNonNull(world)));
         Objects.requireNonNull(regionManager).removeRegion(regionName);
@@ -713,12 +715,12 @@ public class Mine {
     }
 
     public void upgrade() {
-        MineTypeManager mineTypeManager = privateMines.getMineTypeManager();
+        MineTypeRegistry mineTypeRegistry = privateMines.getMineTypeManager();
         MineData mineData = getMineData();
         UUID mineOwner = mineData.getMineOwner();
         Player player = Bukkit.getOfflinePlayer(mineOwner).getPlayer();
-        MineType currentType = mineTypeManager.getMineType(mineData.getMineType());
-        MineType nextType = mineTypeManager.getNextMineType(currentType);
+        MineType currentType = mineTypeRegistry.get(mineData.getMineType());
+        MineType nextType = mineTypeRegistry.getNextMineType(currentType);
 
         Location mineLocation = mineData.getMineLocation();
         File schematicFile = new File("plugins/PrivateMines/schematics/" + nextType.getFile());

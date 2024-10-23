@@ -28,17 +28,14 @@ import me.untouchedodin0.kotlin.mine.type.MineType;
 import me.untouchedodin0.privatemines.commands.AddonsCommand;
 import me.untouchedodin0.privatemines.commands.PrivateMinesCommand;
 import me.untouchedodin0.privatemines.commands.PublicMinesCommand;
-import me.untouchedodin0.privatemines.config.Config;
-import me.untouchedodin0.privatemines.config.MenuConfig;
-import me.untouchedodin0.privatemines.config.MessagesConfig;
-import me.untouchedodin0.privatemines.config.MineConfig;
 import me.untouchedodin0.privatemines.configuration.ConfigurationProcessor;
 import me.untouchedodin0.privatemines.factory.MineFactory;
 import me.untouchedodin0.privatemines.iterator.SchematicIterator;
 import me.untouchedodin0.privatemines.listener.MineResetListener;
 import me.untouchedodin0.privatemines.listener.PlayerJoinListener;
 import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineTypeManager;
+import me.untouchedodin0.privatemines.mine.MineService;
+import me.untouchedodin0.privatemines.mine.MineTypeRegistry;
 import me.untouchedodin0.privatemines.storage.SchematicStorage;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import me.untouchedodin0.privatemines.storage.sql.SQLite;
@@ -81,18 +78,18 @@ public class PrivateMines extends JavaPlugin {
     private File addonsDirectory;
 
     private final Map<String, SQLCache> caches = new HashMap<>();
-    private final ConfigurationProcessor configurationProcessor = new ConfigurationProcessor(this);
 
+    private ConfigurationProcessor configurationProcessor;
     private SchematicStorage schematicStorage;
     private SchematicIterator schematicIterator;
 
     private MineFactory mineFactory;
-    private MineStorage mineStorage;
+    private MineService mineService;
 
     private PregenStorage pregenStorage;
 
     private MineWorldManager mineWorldManager;
-    private MineTypeManager mineTypeManager;
+    private MineTypeRegistry mineTypeRegistry;
 
     private QueueUtils queueUtils;
 
@@ -109,8 +106,10 @@ public class PrivateMines extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        instance = this;
         logInfo("Loading Private Mines v" + getPluginMeta().getVersion());
+
+        instance = this;
+        configurationProcessor = new ConfigurationProcessor(this);
         saveDefaultConfig();
 
         schematicsDirectory = new File(getDataFolder(), "schematics");
@@ -122,9 +121,9 @@ public class PrivateMines extends JavaPlugin {
 
         mineWorldManager = new MineWorldManager();
         mineFactory = new MineFactory();
-        mineStorage = new MineStorage();
+        mineService = new MineService();
         pregenStorage = new PregenStorage();
-        mineTypeManager = new MineTypeManager(this);
+        mineTypeRegistry = new MineTypeRegistry();
         queueUtils = new QueueUtils();
         addonManager = new AddonManager();
         schematicStorage = new SchematicStorage();
@@ -205,9 +204,16 @@ public class PrivateMines extends JavaPlugin {
         Task.asyncDelayed(this::loadAddons);
 
         Metrics metrics = new Metrics(this, PLUGIN_ID);
-        metrics.addCustomChart(new SingleLineChart("mines", () -> mineStorage.getTotalMines()));
+        metrics.addCustomChart(new SingleLineChart("mines", () -> mineService.getTotalMines()));
 
         new UpdateChecker(this).fetch();
+        configurationProcessor.refreshFields();
+    }
+
+    @Override
+    public void reloadConfig() {
+        super.reloadConfig();
+        if (configurationProcessor != null) configurationProcessor.refreshFields();
     }
 
     @Override
@@ -281,7 +287,7 @@ public class PrivateMines extends JavaPlugin {
 
             Mine mine = new Mine(this);
             UUID uuid = UUID.fromString(owner);
-            MineType type = mineTypeManager.getMineType(mineType);
+            MineType type = mineTypeRegistry.get(mineType);
             Location minMining = LocationUtils.fromString(corner1);
             Location maxMining = LocationUtils.fromString(corner2);
             Location fullMin = LocationUtils.fromString(fullRegionMin);
@@ -305,7 +311,7 @@ public class PrivateMines extends JavaPlugin {
 //      mineData.setMaterials(materials); - This breaks it for some reason
             mine.setMineData(mineData);
 
-            mineStorage.addMine(uuid, mine);
+            mineService.addMine(uuid, mine);
         });
     }
 
@@ -325,7 +331,7 @@ public class PrivateMines extends JavaPlugin {
     }
 
     public void saveMines() {
-        mineStorage.getMines().forEach((uuid, mine) -> {
+        mineService.getMines().forEach((uuid, mine) -> {
             Player player = Bukkit.getOfflinePlayer(uuid).getPlayer();
             if (player == null) return;
             SQLUtils.update(mine);
@@ -349,8 +355,8 @@ public class PrivateMines extends JavaPlugin {
         return mineWorldManager;
     }
 
-    public MineTypeManager getMineTypeManager() {
-        return mineTypeManager;
+    public MineTypeRegistry getMineTypeManager() {
+        return mineTypeRegistry;
     }
 
     public AddonManager getAddonManager() {
@@ -377,8 +383,8 @@ public class PrivateMines extends JavaPlugin {
         getLogger().info(message);
     }
 
-    public MineStorage getMineStorage() {
-        return mineStorage;
+    public MineStorage getMineService() {
+        return mineService;
     }
 
     public File getAddonsDirectory() {

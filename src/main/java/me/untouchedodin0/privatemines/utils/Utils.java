@@ -25,8 +25,6 @@ import com.sk89q.worldedit.math.BlockVector3;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Registry;
-import org.checkerframework.checker.i18nformatter.qual.I18nConversionCategory;
 
 import java.util.ArrayList;
 import java.util.List;

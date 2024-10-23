@@ -50,7 +50,7 @@ import static io.papermc.paper.command.brigadier.Commands.literal;
 
 public class PublicMinesCommand {
     private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.getInstance();
-    private static final MineStorage MINE_STORAGE = PLUGIN_INSTANCE.getMineStorage();
+    private static final MineStorage MINE_STORAGE = PLUGIN_INSTANCE.getMineService();
     private static String TAX_STRING_FORMAT = "Tax: %.2f%%";
 
     private PublicMinesCommand() {

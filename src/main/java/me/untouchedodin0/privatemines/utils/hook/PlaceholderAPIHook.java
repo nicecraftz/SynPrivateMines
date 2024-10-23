@@ -19,7 +19,7 @@ public class PlaceholderAPIHook extends Hook {
 
     private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.getInstance();
     private static final QueueUtils queueUtils = PLUGIN_INSTANCE.getQueueUtils();
-    private static final MineStorage mineStorage = PLUGIN_INSTANCE.getMineStorage();
+    private static final MineStorage mineStorage = PLUGIN_INSTANCE.getMineService();
 
     @Override
     public String getPluginName() {
