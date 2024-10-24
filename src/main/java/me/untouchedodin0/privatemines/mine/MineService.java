@@ -6,6 +6,7 @@ import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
 import org.bukkit.Location;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class MineService {
@@ -61,6 +62,14 @@ public class MineService {
 
     private double distanceToMine(Location location, Mine mine) {
         return location.distance(mine.getMineLocation());
+    }
+
+    public Map<UUID, Mine> getMines() {
+        return Map.copyOf(mines);
+    }
+
+    public int getMinesCount() {
+        return mines.size();
     }
 
 }

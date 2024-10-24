@@ -21,10 +21,7 @@
 
 package me.untouchedodin0.privatemines;
 
-import me.untouchedodin0.kotlin.mine.data.MineData;
-import me.untouchedodin0.kotlin.mine.storage.MineStorage;
 import me.untouchedodin0.kotlin.mine.storage.PregenStorage;
-import me.untouchedodin0.kotlin.mine.type.MineType;
 import me.untouchedodin0.privatemines.commands.AddonsCommand;
 import me.untouchedodin0.privatemines.commands.PrivateMinesCommand;
 import me.untouchedodin0.privatemines.commands.PublicMinesCommand;
@@ -33,9 +30,7 @@ import me.untouchedodin0.privatemines.factory.MineFactory;
 import me.untouchedodin0.privatemines.iterator.SchematicIterator;
 import me.untouchedodin0.privatemines.listener.MineResetListener;
 import me.untouchedodin0.privatemines.listener.PlayerJoinListener;
-import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineService;
-import me.untouchedodin0.privatemines.mine.MineTypeRegistry;
+import me.untouchedodin0.privatemines.mine.*;
 import me.untouchedodin0.privatemines.storage.SchematicStorage;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import me.untouchedodin0.privatemines.storage.sql.SQLite;
@@ -204,7 +199,7 @@ public class PrivateMines extends JavaPlugin {
         Task.asyncDelayed(this::loadAddons);
 
         Metrics metrics = new Metrics(this, PLUGIN_ID);
-        metrics.addCustomChart(new SingleLineChart("mines", () -> mineService.getTotalMines()));
+        metrics.addCustomChart(new SingleLineChart("mines", () -> mineService.getMinesCount()));
 
         new UpdateChecker(this).fetch();
         configurationProcessor.refreshFields();
@@ -262,10 +257,10 @@ public class PrivateMines extends JavaPlugin {
             String owner = result.getString(1);
             String mineType = result.getString(2);
             String mineLocation = result.getString(3);
-            String corner1 = result.getString(4);
-            String corner2 = result.getString(5);
-            String fullRegionMin = result.getString(6);
-            String fullRegionMax = result.getString(7);
+            String mineAreaCornerMinString = result.getString(4);
+            String mineAreaCornerMaxString = result.getString(5);
+            String schematicAreaCornerMinString = result.getString(6);
+            String schematicAreaCornerMaxString = result.getString(7);
             String spawn = result.getString(8);
             double tax = result.get(9);
             int isOpen = result.get(10);
@@ -284,34 +279,33 @@ public class PrivateMines extends JavaPlugin {
 //        Material material = Material.valueOf(matString);
 //        materials.put(material, percent);
 //      }
-
-            Mine mine = new Mine(this);
             UUID uuid = UUID.fromString(owner);
             MineType type = mineTypeRegistry.get(mineType);
-            Location minMining = LocationUtils.fromString(corner1);
-            Location maxMining = LocationUtils.fromString(corner2);
-            Location fullMin = LocationUtils.fromString(fullRegionMin);
-            Location fullMax = LocationUtils.fromString(fullRegionMax);
+
+            Location mineAreaCornerMin = LocationUtils.fromString(mineAreaCornerMinString);
+            Location mineAreaCornerMax = LocationUtils.fromString(mineAreaCornerMaxString);
+            Location schematicAreaCornerMin = LocationUtils.fromString(schematicAreaCornerMinString);
+            Location schematicAreaCornerMax = LocationUtils.fromString(schematicAreaCornerMaxString);
+
             Location location = LocationUtils.fromString(mineLocation);
             Location spawnLocation = LocationUtils.fromString(spawn);
             boolean open = isOpen != 0;
 
-            MineData mineData = new MineData(
-                    uuid,
-                    minMining,
-                    maxMining,
-                    fullMin,
-                    fullMax,
+            MineStructure mineStructure = new MineStructure(
+                    mineAreaCornerMin,
+                    mineAreaCornerMax,
+                    schematicAreaCornerMin,
+                    schematicAreaCornerMax,
                     location,
-                    spawnLocation,
-                    type,
-                    open,
-                    tax
+                    spawnLocation
             );
-//      mineData.setMaterials(materials); - This breaks it for some reason
-            mine.setMineData(mineData);
 
-            mineService.addMine(uuid, mine);
+            MineData mineData = new MineData(uuid, mineStructure, type);
+            mineData.setOpen(open);
+            mineData.setTax(tax);
+
+            Mine mine = new Mine(mineData);
+            mineService.cache(mine);
         });
     }
 
@@ -331,12 +325,13 @@ public class PrivateMines extends JavaPlugin {
     }
 
     public void saveMines() {
-        mineService.getMines().forEach((uuid, mine) -> {
-            Player player = Bukkit.getOfflinePlayer(uuid).getPlayer();
+        for (Mine mine : mineService.getMines().values()) {
+            Player player = Bukkit.getOfflinePlayer(mine.getMineData().getMineOwner()).getPlayer();
             if (player == null) return;
+
             SQLUtils.update(mine);
             mine.stopTasks();
-        });
+        }
     }
 
     public SchematicStorage getSchematicStorage() {
@@ -381,10 +376,6 @@ public class PrivateMines extends JavaPlugin {
 
     public void logInfo(String message) {
         getLogger().info(message);
-    }
-
-    public MineStorage getMineService() {
-        return mineService;
     }
 
     public File getAddonsDirectory() {
