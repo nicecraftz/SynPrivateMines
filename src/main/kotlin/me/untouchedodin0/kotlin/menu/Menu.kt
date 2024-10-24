@@ -50,11 +50,11 @@ class Menu {
     fun open(player: Player) {
         val slots = rows * 9
         val inventoryGUI = InventoryGUI(slots, Utils.colorBukkit(title))
-        val mineStorage = privateMines.mineService
+        val mineService = privateMines.mineService
         var buttonSlot = 0
 
         if (name.equals("publicMines", true)) {
-            mineStorage.mines.forEach { (uuid, mine) ->
+            mineService.mines.forEach { (uuid, mine) ->
                 run {
                     val name = "${Bukkit.getOfflinePlayer(uuid).name}'s Mine"
                     val tax = mine.mineData.tax

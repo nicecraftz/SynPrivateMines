@@ -29,9 +29,10 @@ public class WorldguardHook extends Hook {
         World worldGuardWorld = BukkitAdapter.adapt(PLUGIN_INSTANCE.getMineWorldManager().getMinesWorld());
         regionManager = WorldGuard.getInstance().getPlatform().getRegionContainer().get(worldGuardWorld);
         flags = WorldGuard.getInstance().getFlagRegistry();
+        PLUGIN_INSTANCE.setWorldGuardHook(new WorldGuardRegionOrchestrator());
     }
 
-    private class WorldGuardRegionOrchestrator implements RegionOrchestrator<ProtectedRegion, Flag> {
+    public class WorldGuardRegionOrchestrator implements RegionOrchestrator<ProtectedRegion, Flag> {
 
         @Override
         public void setFlag(ProtectedRegion region, Flag flag, boolean state) {

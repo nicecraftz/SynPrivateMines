@@ -21,24 +21,25 @@
 
 package me.untouchedodin0.privatemines.storage;
 
+import me.untouchedodin0.privatemines.iterator.SchematicIterator.MineBlocks;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import me.untouchedodin0.privatemines.iterator.SchematicIterator.MineBlocks;
 
 public class SchematicStorage {
 
-  private final Map<File, MineBlocks> mineBlocksMap = new HashMap<>();
+    private final Map<File, MineBlocks> mineBlocksMap = new HashMap<>();
 
-  public void addSchematic(File file, MineBlocks mineBlocks) {
-    mineBlocksMap.putIfAbsent(file, mineBlocks);
-  }
+    public void addSchematic(File file, MineBlocks mineBlocks) {
+        mineBlocksMap.putIfAbsent(file, mineBlocks);
+    }
 
-  public Map<File, MineBlocks> getMineBlocksMap() {
-    return mineBlocksMap;
-  }
+    public Map<File, MineBlocks> getMineBlocksMap() {
+        return mineBlocksMap;
+    }
 
-  public MineBlocks get(File file) {
-    return mineBlocksMap.get(file);
-  }
+    public MineBlocks get(File file) {
+        return mineBlocksMap.get(file);
+    }
 }

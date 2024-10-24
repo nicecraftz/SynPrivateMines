@@ -22,148 +22,100 @@
 package me.untouchedodin0.privatemines.iterator;
 
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.world.block.BlockType;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import me.untouchedodin0.privatemines.PrivateMines;
-import me.untouchedodin0.privatemines.config.Config;
+import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
+import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.storage.SchematicStorage;
-import me.untouchedodin0.privatemines.utils.Utils;
+import me.untouchedodin0.privatemines.utils.schematic.WorldEditSchematicPlacer;
 import org.bukkit.Material;
+import org.bukkit.util.Vector;
+
+import java.io.File;
+
+import static com.sk89q.worldedit.bukkit.BukkitAdapter.adapt;
 
 public class SchematicIterator {
+    private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
+    private static final SchematicStorage SCHEMATIC_STORAGE = PRIVATE_MINES.getSchematicStorage();
 
-  SchematicStorage schematicStorage;
-  BlockVector3 spawn;
-  BlockVector3 npc;
-  BlockVector3 quarry;
-  BlockVector3 corner1;
-  BlockVector3 corner2;
+    private BlockVector3 spawnBlockVector3;
+    private BlockVector3 npcBlockVector3;
+    private BlockVector3 quarryBlockVector3;
+    private BlockVector3 cornerMinBlockVector3;
+    private BlockVector3 cornerMaxBlockVector3;
 
-  public SchematicIterator(SchematicStorage storage) {
-    this.schematicStorage = storage;
-  }
+    @ConfigurationEntry(key = "spawn-point", section = "materials", type = ConfigurationValueType.MATERIAL, value = "POWERED_RAIL")
+    Material spawnMaterial;
 
-  public MineBlocks findRelativePoints(File file) {
-    PrivateMines privateMines = PrivateMines.getInstance();
-    MineBlocks mineBlocks = new MineBlocks();
-    mineBlocks.corners = new BlockVector3[2];
+    @ConfigurationEntry(key = "mine-corner", section = "materials", type = ConfigurationValueType.MATERIAL, value = "POWERED_RAIL")
+    Material cornerMaterial;
 
-    Clipboard clipboard;
-    ClipboardFormat clipboardFormat = ClipboardFormats.findByFile(file);
+    @ConfigurationEntry(key = "sell-npc", section = "materials", type = ConfigurationValueType.MATERIAL, value = "POWERED_RAIL")
+    Material npcMaterial;
 
-    if (clipboardFormat != null) {
-      try (ClipboardReader clipboardReader = clipboardFormat.getReader(new FileInputStream(file))) {
-        clipboard = clipboardReader.read();
-
-        Material cornerMaterial = Config.mineCorner;
-        Material spawnMaterial = Config.spawnPoint;
-        Material npcMaterial = Config.sellNpc;
-        Material quarryMaterial = Config.quarryMaterial;
-
-        BlockType cornerType = BlockType.REGISTRY.get(cornerMaterial.getKey().getKey());
-        BlockType spawnType = BlockType.REGISTRY.get(spawnMaterial.getKey().getKey());
-        BlockType npcType = BlockType.REGISTRY.get(npcMaterial.getKey().getKey());
-        BlockType quarryType = BlockType.REGISTRY.get(quarryMaterial.getKey().getKey());
+    @ConfigurationEntry(key = "quarry", section = "materials", type = ConfigurationValueType.MATERIAL, value = "POWERED_RAIL")
+    Material quarryMaterial;
 
 
-        clipboard.getRegion().forEach(blockVector3 -> {
-          BlockType blockType = clipboard.getBlock(blockVector3).getBlockType();
-          int x = blockVector3.getX();
-          int y = blockVector3.getY();
-          int z = blockVector3.getZ();
+    public MineBlocks findRelativePoints(File file) {
+        try (Clipboard clipboard = WorldEditSchematicPlacer.getPlacer().getClipboard(file)) {
+            Region region = clipboard.getRegion();
+            for (BlockVector3 regionBlock : region) {
+                BlockType blockType = clipboard.getBlock(regionBlock).getBlockType();
+                BlockVector3 baseVector = BlockVector3.at(regionBlock.getX(), regionBlock.getY(), regionBlock.getZ());
+                Material worldEditToBukkitMaterial = adapt(blockType);
 
-          if (blockType.equals(cornerType)) {
-            if (corner1 == null) {
-              corner1 = BlockVector3.at(x, y, z);
-            } else if (corner2 == null) {
-              corner2 = BlockVector3.at(x, y, z);
+                if (worldEditToBukkitMaterial == cornerMaterial) {
+                    if (cornerMinBlockVector3 == null) {
+                        cornerMinBlockVector3 = baseVector;
+                    } else if (cornerMaxBlockVector3 == null) {
+                        cornerMaxBlockVector3 = baseVector;
+                    }
+                } else if (worldEditToBukkitMaterial == spawnMaterial && spawnBlockVector3 == null) {
+                    spawnBlockVector3 = baseVector;
+                } else if (worldEditToBukkitMaterial == npcMaterial && npcBlockVector3 == null) {
+                    npcBlockVector3 = baseVector;
+                } else if (worldEditToBukkitMaterial == quarryMaterial && quarryBlockVector3 == null) {
+                    quarryBlockVector3 = baseVector;
+                }
             }
-          } else if (blockType.equals(spawnType)) {
-            if (spawn == null) {
-              spawn = BlockVector3.at(x, y, z);
-            }
-          } else if (blockType.equals(npcType)) {
-            if (npc == null) {
-              npc = BlockVector3.at(x, y, z);
-            }
-          } else if (blockType.equals(quarryType)) {
-            if (quarry == null) {
-              quarry = BlockVector3.at(x, y, z);
-            }
-          }
-        });
-
-
-        if (spawn == null) {
-          privateMines.getLogger().info(
-              String.format("Failed to find a spawn block in the mine\nhave you placed a %s block?",
-                  Utils.format(spawnMaterial)));
-          return null;
-        } else if (corner1 == null) {
-          privateMines.getLogger().info(String.format(
-              "Failed to find corner 1 in the mine\nhave you placed 2 %s blocks in the mining region?",
-              Utils.format(cornerMaterial)));
-          return null;
-        } else if (corner2 == null) {
-          privateMines.getLogger().info(String.format(
-              "Failed to find corner 2 in the mine\nhave you placed 2 %s blocks in the mining region?",
-              Utils.format(cornerMaterial)));
-          return null;
         }
 
-        mineBlocks.spawnLocation = BlockVector3.at(spawn.getX(), spawn.getY(), spawn.getZ());
-        if (npc != null) {
-          mineBlocks.npcLocation = BlockVector3.at(npc.getX(), npc.getY(), npc.getZ());
+        if (spawnBlockVector3 == null || cornerMinBlockVector3 == null || cornerMaxBlockVector3 == null) {
+            PRIVATE_MINES.logInfo("Please, make sure you have placed the spawn and corner blocks.");
+            return null;
         }
-        if (quarry != null) {
-          mineBlocks.quarryLocation = BlockVector3.at(quarry.getX(), quarry.getY(), quarry.getZ());
+
+        BlockVector3[] corners = new BlockVector3[]{cornerMinBlockVector3, cornerMaxBlockVector3};
+        MineBlocks mineBlocks = MineBlocks.fromWorldguardElements(
+                spawnBlockVector3,
+                corners,
+                npcBlockVector3,
+                quarryBlockVector3
+        );
+        return mineBlocks;
+    }
+
+    public record MineBlocks(
+            Vector spawnLocation, Vector[] corners, Vector npcLocation, Vector quarryLocation
+    ) {
+        public static MineBlocks fromWorldguardElements(BlockVector3 spawnLocation, BlockVector3[] corners, BlockVector3 npcLocation, BlockVector3 quarryLocation) {
+            Vector bukkitSpawnLocation = adapt(spawnLocation);
+            Vector bukkitNpcLocation = npcLocation == null ? null : adapt(npcLocation);
+            Vector bukkitQuarryLocation = quarryLocation == null ? null : adapt(quarryLocation);
+            Vector bukkitFirstCorner = adapt(corners[0]);
+            Vector bukkitSecondCorner = adapt(corners[1]);
+            Vector[] locations = new Vector[]{bukkitFirstCorner, bukkitSecondCorner};
+            return new MineBlocks(bukkitSpawnLocation, locations, bukkitNpcLocation, bukkitQuarryLocation);
         }
-        mineBlocks.corners[0] = BlockVector3.at(corner1.getX(), corner1.getY(), corner1.getZ());
-        mineBlocks.corners[1] = BlockVector3.at(corner2.getX(), corner2.getY(), corner2.getZ());
 
-        spawn = null;
-        npc = null;
-        quarry = null;
-        corner1 = null;
-        corner2 = null;
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-    }
-    return mineBlocks;
-  }
+        private static Vector adapt(BlockVector3 blockVector3) {
+            return new Vector(blockVector3.getX(), blockVector3.getY(), blockVector3.getZ());
+        }
 
-  public static class MineBlocks {
-
-    public BlockVector3 spawnLocation;
-    public BlockVector3 npcLocation;
-    public BlockVector3 quarryLocation;
-    public BlockVector3[] corners;
-
-    public BlockVector3 getSpawnLocation() {
-      return spawnLocation;
     }
 
-    public BlockVector3 getNpcLocation() {
-      return npcLocation;
-    }
-
-    public BlockVector3 getQuarryLocation() {
-      return quarryLocation;
-    }
-
-    public BlockVector3 getCorner1() {
-      return corners[0];
-    }
-
-    public BlockVector3 getCorner2() {
-      return corners[1];
-    }
-  }
 }

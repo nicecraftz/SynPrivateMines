@@ -37,6 +37,7 @@ import me.untouchedodin0.privatemines.storage.sql.SQLite;
 import me.untouchedodin0.privatemines.utils.QueueUtils;
 import me.untouchedodin0.privatemines.utils.UpdateChecker;
 import me.untouchedodin0.privatemines.utils.addon.AddonManager;
+import me.untouchedodin0.privatemines.utils.hook.WorldguardHook.WorldGuardRegionOrchestrator;
 import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bstats.bukkit.Metrics;
@@ -94,6 +95,7 @@ public class PrivateMines extends JavaPlugin {
     private SQLHelper sqlHelper;
 
     private AddonManager addonManager;
+    private WorldGuardRegionOrchestrator regionOrchestrator;
 
     public static PrivateMines getInstance() {
         return instance;
@@ -121,8 +123,9 @@ public class PrivateMines extends JavaPlugin {
         mineTypeRegistry = new MineTypeRegistry();
         queueUtils = new QueueUtils();
         addonManager = new AddonManager();
+
         schematicStorage = new SchematicStorage();
-        schematicIterator = new SchematicIterator(getSchematicStorage());
+        schematicIterator = new SchematicIterator(schematicStorage);
 
         // TODO : Handle Tax System for mines.
 
@@ -346,6 +349,10 @@ public class PrivateMines extends JavaPlugin {
         return pregenStorage;
     }
 
+    public MineService getMineService() {
+        return mineService;
+    }
+
     public MineWorldManager getMineWorldManager() {
         return mineWorldManager;
     }
@@ -384,5 +391,13 @@ public class PrivateMines extends JavaPlugin {
 
     public File getSchematicsDirectory() {
         return schematicsDirectory;
+    }
+
+    public void setRegionOrchestrator(WorldGuardRegionOrchestrator regionOrchestrator) {
+        this.regionOrchestrator = regionOrchestrator;
+    }
+
+    public WorldGuardRegionOrchestrator getRegionOrchestrator() {
+        return regionOrchestrator;
     }
 }
