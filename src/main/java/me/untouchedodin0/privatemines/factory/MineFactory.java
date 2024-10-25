@@ -27,17 +27,12 @@ import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
-import me.untouchedodin0.kotlin.mine.storage.MineStorage;
-import me.untouchedodin0.kotlin.mine.type.MineType;
-import me.untouchedodin0.kotlin.utils.FlagUtils;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
 import me.untouchedodin0.privatemines.events.PrivateMineCreationEvent;
-import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineData;
-import me.untouchedodin0.privatemines.mine.MineStructure;
+import me.untouchedodin0.privatemines.mine.*;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
 import me.untouchedodin0.privatemines.utils.schematic.PastedMine;
@@ -54,7 +49,8 @@ import java.util.UUID;
 
 public class MineFactory {
     private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
-    private static final MineStorage MINE_STORAGE = PRIVATE_MINES.getMineService();
+    private static final PasteHelper PASTE_HELPER = PRIVATE_MINES.getPasteHelper();
+    private static final MineService MINE_STORAGE = PRIVATE_MINES.getMineService();
 
     @ConfigurationEntry(key = "is-closed-by-default", section = "mine", type = ConfigurationValueType.BOOLEAN, value = "true")
     private boolean defaultClosed;
@@ -72,7 +68,7 @@ public class MineFactory {
      */
     public void create(Player player, Location location, MineType mineType) {
         UUID uuid = player.getUniqueId();
-        File schematicFile = new File("plugins/PrivateMines/schematics/" + mineType.getFile());
+        File schematicFile = new File("plugins/PrivateMines/schematics/" + mineType.schematicFile());
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionManager regionManager = container.get(BukkitAdapter.adapt(location.getWorld()));
 
@@ -86,49 +82,37 @@ public class MineFactory {
 
         // todo: make class to handle worldedit functions to isolate it from all the code.
         Task.asyncDelayed(() -> {
-            PasteHelper pasteHelper = new PasteHelper();
-            PastedMine pastedMine = pasteHelper.paste(schematicFile, location);
+            PastedMine pastedMine = PASTE_HELPER.paste(schematicFile, location);
 
             Location spawn = location.clone().add(0, 0, 1);
             Location corner1 = pastedMine.getLowerRailsLocation();
             Location corner2 = pastedMine.getUpperRailsLocation();
-            Location minimum = pasteHelper.getMinimum();
-            Location maximum = pasteHelper.getMaximum();
+            Location minimum = PASTE_HELPER.getMinimum();
+            Location maximum = PASTE_HELPER.getMaximum();
             BlockVector3 miningRegionMin = BukkitAdapter.asBlockVector(corner1);
             BlockVector3 miningRegionMax = BukkitAdapter.asBlockVector(corner2);
             BlockVector3 fullRegionMin = BukkitAdapter.asBlockVector(minimum);
             BlockVector3 fullRegionMax = BukkitAdapter.asBlockVector(maximum);
 
             ProtectedCuboidRegion fullRegion = new ProtectedCuboidRegion(fullRegionName, fullRegionMin, fullRegionMax);
-            ProtectedCuboidRegion miningRegion = new ProtectedCuboidRegion(
-                    mineRegionName,
+            ProtectedCuboidRegion miningRegion = new ProtectedCuboidRegion(mineRegionName,
                     miningRegionMin,
                     miningRegionMax
             );
 
-            if (regionManager != null) {
-                regionManager.addRegion(fullRegion);
-                regionManager.addRegion(miningRegion);
-            }
-
-            MineStructure mineStructure = new MineStructure(corner2, corner1, minimum, maximum, location, spawn);
-            MineData mineData = new MineData(uuid, mineStructure, mineType);
-            Mine mine = new Mine(mineData);
-            mineData.setOpen(!defaultClosed);
-
-            SQLUtils.insert(mine);
-
-            MINE_STORAGE.addMine(uuid, mine);
-            mine.handleReset();
-
-            Task.syncDelayed(() -> {
-                spawn.getBlock().setType(Material.AIR);
-                player.teleport(spawn);
-                FlagUtils flagUtils = new FlagUtils();
-                flagUtils.setFlags(mine);
-                PrivateMineCreationEvent creationEvent = new PrivateMineCreationEvent(mine);
-                Bukkit.getPluginManager().callEvent(creationEvent);
-            });
+            createMineWithRegionConfiguration(player,
+                    location,
+                    mineType,
+                    uuid,
+                    regionManager,
+                    spawn,
+                    corner1,
+                    corner2,
+                    minimum,
+                    maximum,
+                    fullRegion,
+                    miningRegion
+            );
         });
     }
 
@@ -156,19 +140,37 @@ public class MineFactory {
         Location corner2 = pastedMine.getUpperRailsLocation();
         Location minimum = pasteHelper.getMinimum();
         Location maximum = pasteHelper.getMaximum();
+
         BlockVector3 miningRegionMin = BukkitAdapter.asBlockVector(corner1);
         BlockVector3 miningRegionMax = BukkitAdapter.asBlockVector(corner2);
         BlockVector3 fullRegionMin = BukkitAdapter.asBlockVector(minimum);
         BlockVector3 fullRegionMax = BukkitAdapter.asBlockVector(maximum);
 
-        ProtectedCuboidRegion miningRegion = new ProtectedCuboidRegion(
-                mineRegionName,
+        ProtectedCuboidRegion miningRegion = new ProtectedCuboidRegion(mineRegionName,
                 miningRegionMin,
                 miningRegionMax
         );
 
         ProtectedCuboidRegion fullRegion = new ProtectedCuboidRegion(fullRegionName, fullRegionMin, fullRegionMax);
 
+        createMineWithRegionConfiguration(player,
+                location,
+                mineType,
+                uuid,
+                regionManager,
+                spawn,
+                corner1,
+                corner2,
+                minimum,
+                maximum,
+                miningRegion,
+                fullRegion
+        );
+        Mine mine;
+        return mine;
+    }
+
+    private void createMineWithRegionConfiguration(Player player, Location location, MineType mineType, UUID uuid, RegionManager regionManager, Location spawn, Location corner1, Location corner2, Location minimum, Location maximum, ProtectedCuboidRegion miningRegion, ProtectedCuboidRegion fullRegion) {
         if (regionManager != null) {
             regionManager.addRegion(miningRegion);
             regionManager.addRegion(fullRegion);
@@ -192,8 +194,6 @@ public class MineFactory {
             PrivateMineCreationEvent creationEvent = new PrivateMineCreationEvent(mine);
             Bukkit.getPluginManager().callEvent(creationEvent);
         });
-
-        return mine;
     }
 
     public void createUpgraded(UUID uuid, Location location, MineType mineType) {

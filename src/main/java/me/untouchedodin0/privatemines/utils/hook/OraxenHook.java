@@ -1,6 +1,7 @@
 package me.untouchedodin0.privatemines.utils.hook;
 
 public class OraxenHook extends Hook {
+    public static final String ORAXEN_NAME = "ItemsAdder";
     @Override
     public String getPluginName() {
         return "Oraxen";

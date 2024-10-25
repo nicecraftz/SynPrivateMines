@@ -14,8 +14,9 @@ public class MineData {
     private final WeightedCollection<Material> materials = new WeightedCollection<>();
 
     private final UUID mineOwner;
-    private final MineStructure mineStructure;
-    private final MineType mineType;
+
+    private MineStructure mineStructure;
+    private MineType mineType;
 
     private boolean isOpen = false;
     private double tax = 5d;
@@ -35,8 +36,16 @@ public class MineData {
         return mineOwner;
     }
 
+    public void setMineStructure(MineStructure mineStructure) {
+        this.mineStructure = mineStructure;
+    }
+
     public MineStructure getMineStructure() {
         return mineStructure;
+    }
+
+    public void setMineType(MineType mineType) {
+        this.mineType = mineType;
     }
 
     public MineType getMineType() {

@@ -8,14 +8,22 @@ import com.sk89q.worldguard.protection.flags.FlagContext;
 import com.sk89q.worldguard.protection.flags.Flags;
 import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
 import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.sk89q.worldguard.protection.regions.RegionContainer;
 import me.untouchedodin0.privatemines.mine.Mine;
 import me.untouchedodin0.privatemines.mine.MineType;
 import me.untouchedodin0.privatemines.utils.regions.RegionOrchestrator;
+import org.bukkit.Location;
+import org.bukkit.util.BoundingBox;
 
 import java.util.Map;
 
 public class WorldguardHook extends Hook {
+    private org.bukkit.World bukkitMinesWorld;
+    private World worldGuardMinesWorld;
+
+    private RegionContainer regionContainer;
     private RegionManager regionManager;
     private FlagRegistry flags;
 
@@ -26,10 +34,14 @@ public class WorldguardHook extends Hook {
 
     @Override
     public void hook() {
-        World worldGuardWorld = BukkitAdapter.adapt(PLUGIN_INSTANCE.getMineWorldManager().getMinesWorld());
-        regionManager = WorldGuard.getInstance().getPlatform().getRegionContainer().get(worldGuardWorld);
+        bukkitMinesWorld = PLUGIN_INSTANCE.getMineWorldManager().getMinesWorld();
+        worldGuardMinesWorld = BukkitAdapter.adapt(bukkitMinesWorld);
+
+        regionContainer = WorldGuard.getInstance().getPlatform().getRegionContainer();
+        regionManager = regionContainer.get(worldGuardMinesWorld);
+
         flags = WorldGuard.getInstance().getFlagRegistry();
-        PLUGIN_INSTANCE.setWorldGuardHook(new WorldGuardRegionOrchestrator());
+        PLUGIN_INSTANCE.setRegionOrchestrator(new WorldGuardRegionOrchestrator());
     }
 
     public class WorldGuardRegionOrchestrator implements RegionOrchestrator<ProtectedRegion, Flag> {
@@ -50,6 +62,25 @@ public class WorldguardHook extends Hook {
             MineType mineType = mine.getMineData().getMineType();
             applyFlagStates(mineType.mineFlags(), mineRegion);
             applyFlagStates(mineType.schematicAreaFlags(), schematicRegion);
+        }
+
+        @Override
+        public void removeRegion(String name) {
+            regionManager.removeRegion(name);
+        }
+
+        @Override
+        public void addRegion(String name, BoundingBox boundingBox) {
+            Location min = boundingBox.getMin().toLocation(bukkitMinesWorld);
+            Location max = boundingBox.getMax().toLocation(bukkitMinesWorld);
+
+            ProtectedCuboidRegion region = new ProtectedCuboidRegion(
+                    name,
+                    BukkitAdapter.asBlockVector(min),
+                    BukkitAdapter.asBlockVector(max)
+            );
+
+            regionManager.addRegion(region);
         }
 
         private void applyFlagStates(Map<String, Boolean> flagStates, ProtectedRegion region) {

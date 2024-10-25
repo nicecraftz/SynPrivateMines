@@ -38,6 +38,7 @@ import me.untouchedodin0.privatemines.utils.QueueUtils;
 import me.untouchedodin0.privatemines.utils.UpdateChecker;
 import me.untouchedodin0.privatemines.utils.addon.AddonManager;
 import me.untouchedodin0.privatemines.utils.hook.WorldguardHook.WorldGuardRegionOrchestrator;
+import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
 import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bstats.bukkit.Metrics;
@@ -94,6 +95,8 @@ public class PrivateMines extends JavaPlugin {
     private SQLite sqLite;
     private SQLHelper sqlHelper;
 
+    private PasteHelper pasteHelper;
+
     private AddonManager addonManager;
     private WorldGuardRegionOrchestrator regionOrchestrator;
 
@@ -131,6 +134,8 @@ public class PrivateMines extends JavaPlugin {
 
         registerListeners();
         handleHooks();
+
+        pasteHelper = new PasteHelper();
 
         // todo: register mine types.
 
@@ -337,6 +342,10 @@ public class PrivateMines extends JavaPlugin {
         }
     }
 
+    public PasteHelper getPasteHelper() {
+        return pasteHelper;
+    }
+
     public SchematicStorage getSchematicStorage() {
         return schematicStorage;
     }
@@ -357,7 +366,7 @@ public class PrivateMines extends JavaPlugin {
         return mineWorldManager;
     }
 
-    public MineTypeRegistry getMineTypeManager() {
+    public MineTypeRegistry getMineTypeRegistry() {
         return mineTypeRegistry;
     }
 

@@ -21,12 +21,10 @@
 
 package me.untouchedodin0.privatemines.events;
 
-import me.untouchedodin0.kotlin.mine.type.MineType;
 import me.untouchedodin0.privatemines.mine.Mine;
+import me.untouchedodin0.privatemines.mine.MineType;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.UUID;
 
 public class PrivateMineUpgradeEvent extends MineEvent {
 

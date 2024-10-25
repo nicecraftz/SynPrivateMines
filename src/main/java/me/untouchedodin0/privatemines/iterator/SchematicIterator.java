@@ -28,8 +28,7 @@ import com.sk89q.worldedit.world.block.BlockType;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
-import me.untouchedodin0.privatemines.storage.SchematicStorage;
-import me.untouchedodin0.privatemines.utils.schematic.WorldEditSchematicPlacer;
+import me.untouchedodin0.privatemines.utils.schematic.WorldEditWorldWriter;
 import org.bukkit.Material;
 import org.bukkit.util.Vector;
 
@@ -39,7 +38,6 @@ import static com.sk89q.worldedit.bukkit.BukkitAdapter.adapt;
 
 public class SchematicIterator {
     private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
-    private static final SchematicStorage SCHEMATIC_STORAGE = PRIVATE_MINES.getSchematicStorage();
 
     private BlockVector3 spawnBlockVector3;
     private BlockVector3 npcBlockVector3;
@@ -61,7 +59,7 @@ public class SchematicIterator {
 
 
     public MineBlocks findRelativePoints(File file) {
-        try (Clipboard clipboard = WorldEditSchematicPlacer.getPlacer().getClipboard(file)) {
+        try (Clipboard clipboard = WorldEditWorldWriter.getWriter().getClipboard(file)) {
             Region region = clipboard.getRegion();
             for (BlockVector3 regionBlock : region) {
                 BlockType blockType = clipboard.getBlock(regionBlock).getBlockType();
@@ -96,6 +94,7 @@ public class SchematicIterator {
                 npcBlockVector3,
                 quarryBlockVector3
         );
+
         return mineBlocks;
     }
 

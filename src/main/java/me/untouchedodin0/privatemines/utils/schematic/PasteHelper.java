@@ -15,7 +15,7 @@ import static com.sk89q.worldedit.bukkit.BukkitAdapter.adapt;
 import static com.sk89q.worldedit.bukkit.BukkitAdapter.asBlockVector;
 
 public class PasteHelper {
-    private static final WorldEditSchematicPlacer WORLD_EDIT_SCHEMATIC_PLACER = WorldEditSchematicPlacer.getPlacer();
+    private static final WorldEditWorldWriter WORLD_EDIT_SCHEMATIC_PLACER = WorldEditWorldWriter.getWriter();
 
     private Location minimum, maximum;
     private Region newRegion;

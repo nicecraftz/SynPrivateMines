@@ -19,4 +19,8 @@ public class HookHandler {
         hooks.forEach(Hook::tryHook);
     }
 
+    public static boolean isHooked(String name) {
+
+    }
+
 }
