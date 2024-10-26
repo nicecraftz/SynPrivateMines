@@ -30,28 +30,23 @@ import me.untouchedodin0.privatemines.factory.MineFactory;
 import me.untouchedodin0.privatemines.iterator.SchematicIterator;
 import me.untouchedodin0.privatemines.listener.MineResetListener;
 import me.untouchedodin0.privatemines.listener.PlayerJoinListener;
-import me.untouchedodin0.privatemines.mine.*;
+import me.untouchedodin0.privatemines.mine.Mine;
+import me.untouchedodin0.privatemines.mine.MineService;
+import me.untouchedodin0.privatemines.mine.MineTypeRegistry;
 import me.untouchedodin0.privatemines.storage.SchematicStorage;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import me.untouchedodin0.privatemines.storage.sql.SQLite;
 import me.untouchedodin0.privatemines.utils.QueueUtils;
 import me.untouchedodin0.privatemines.utils.UpdateChecker;
 import me.untouchedodin0.privatemines.utils.addon.AddonManager;
-import me.untouchedodin0.privatemines.utils.hook.WorldguardHook.WorldGuardRegionOrchestrator;
 import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
 import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import redempt.redlib.misc.LocationUtils;
-import redempt.redlib.misc.Task;
-import redempt.redlib.sql.SQLCache;
-import redempt.redlib.sql.SQLHelper;
-import redempt.redlib.sql.SQLHelper.Results;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,10 +54,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 import static me.untouchedodin0.privatemines.utils.hook.HookHandler.handleHooks;
@@ -73,8 +65,6 @@ public class PrivateMines extends JavaPlugin {
 
     private File schematicsDirectory;
     private File addonsDirectory;
-
-    private final Map<String, SQLCache> caches = new HashMap<>();
 
     private ConfigurationProcessor configurationProcessor;
     private SchematicStorage schematicStorage;
@@ -93,12 +83,9 @@ public class PrivateMines extends JavaPlugin {
     private Economy economy = null;
 
     private SQLite sqLite;
-    private SQLHelper sqlHelper;
-
     private PasteHelper pasteHelper;
 
     private AddonManager addonManager;
-    private WorldGuardRegionOrchestrator regionOrchestrator;
 
     public static PrivateMines getInstance() {
         return instance;
@@ -128,7 +115,7 @@ public class PrivateMines extends JavaPlugin {
         addonManager = new AddonManager();
 
         schematicStorage = new SchematicStorage();
-        schematicIterator = new SchematicIterator(schematicStorage);
+        schematicIterator = new SchematicIterator();
 
         // TODO : Handle Tax System for mines.
 
@@ -158,7 +145,6 @@ public class PrivateMines extends JavaPlugin {
         PublicMinesCommand.registerCommands();
         PrivateMinesCommand.registerCommands();
         ensureDatabaseFileCreation();
-
 
         // TODO: rewrite whole sql data handle system.
         sqLite = new SQLite();
@@ -223,7 +209,6 @@ public class PrivateMines extends JavaPlugin {
     public void onDisable() {
         logInfo("PrivateMines is disabling..");
         saveMines();
-        sqlHelper.close();
     }
 
     private void saveInitialResources() {
@@ -257,75 +242,75 @@ public class PrivateMines extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MineResetListener(), this);
     }
 
-    public void loadSQLMines() {
-        SQLHelper sqlHelper = getSqlHelper();
-        Results results = sqlHelper.queryResults("SELECT * FROM privatemines;");
-
-        results.forEach(result -> {
-            String owner = result.getString(1);
-            String mineType = result.getString(2);
-            String mineLocation = result.getString(3);
-            String mineAreaCornerMinString = result.getString(4);
-            String mineAreaCornerMaxString = result.getString(5);
-            String schematicAreaCornerMinString = result.getString(6);
-            String schematicAreaCornerMaxString = result.getString(7);
-            String spawn = result.getString(8);
-            double tax = result.get(9);
-            int isOpen = result.get(10);
-
-//      String resultsMaterial = result.getString(13);
-//      resultsMaterial = resultsMaterial.substring(1); // remove starting '{'
+//    public void loadSQLMines() {
+//        SQLHelper sqlHelper = getSqlHelper();
+//        Results results = sqlHelper.queryResults("SELECT * FROM privatemines;");
 //
-//      Map<Material, Double> materials = new HashMap<>();
+//        results.forEach(result -> {
+//            String owner = result.getString(1);
+//            String mineType = result.getString(2);
+//            String mineLocation = result.getString(3);
+//            String mineAreaCornerMinString = result.getString(4);
+//            String mineAreaCornerMaxString = result.getString(5);
+//            String schematicAreaCornerMinString = result.getString(6);
+//            String schematicAreaCornerMaxString = result.getString(7);
+//            String spawn = result.getString(8);
+//            double tax = result.get(9);
+//            int isOpen = result.get(10);
 //
-//      String[] pairs = resultsMaterial.split("\\s*,\\s*");
+////      String resultsMaterial = result.getString(13);
+////      resultsMaterial = resultsMaterial.substring(1); // remove starting '{'
+////
+////      Map<Material, Double> materials = new HashMap<>();
+////
+////      String[] pairs = resultsMaterial.split("\\s*,\\s*");
+////
+////      for (String string : pairs) {
+////        String[] parts = string.split("=");
+////        String matString = parts[0];
+////        double percent = Double.parseDouble(parts[1].substring(0, parts[1].length() - 1));
+////        Material material = Material.valueOf(matString);
+////        materials.put(material, percent);
+////      }
+//            UUID uuid = UUID.fromString(owner);
+//            MineType type = mineTypeRegistry.get(mineType);
 //
-//      for (String string : pairs) {
-//        String[] parts = string.split("=");
-//        String matString = parts[0];
-//        double percent = Double.parseDouble(parts[1].substring(0, parts[1].length() - 1));
-//        Material material = Material.valueOf(matString);
-//        materials.put(material, percent);
-//      }
-            UUID uuid = UUID.fromString(owner);
-            MineType type = mineTypeRegistry.get(mineType);
-
-            Location mineAreaCornerMin = LocationUtils.fromString(mineAreaCornerMinString);
-            Location mineAreaCornerMax = LocationUtils.fromString(mineAreaCornerMaxString);
-            Location schematicAreaCornerMin = LocationUtils.fromString(schematicAreaCornerMinString);
-            Location schematicAreaCornerMax = LocationUtils.fromString(schematicAreaCornerMaxString);
-
-            Location location = LocationUtils.fromString(mineLocation);
-            Location spawnLocation = LocationUtils.fromString(spawn);
-            boolean open = isOpen != 0;
-
-            MineStructure mineStructure = new MineStructure(
-                    mineAreaCornerMin,
-                    mineAreaCornerMax,
-                    schematicAreaCornerMin,
-                    schematicAreaCornerMax,
-                    location,
-                    spawnLocation
-            );
-
-            MineData mineData = new MineData(uuid, mineStructure, type);
-            mineData.setOpen(open);
-            mineData.setTax(tax);
-
-            Mine mine = new Mine(mineData);
-            mineService.cache(mine);
-        });
-    }
+//            Location mineAreaCornerMin = LocationUtils.fromString(mineAreaCornerMinString);
+//            Location mineAreaCornerMax = LocationUtils.fromString(mineAreaCornerMaxString);
+//            Location schematicAreaCornerMin = LocationUtils.fromString(schematicAreaCornerMinString);
+//            Location schematicAreaCornerMax = LocationUtils.fromString(schematicAreaCornerMaxString);
+//
+//            Location location = LocationUtils.fromString(mineLocation);
+//            Location spawnLocation = LocationUtils.fromString(spawn);
+//            boolean open = isOpen != 0;
+//
+//            MineStructure mineStructure = new MineStructure(
+//                    mineAreaCornerMin,
+//                    mineAreaCornerMax,
+//                    schematicAreaCornerMin,
+//                    schematicAreaCornerMax,
+//                    location,
+//                    spawnLocation
+//            );
+//
+//            MineData mineData = new MineData(uuid, mineStructure, type);
+//            mineData.setOpen(open);
+//            mineData.setTax(tax);
+//
+//            Mine mine = new Mine(mineData);
+//            mineService.cache(mine);
+//        });
+//    }
 
     public void loadAddons() {
         final PathMatcher jarMatcher = FileSystems.getDefault()
                 .getPathMatcher("glob:**/*.jar"); // Credits to Brister Mitten
-        PrivateMinesAPI privateMinesAPI = new PrivateMinesAPI();
+        PrivateMinesAPIImpl privateMinesAPIImpl = new PrivateMinesAPIImpl();
 
         try (Stream<Path> paths = Files.walk(addonsDirectory.toPath()).filter(jarMatcher::matches)) {
             paths.forEach(jar -> {
                 File file = jar.toFile();
-                privateMinesAPI.loadAddon(file);
+                privateMinesAPIImpl.loadAddon(file);
             });
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -400,13 +385,5 @@ public class PrivateMines extends JavaPlugin {
 
     public File getSchematicsDirectory() {
         return schematicsDirectory;
-    }
-
-    public void setRegionOrchestrator(WorldGuardRegionOrchestrator regionOrchestrator) {
-        this.regionOrchestrator = regionOrchestrator;
-    }
-
-    public WorldGuardRegionOrchestrator getRegionOrchestrator() {
-        return regionOrchestrator;
     }
 }

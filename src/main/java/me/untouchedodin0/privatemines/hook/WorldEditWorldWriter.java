@@ -1,4 +1,4 @@
-package me.untouchedodin0.privatemines.utils.schematic;
+package me.untouchedodin0.privatemines.hook;
 
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
@@ -18,23 +18,26 @@ import me.untouchedodin0.privatemines.PrivateMines;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.util.BoundingBox;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 
 
 public class WorldEditWorldWriter implements WorldWriter<Clipboard> {
+    public static final Map<Material, Double> EMPTY = Map.of(Material.AIR, 1d);
     private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
     private static final WorldEdit WORLD_EDIT = WorldEdit.getInstance();
+    private static final World MINES_WORLD = PRIVATE_MINES.getMineWorldManager().getMinesWorld();
+
     private static WorldEditWorldWriter placer;
 
     private WorldEditWorldWriter() {
 
     }
-
 
     @Override
     public void placeSchematic(File schematicFile, Location location) {
@@ -67,25 +70,35 @@ public class WorldEditWorldWriter implements WorldWriter<Clipboard> {
     }
 
     @Override
-    public void fill(World world, BoundingBox boundingBox, List<Material> materialList) {
+    public void fill(BoundingBox boundingBox, Map<Material, Double> materials) {
         RandomPattern randomPattern = new RandomPattern();
-        for (Material material : materialList) {
-            randomPattern.add(BukkitAdapter.adapt(material.createBlockData()), 1);
+
+        for (Map.Entry<Material, Double> materialDoubleEntry : materials.entrySet()) {
+            BlockData blockData = materialDoubleEntry.getKey().createBlockData();
+            double chance = materialDoubleEntry.getValue();
+            randomPattern.add(BukkitAdapter.adapt(blockData), chance);
         }
 
         try (
                 EditSession editSession = WorldEdit.getInstance()
                         .newEditSessionBuilder()
-                        .world(BukkitAdapter.adapt(world))
+                        .world(BukkitAdapter.adapt(MINES_WORLD))
                         .fastMode(true)
                         .build()
         ) {
-            BlockVector3 min = BukkitAdapter.asBlockVector(boundingBox.getMin().toLocation(world));
-            BlockVector3 max = BukkitAdapter.asBlockVector(boundingBox.getMax().toLocation(world));
-            Region region = new CuboidRegion(BukkitAdapter.adapt(world), min, max);
+            BlockVector3 min = BukkitAdapter.asBlockVector(boundingBox.getMin().toLocation(MINES_WORLD));
+            BlockVector3 max = BukkitAdapter.asBlockVector(boundingBox.getMax().toLocation(MINES_WORLD));
+            Region region = new CuboidRegion(BukkitAdapter.adapt(MINES_WORLD), min, max);
 
             editSession.setBlocks(region, randomPattern);
         }
+    }
+
+    @Override
+    public void fillWithGap(BoundingBox boundingBox, int gap, Map<Material, Double> materials) {
+        fill(boundingBox, Map.of(Material.AIR, 1d));
+        boundingBox.expand(-Math.abs(gap));
+        fill(boundingBox, materials);
     }
 
     public static WorldEditWorldWriter getWriter() {

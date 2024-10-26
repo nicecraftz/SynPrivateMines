@@ -30,11 +30,6 @@ import org.bukkit.ChatColor
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
-import redempt.redlib.config.annotations.ConfigMappable
-import redempt.redlib.config.annotations.ConfigPath
-import redempt.redlib.inventorygui.InventoryGUI
-import redempt.redlib.inventorygui.ItemButton
-import redempt.redlib.itemutils.ItemBuilder
 import java.util.*
 
 @ConfigMappable

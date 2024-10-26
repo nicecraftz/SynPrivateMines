@@ -19,26 +19,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package me.untouchedodin0.privatemines.utils;
+package me.untouchedodin0.privatemines;
 
-import com.sk89q.worldedit.math.BlockVector3;
+import me.untouchedodin0.privatemines.mine.Mine;
+import me.untouchedodin0.privatemines.mine.MineService;
+import me.untouchedodin0.privatemines.mine.MineType;
+import org.bukkit.Location;
 
-import java.util.List;
+import java.util.UUID;
 
-public class ExpansionUtils {
+public class PrivateMinesAPIImpl implements PrivateMinesAPI {
+    private static final MineService MINE_SERVICE = PrivateMines.getInstance().getMineService();
 
-    public static final List<BlockVector3> EXPANSION_VECTORS = List.of(
-            BlockVector3.UNIT_X,
-            BlockVector3.UNIT_MINUS_X,
-            BlockVector3.UNIT_Z,
-            BlockVector3.UNIT_MINUS_Z
-    );
-
-    public static BlockVector3[] expansionVectors(final int amount) {
-        return EXPANSION_VECTORS.stream().map(it -> it.multiply(amount)).toArray(BlockVector3[]::new);
+    @Override
+    public boolean hasMine(UUID uuid) {
+        return MINE_SERVICE.has(uuid);
     }
 
-    public static BlockVector3[] contractVectors(final int amount) {
-        return EXPANSION_VECTORS.stream().map(it -> it.divide(amount)).toArray(BlockVector3[]::new);
+    @Override
+    public CreateResult createMine(UUID uuid, Location location, MineType mineType) {
+        return MINE_SERVICE.create();
+    }
+
+    @Override
+    public Mine getPlayerMine(UUID uuid) {
+        return MINE_SERVICE.get(uuid);
+    }
+
+    @Override
+    public Mine getNearestMine(Location location) {
+        return MINE_SERVICE.getNearest(location);
     }
 }

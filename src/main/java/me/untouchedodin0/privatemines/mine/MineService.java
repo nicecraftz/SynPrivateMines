@@ -2,34 +2,43 @@ package me.untouchedodin0.privatemines.mine;
 
 import com.google.common.collect.Maps;
 import me.untouchedodin0.privatemines.PrivateMines;
+import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
+import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
+import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
 import me.untouchedodin0.privatemines.events.PrivateMineDeleteEvent;
+import me.untouchedodin0.privatemines.events.PrivateMineResetEvent;
 import me.untouchedodin0.privatemines.events.PrivateMineUpgradeEvent;
+import me.untouchedodin0.privatemines.hook.HookHandler;
+import me.untouchedodin0.privatemines.hook.ItemsAdderHook;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import me.untouchedodin0.privatemines.utils.hook.HookHandler;
 import me.untouchedodin0.privatemines.utils.hook.ItemsAdderHook;
 import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
 import me.untouchedodin0.privatemines.utils.schematic.PastedMine;
-import me.untouchedodin0.privatemines.utils.schematic.WorldEditWorldWriter;
-import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
+import me.untouchedodin0.privatemines.hook.WorldEditWorldWriter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BoundingBox;
-import redempt.redlib.misc.Task;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public class MineService {
     private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
-    private static final MineWorldManager MINE_WORLD_MANAGER = PRIVATE_MINES.getMineWorldManager();
-    private static World MINES_WORLD = MINE_WORLD_MANAGER.getMinesWorld();
     private final HashMap<UUID, Mine> mines = Maps.newHashMap();
-//    private final DatabaseSomething impl;
+
+    @ConfigurationEntry(key = "should-create-wall-gap", section = "mine.configuration", value = "true", type = ConfigurationValueType.BOOLEAN)
+    boolean shouldCreateWallGap;
+
+    @ConfigurationEntry(key = "gap", section = "mine.configuration", value = "1", type = ConfigurationValueType.INT)
+    int wallsGap;
+
+    public MineService() {
+        InstanceRegistry.registerInstance(this);
+    }
 
     public void cache(Mine mine) {
         mines.put(mine.getMineData().getMineOwner(), mine);
@@ -55,6 +64,29 @@ public class MineService {
         // todo handle mine deletion
     }
 
+    public void reset(Mine mine) {
+        MineData mineData = mine.getMineData();
+        MineType mineType = mineData.getMineType();
+        BoundingBox boundingBox = mineData.getMineStructure().mineBoundingBox();
+
+        // todo: handle personal blocks too
+        Map<Material, Double> materials = mineType.materials();
+
+        // todo: handle better
+        // WeightedCollection<String> personalBlocks = mineType.personalBlocks();
+
+        PrivateMineResetEvent privateMineResetEvent = new PrivateMineResetEvent(mine);
+        Bukkit.getPluginManager().callEvent(privateMineResetEvent);
+        if (privateMineResetEvent.isCancelled()) return;
+        if (materials != null && materials.isEmpty()) return;
+
+        if (shouldCreateWallGap) {
+            WorldEditWorldWriter.getWriter().fillWithGap(boundingBox, wallsGap, materials);
+        } else {
+            WorldEditWorldWriter.getWriter().fill(boundingBox, materials);
+        }
+    }
+
     private void handleMineDeletion(Mine mine) {
         MineData mineData = mine.getMineData();
         UUID uuid = mineData.getMineOwner();
@@ -70,13 +102,12 @@ public class MineService {
         // todo: this could be just made a constant to accept a uuid parameter or just the mine object.
         String regionName = String.format("mine-%s", uuid);
         String fullRegionName = String.format("full-mine-%s", uuid);
-
         PrivateMines.getInstance().getRegionOrchestrator().removeRegion(regionName);
         PrivateMines.getInstance().getRegionOrchestrator().removeRegion(fullRegionName);
-        WorldEditWorldWriter.getWriter().fill(MINES_WORLD, schematicBoundingBox, List.of(Material.AIR));
 
-        if (mineData.getMineType().useItemsAdder() && HookHandler.isHooked(ItemsAdderHook.ITEMSADDER_NAME)) {
-            ItemsAdderHook.removeItemsAdderBlocksFromBoundingBox(MINES_WORLD, mineBoundingBox);
+        WorldEditWorldWriter.getWriter().fill(schematicBoundingBox, WorldEditWorldWriter.EMPTY);
+        if (mineData.getMineType().useItemsAdder() && HookHandler.hooked(ItemsAdderHook.ITEMSADDER_NAME)) {
+            ItemsAdderHook.removeItemsAdderBlocksFromBoundingBox(mineBoundingBox);
         }
 
         mine.stopTasks();
@@ -98,59 +129,49 @@ public class MineService {
         MineType nextType = mineTypeRegistry.getNextMineType(mineData.getMineType());
         mineData.setMineType(nextType);
 
-        PrivateMineUpgradeEvent privateMineUpgradeEvent = new PrivateMineUpgradeEvent(
-                mine,
-                currentType,
-                nextType
-        );
+        PrivateMineUpgradeEvent privateMineUpgradeEvent = new PrivateMineUpgradeEvent(mine, currentType, nextType);
 
         Bukkit.getPluginManager().callEvent(privateMineUpgradeEvent);
-        if (privateMineUpgradeEvent.isCancelled()) {
-            return;
-        }
+        if (privateMineUpgradeEvent.isCancelled()) return;
 
         if (currentType.schematicFile().equals(nextType.schematicFile())) return;
         PRIVATE_MINES.getEconomy().withdrawPlayer(player, nextType.upgradeCost());
+
         String mineRegionName = String.format("mine-%s", player.getUniqueId());
         String fullRegionName = String.format("full-mine-%s", player.getUniqueId());
-
         BoundingBox schematicArea = mineData.getMineStructure().schematicBoundingBox();
 
+        WorldEditWorldWriter.getWriter().fill(schematicArea, WorldEditWorldWriter.EMPTY);
 
-        Task.asyncDelayed(() -> {
-            WorldEditWorldWriter.getWriter()
-                    .fill(MINE_WORLD_MANAGER.getMinesWorld(), schematicArea, List.of(Material.AIR));
-            PasteHelper pasteHelper = PrivateMines.getInstance().getPasteHelper();
-            PastedMine pastedMine = pasteHelper.paste(nextType.schematicFile(), mine.getMineLocation());
+        PasteHelper pasteHelper = PrivateMines.getInstance().getPasteHelper();
+        PastedMine pastedMine = pasteHelper.paste(nextType.schematicFile(), mine.getMineLocation());
+        Location spawn = mine.getMineLocation().clone().add(0, 0, 1);
 
-            Location spawn = mine.getMineLocation().clone().add(0, 0, 1);
-            Location corner1 = pastedMine.getLowerRailsLocation();
-            Location corner2 = pastedMine.getUpperRailsLocation();
+        Location mineMinCorner = pastedMine.getLowerRailsLocation();
+        Location mineMaxCorner = pastedMine.getUpperRailsLocation();
+        Location schematicMinCorner = pasteHelper.getMinimum();
+        Location schematicMaxCorner = pasteHelper.getMaximum();
 
-            Location minimum = pasteHelper.getMinimum();
-            Location maximum = pasteHelper.getMaximum();
+        BoundingBox mineRegion = BoundingBox.of(mineMinCorner, mineMaxCorner);
+        BoundingBox schematicRegion = BoundingBox.of(schematicMinCorner, schematicMaxCorner);
 
-            BoundingBox mineRegion = BoundingBox.of(corner1, corner2);
-            BoundingBox schematicRegion = BoundingBox.of(minimum, maximum);
+        PrivateMines.getInstance().getRegionOrchestrator().addRegion(mineRegionName, mineRegion);
+        PrivateMines.getInstance().getRegionOrchestrator().addRegion(fullRegionName, schematicRegion);
 
-            PrivateMines.getInstance().getRegionOrchestrator().addRegion(mineRegionName, mineRegion);
-            PrivateMines.getInstance().getRegionOrchestrator().addRegion(fullRegionName, schematicRegion);
+        MineStructure mineStructure = MineStructure.fromBoundingBoxes(
+                MINES_WORLD,
+                mineRegion,
+                schematicRegion,
+                mineData.getMineStructure().mineLocation(),
+                spawn
+        );
 
-            MineStructure mineStructure = MineStructure.fromBoundingBoxes(
-                    MINES_WORLD,
-                    mineRegion,
-                    schematicRegion,
-                    mineData.getMineStructure()
-                            .mineLocation(),
-                    spawn
-            );
+        mineData.setMineStructure(mineStructure);
+        mine.handleReset();
 
-            mineData.setMineStructure(mineStructure);
-            mine.handleReset();
-            Task.asyncDelayed(() -> SQLUtils.update(mine));
-            Task.syncDelayed(() -> spawn.getBlock().setType(Material.AIR, false));
+        Task.asyncDelayed(() -> SQLUtils.update(mine));
 
-        });
+        spawn.getBlock().setType(Material.AIR);
     }
 
     public boolean has(UUID uuid) {

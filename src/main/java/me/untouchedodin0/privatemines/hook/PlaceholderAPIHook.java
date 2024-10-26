@@ -1,16 +1,16 @@
 package me.untouchedodin0.privatemines.hook;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import me.untouchedodin0.kotlin.mine.data.MineData;
-import me.untouchedodin0.kotlin.mine.storage.MineStorage;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.mine.Mine;
+import me.untouchedodin0.privatemines.mine.MineData;
+import me.untouchedodin0.privatemines.mine.MineService;
 import me.untouchedodin0.privatemines.utils.QueueUtils;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.util.BoundingBox;
 import org.jetbrains.annotations.NotNull;
-import redempt.redlib.misc.LocationUtils;
 
 import java.util.UUID;
 
@@ -18,8 +18,8 @@ public class PlaceholderAPIHook extends Hook {
     private static final String NO_RESULT = "";
 
     private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.getInstance();
-    private static final QueueUtils queueUtils = PLUGIN_INSTANCE.getQueueUtils();
-    private static final MineStorage mineStorage = PLUGIN_INSTANCE.getMineService();
+    private static final QueueUtils QUEUE_UTILS = PLUGIN_INSTANCE.getQueueUtils();
+    private static final MineService MINE_SERVICE = PLUGIN_INSTANCE.getMineService();
 
     @Override
     public String getPluginName() {
@@ -59,7 +59,7 @@ public class PlaceholderAPIHook extends Hook {
             Player player = offlinePlayer.getPlayer();
             UUID playerUniqueId = player.getUniqueId();
 
-            Mine mine = mineStorage.get(playerUniqueId);
+            Mine mine = MINE_SERVICE.get(playerUniqueId);
             Location location = player.getLocation();
 
             switch (params.toLowerCase()) {
@@ -72,28 +72,28 @@ public class PlaceholderAPIHook extends Hook {
                 case "spawn":
                     return handleSpawnPlaceholder(playerUniqueId);
                 case "inqueue":
-                    return String.valueOf(queueUtils.isInQueue(playerUniqueId));
+                    return String.valueOf(QUEUE_UTILS.isInQueue(playerUniqueId));
                 case "hasmine":
-                    return String.valueOf(mineStorage.hasMine(player));
+                    return String.valueOf(MINE_SERVICE.has(playerUniqueId));
             }
 
             return null;
         }
 
         private String handleSpawnPlaceholder(UUID playerUUID) {
-            Mine mine = mineStorage.get(playerUUID);
+            Mine mine = MINE_SERVICE.get(playerUUID);
             if (mine == null) return NO_RESULT;
             return LocationUtils.toString(mine.getSpawnLocation());
         }
 
         private String handleMineLocationPlaceholder(UUID playerUUID) {
-            Mine mine = mineStorage.get(playerUUID);
+            Mine mine = MINE_SERVICE.get(playerUUID);
             if (mine == null) return NO_RESULT;
             return mine.getMineLocation().toString();
         }
 
         private String handleOwnerPlaceholder(Location location) {
-            Mine closest = mineStorage.getClosest(location);
+            Mine closest = MINE_SERVICE.getNearest(location);
             if (closest == null) return NO_RESULT;
 
             MineData mineData = closest.getMineData();
@@ -102,10 +102,8 @@ public class PlaceholderAPIHook extends Hook {
 
         private String handleSizePlaceholder(Mine mine) {
             MineData mineData = mine.getMineData();
-            int minimum = mineData.getMinimumMining().getBlockZ();
-            int maximum = mineData.getMaximumMining().getBlockZ();
-            int distance = maximum - minimum;
-            return distance + "";
+            BoundingBox boundingBox = mineData.getMineStructure().mineBoundingBox();
+            return (boundingBox.getMaxZ() - boundingBox.getMinZ()) + "";
         }
     }
 }

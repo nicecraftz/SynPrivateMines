@@ -1,5 +1,7 @@
 package me.untouchedodin0.privatemines.mine;
 
+import org.bukkit.Material;
+
 import java.io.File;
 import java.util.Map;
 
@@ -12,7 +14,7 @@ public record MineType(
         double upgradeCost,
         boolean useOraxen,
         boolean useItemsAdder,
-        WeightedCollection<String> materials,
+        Map<Material, Double> materials,
         int maxPlayers,
         int maxMineSize,
         Map<String, Boolean> mineFlags,

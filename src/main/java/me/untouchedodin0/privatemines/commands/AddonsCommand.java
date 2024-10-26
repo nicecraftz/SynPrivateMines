@@ -30,7 +30,6 @@ import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.utils.addon.Addon;
 import me.untouchedodin0.privatemines.utils.addon.AddonManager;
-import me.untouchedodin0.privatemines.utils.file.FileWalkerFilter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;

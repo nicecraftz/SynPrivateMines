@@ -33,19 +33,14 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
-import me.untouchedodin0.kotlin.mine.data.MineData;
 import me.untouchedodin0.kotlin.mine.pregen.PregenMine;
-import me.untouchedodin0.kotlin.mine.storage.MineStorage;
 import me.untouchedodin0.kotlin.mine.storage.PregenStorage;
-import me.untouchedodin0.kotlin.mine.type.MineType;
 import me.untouchedodin0.kotlin.utils.Range;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.factory.MineFactory;
 import me.untouchedodin0.privatemines.factory.PregenFactory;
-import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineTypeRegistry;
+import me.untouchedodin0.privatemines.mine.*;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
-import me.untouchedodin0.privatemines.utils.CooldownManager;
 import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
@@ -56,13 +51,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import redempt.redlib.misc.LocationUtils;
-import redempt.redlib.misc.Task;
-import redempt.redlib.region.CuboidRegion;
-import redempt.redlib.sql.SQLHelper;
+import org.bukkit.util.BoundingBox;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
 import static io.papermc.paper.command.brigadier.Commands.argument;
@@ -73,11 +64,9 @@ import static io.papermc.paper.command.brigadier.Commands.literal;
 public class PrivateMinesCommand {
     private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.getInstance();
     private static final Economy ECONOMY = PLUGIN_INSTANCE.getEconomy();
-    private static final SQLHelper SQL_HELPER = PLUGIN_INSTANCE.getSqlHelper();
-    private static final MineStorage MINE_STORAGE = PLUGIN_INSTANCE.getMineService();
-    private static final MineTypeRegistry MINE_TYPE_MANAGER = PLUGIN_INSTANCE.getMineTypeManager();
-
-    private final CooldownManager cooldownManager = new CooldownManager();
+    //    private static final SQLHelper SQL_HELPER = PLUGIN_INSTANCE.getSqlHelper();
+    private static final MineService MINE_SERVICE = PLUGIN_INSTANCE.getMineService();
+    private static final MineTypeRegistry MINE_TYPE_MANAGER = PLUGIN_INSTANCE.getMineTypeRegistry();
 
     private PrivateMinesCommand() {
 
@@ -127,7 +116,7 @@ public class PrivateMinesCommand {
                     MineType defaultMineType = MINE_TYPE_MANAGER.getDefault();
 
 
-                    if (MINE_STORAGE.hasMine(target.getUniqueId())) {
+                    if (MINE_SERVICE.has(target.getUniqueId())) {
                         commandSender.sendRichMessage("<red>The specified player already owns a mine!");
                         return SINGLE_SUCCESS;
                     }
@@ -151,14 +140,14 @@ public class PrivateMinesCommand {
                         return SINGLE_SUCCESS;
                     }
 
-                    if (!MINE_STORAGE.hasMine(target.getUniqueId())) {
+                    if (!MINE_SERVICE.has(target.getUniqueId())) {
                         commandSender.sendRichMessage("<red>The specified player does not own a mine!");
                         return SINGLE_SUCCESS;
                     }
 
-                    Mine mine = MINE_STORAGE.get(target.getUniqueId());
+                    Mine mine = MINE_SERVICE.get(target.getUniqueId());
                     mine.stopTasks();
-                    mine.delete(true);
+                    MINE_SERVICE.delete(mine);
                     SQLUtils.delete(mine);
 
                     commandSender.sendRichMessage("<green>Successfully deleted mine of player " + target.getName());
@@ -175,12 +164,12 @@ public class PrivateMinesCommand {
             Player player = (Player) context.getSource().getSender();
             int times = context.getArgument("times", Integer.class);
 
-            if (!MINE_STORAGE.hasMine(player)) {
+            if (!MINE_SERVICE.has(player.getUniqueId())) {
                 player.sendRichMessage("<red>You do not own a mine!");
                 return SINGLE_SUCCESS;
             }
 
-            Mine mine = MINE_STORAGE.get(player);
+            Mine mine = MINE_SERVICE.get(player.getUniqueId());
 
             for (int i = 0; i < times; i++) {
                 MineData mineData = mine.getMineData();
@@ -193,14 +182,14 @@ public class PrivateMinesCommand {
                     return SINGLE_SUCCESS;
                 }
 
-                double cost = nextType.getUpgradeCost();
+                double cost = nextType.upgradeCost();
                 if (!ECONOMY.has(player, cost)) {
                     player.sendRichMessage("<red>You cannot afford this upgrade!");
                     return SINGLE_SUCCESS;
                 }
 
                 ECONOMY.withdrawPlayer(player, cost);
-                mine.upgrade();
+                MINE_SERVICE.upgrade(mine);
                 mine.handleReset();
                 player.sendRichMessage("<green>Mine upgraded successfully!");
             }
@@ -215,37 +204,29 @@ public class PrivateMinesCommand {
         }).then(argument("target", ArgumentTypes.player()).executes(context -> {
             CommandSender sender = context.getSource().getSender();
             Player target = context.getArgument("target", Player.class);
-            if (!MINE_STORAGE.hasMine(target)) {
+            if (!MINE_SERVICE.has(target.getUniqueId())) {
                 sender.sendRichMessage("<red>This player does not have a mine!");
                 return SINGLE_SUCCESS;
             }
 
-            Mine mine = MINE_STORAGE.get(target);
-            mine.upgrade();
-            mine.reset();
+            Mine mine = MINE_SERVICE.get(target.getUniqueId());
+
+            // todo: seems like this is used more than 2 times so its best to make a method.
+            MINE_SERVICE.upgrade(mine);
+            MINE_SERVICE.reset(mine);
 
             target.sendRichMessage("<green>Your mine has been upgraded!");
 
-
             MineData mineData = mine.getMineData();
-            Location minFull = mineData.getMinimumFullRegion();
-            Location maxFull = mineData.getMaximumFullRegion();
-            CuboidRegion cuboidRegion = new CuboidRegion(minFull, maxFull);
+            MineStructure mineStructure = mineData.getMineStructure();
 
-            List<Player> teleportingPlayers = Bukkit.getOnlinePlayers()
-                    .stream()
-                    .filter(player -> !(cuboidRegion.contains(player.getLocation()) || player.getUniqueId()
-                            .equals(mineData.getMineOwner())))
-                    .collect(Collectors.toUnmodifiableList());
+            BoundingBox schematicArea = mineStructure.schematicBoundingBox();
 
-            for (Player player : teleportingPlayers) {
-                // todo: change - this is shit, what happens if there is no spawn command?
-                Bukkit.getServer().dispatchCommand(player, "spawn");
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                if (schematicArea.contains(onlinePlayer.getLocation().toVector()) && isInMineWorld(onlinePlayer)) {
+                    Bukkit.dispatchCommand(onlinePlayer, "spawn"); //todo: change this since command may not exist.
+                }
             }
-
-            Task.syncDelayed(() -> {
-                for (Player player : teleportingPlayers) mine.teleport(player);
-            }, 20L);
 
             Task.asyncDelayed(() -> {
                 SQL_HELPER.executeUpdate(
@@ -275,15 +256,13 @@ public class PrivateMinesCommand {
     @CommandPermission("privatemines.forcereset")
     @Syntax("<target>")
     public void forceReset(CommandSender sender, OfflinePlayer target) {
-        if (!MINE_STORAGE.hasMine(target.getUniqueId())) {
+        if (!MINE_SERVICE.hasMine(target.getUniqueId())) {
             if (sender instanceof Player player) {
                 audienceUtils.sendMessage(player, MessagesConfig.playerDoesntOwnMine);
             }
         } else {
-            Mine mine = MINE_STORAGE.get(target.getUniqueId());
-            if (mine != null) {
-                mine.handleReset();
-            }
+            Mine mine = MINE_SERVICE.get(target.getUniqueId());
+            if (mine != null) mine.handleReset();
         }
     }
 
@@ -291,11 +270,11 @@ public class PrivateMinesCommand {
     @Subcommand("reset")
     @CommandPermission("privatemines.reset")
     public void reset(Player player) {
-        if (!MINE_STORAGE.hasMine(player)) {
+        if (!MINE_SERVICE.hasMine(player)) {
             audienceUtils.sendMessage(player, MessagesConfig.dontOwnMine);
         } else {
-            int timeLeft = cooldownManager.getCooldown(player.getUniqueId());
-            Mine mine = MINE_STORAGE.get(player);
+            int timeLeft = cooldowns.get(player.getUniqueId());
+            Mine mine = MINE_SERVICE.get(player);
 
             if (!Config.enableResetCooldown) {
                 if (mine != null) {
@@ -306,12 +285,12 @@ public class PrivateMinesCommand {
                     if (mine != null) {
                         mine.handleReset();
                     }
-                    cooldownManager.setCooldown(player.getUniqueId(), Config.resetCooldown);
+                    cooldowns.set(player.getUniqueId(), Config.resetCooldown);
                     new BukkitRunnable() {
                         @Override
                         public void run() {
-                            int timeLeft = cooldownManager.getCooldown(player.getUniqueId());
-                            cooldownManager.setCooldown(player.getUniqueId(), --timeLeft);
+                            int timeLeft = cooldowns.get(player.getUniqueId());
+                            cooldowns.set(player.getUniqueId(), --timeLeft);
                             if (timeLeft == 0) {
                                 this.cancel();
                             }
@@ -331,10 +310,10 @@ public class PrivateMinesCommand {
     @Subcommand("teleport")
     @CommandPermission("privatemines.teleport")
     public void teleport(Player player) {
-        if (!MINE_STORAGE.hasMine(player)) {
+        if (!MINE_SERVICE.hasMine(player)) {
             audienceUtils.sendMessage(player, MessagesConfig.dontOwnMine);
         } else {
-            Mine mine = MINE_STORAGE.get(player);
+            Mine mine = MINE_SERVICE.get(player);
             if (mine != null) {
                 mine.teleport(player);
             }
@@ -348,7 +327,7 @@ public class PrivateMinesCommand {
     public void go(Player player, OfflinePlayer target) {
         if (target.getPlayer() != null) {
             Player targetPlayer = target.getPlayer();
-            Mine mine = MINE_STORAGE.get(targetPlayer);
+            Mine mine = MINE_SERVICE.get(targetPlayer);
             if (mine != null) {
                 MineData mineData = mine.getMineData();
                 if (mineData != null) {
@@ -374,10 +353,10 @@ public class PrivateMinesCommand {
     @CommandPermission("privatemines.expand")
     @Syntax("<target> <amount>")
     public void expand(CommandSender commandSender, OfflinePlayer target, int amount) {
-        if (!MINE_STORAGE.hasMine(Objects.requireNonNull(target.getPlayer()))) {
+        if (!MINE_SERVICE.hasMine(Objects.requireNonNull(target.getPlayer()))) {
             return;
         }
-        Mine mine = MINE_STORAGE.get(target.getPlayer());
+        Mine mine = MINE_SERVICE.get(target.getPlayer());
         if (mine != null) {
             if (mine.canExpand(amount)) {
                 for (int i = 0; i < amount; i++) {
@@ -391,13 +370,13 @@ public class PrivateMinesCommand {
     @Subcommand("open")
     @CommandPermission("privatemines.open")
     public void open(Player player) {
-        Mine mine = MINE_STORAGE.get(player);
+        Mine mine = MINE_SERVICE.get(player);
         MineData mineData;
         if (mine != null) {
             mineData = mine.getMineData();
             mineData.setOpen(true);
             mine.setMineData(mineData);
-            MINE_STORAGE.replaceMineNoLog(player, mine);
+            MINE_SERVICE.replaceMineNoLog(player, mine);
             SQLUtils.update(mine);
             audienceUtils.sendMessage(player, MessagesConfig.mineOpened);
         }
@@ -406,13 +385,13 @@ public class PrivateMinesCommand {
     @Subcommand("close")
     @CommandPermission("privatemines.close")
     public void close(Player player) {
-        Mine mine = MINE_STORAGE.get(player);
+        Mine mine = MINE_SERVICE.get(player);
         MineData mineData;
         if (mine != null) {
             mineData = mine.getMineData();
             mineData.setOpen(false);
             mine.setMineData(mineData);
-            MINE_STORAGE.replaceMineNoLog(player, mine);
+            MINE_SERVICE.replaceMineNoLog(player, mine);
             SQLUtils.update(mine);
             audienceUtils.sendMessage(player, MessagesConfig.mineClosed);
         }
@@ -422,10 +401,10 @@ public class PrivateMinesCommand {
     @CommandPermission("privatemines.ban")
     @Syntax("<target>")
     public void ban(Player player, Player target) {
-        Mine mine = MINE_STORAGE.get(player);
+        Mine mine = MINE_SERVICE.get(player);
         if (mine != null) {
             mine.ban(target);
-            MINE_STORAGE.replaceMineNoLog(player, mine);
+            MINE_SERVICE.replaceMineNoLog(player, mine);
             SQLUtils.update(mine);
             audienceUtils.sendMessage(player, target, MessagesConfig.successfullyBannedPlayer);
         }
@@ -435,10 +414,10 @@ public class PrivateMinesCommand {
     @CommandPermission("privatemines.unban")
     @Syntax("<target>")
     public void unban(Player player, Player target) {
-        Mine mine = MINE_STORAGE.get(player);
+        Mine mine = MINE_SERVICE.get(player);
         if (mine != null) {
             mine.unban(target);
-            MINE_STORAGE.replaceMineNoLog(player, mine);
+            MINE_SERVICE.replaceMineNoLog(player, mine);
             SQLUtils.update(mine);
             audienceUtils.sendMessage(player, target, MessagesConfig.unbannedPlayer);
         }
@@ -455,12 +434,12 @@ public class PrivateMinesCommand {
         if (!range.contains(tax)) {
             audienceUtils.sendMessage(player, MessagesConfig.taxLimit);
         } else {
-            Mine mine = MINE_STORAGE.get(player);
+            Mine mine = MINE_SERVICE.get(player);
             if (mine != null) {
                 MineData mineData = mine.getMineData();
                 mineData.setTax(tax);
                 mine.setMineData(mineData);
-                MINE_STORAGE.replaceMineNoLog(player, mine);
+                MINE_SERVICE.replaceMineNoLog(player, mine);
                 SQLUtils.update(mine);
                 Component message = Component.text()
                         .append(Component.text("Successfully updated tax to ", NamedTextColor.GREEN))
@@ -488,12 +467,12 @@ public class PrivateMinesCommand {
         }
 
         if (target != null) {
-            Mine mine = MINE_STORAGE.get(Objects.requireNonNull(target.getPlayer()));
+            Mine mine = MINE_SERVICE.get(Objects.requireNonNull(target.getPlayer()));
             if (mine != null) {
                 MineData mineData = mine.getMineData();
                 mineData.setMaterials(map);
                 mine.setMineData(mineData);
-                MINE_STORAGE.replaceMineNoLog(target.getPlayer(), mine);
+                MINE_SERVICE.replaceMineNoLog(target.getPlayer(), mine);
                 mine.handleReset();
                 Task.asyncDelayed(() -> SQLUtils.update(mine));
             }
@@ -510,7 +489,7 @@ public class PrivateMinesCommand {
     @Subcommand("claim")
     @CommandPermission("privatemines.claim")
     public void claim(Player player) {
-        if (MINE_STORAGE.hasMine(player)) {
+        if (MINE_SERVICE.hasMine(player)) {
             audienceUtils.sendMessage(player, MessagesConfig.playerAlreadyOwnsAMine);
         } else {
             String mineRegionName = String.format("mine-%s", player.getUniqueId());
@@ -571,7 +550,7 @@ public class PrivateMinesCommand {
                 SQLUtils.claim(location);
                 SQLUtils.insert(mine);
 
-                MINE_STORAGE.addMine(player.getUniqueId(), mine);
+                MINE_SERVICE.addMine(player.getUniqueId(), mine);
 
                 Task.syncDelayed(() -> spawn.getBlock().setType(Material.AIR, false));
                 pregenMine.teleport(player);

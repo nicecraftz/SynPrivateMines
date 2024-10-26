@@ -1,4 +1,4 @@
-package me.untouchedodin0.privatemines.utils.regions;
+package me.untouchedodin0.privatemines.hook;
 
 import me.untouchedodin0.privatemines.mine.Mine;
 import org.bukkit.util.BoundingBox;

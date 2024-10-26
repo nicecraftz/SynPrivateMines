@@ -28,7 +28,7 @@ import com.sk89q.worldedit.world.block.BlockType;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
-import me.untouchedodin0.privatemines.utils.schematic.WorldEditWorldWriter;
+import me.untouchedodin0.privatemines.hook.WorldEditWorldWriter;
 import org.bukkit.Material;
 import org.bukkit.util.Vector;
 

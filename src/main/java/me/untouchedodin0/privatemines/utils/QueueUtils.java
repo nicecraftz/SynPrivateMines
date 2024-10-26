@@ -6,34 +6,24 @@ import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import me.untouchedodin0.kotlin.mine.data.MineData;
 import me.untouchedodin0.kotlin.mine.pregen.PregenMine;
-import me.untouchedodin0.kotlin.mine.storage.MineStorage;
 import me.untouchedodin0.kotlin.mine.storage.PregenStorage;
-import me.untouchedodin0.kotlin.mine.type.MineType;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineTypeRegistry;
+import me.untouchedodin0.privatemines.mine.MineService;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import redempt.redlib.misc.Task;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class QueueUtils {
 
-    PrivateMines privateMines = PrivateMines.getInstance();
-    MineTypeRegistry mineTypeRegistry = privateMines.getMineTypeManager();
+    private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
+    private static final MineService MINE_SERVICE = PRIVATE_MINES.getMineService();
 
     public Queue<UUID> queue = new LinkedList<>();
     public List<UUID> waitingInQueue = new ArrayList<>();
@@ -55,13 +45,11 @@ public class QueueUtils {
     }
 
     public void claim(Player player) {
-        MineStorage mineStorage = privateMines.getMineService();
         String mineRegionName = String.format("mine-%s", player.getUniqueId());
         String fullRegionName = String.format("full-mine-%s", player.getUniqueId());
+        PregenStorage pregenStorage = PRIVATE_MINES.getPregenStorage();
 
-        PregenStorage pregenStorage = privateMines.getPregenStorage();
-
-        if (mineStorage.hasMine(player)) {
+        if (MINE_SERVICE.has(player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "You already own a mine!");
             return;
         }
@@ -120,11 +108,13 @@ public class QueueUtils {
                 RegionManager regionManager = container.get(BukkitAdapter.adapt(Objects.requireNonNull(spawn)
                         .getWorld()));
 
-                ProtectedCuboidRegion miningRegion = new ProtectedCuboidRegion(mineRegionName,
+                ProtectedCuboidRegion miningRegion = new ProtectedCuboidRegion(
+                        mineRegionName,
                         miningRegionMin,
                         miningRegionMax
                 );
-                ProtectedCuboidRegion fullRegion = new ProtectedCuboidRegion(fullRegionName,
+                ProtectedCuboidRegion fullRegion = new ProtectedCuboidRegion(
+                        fullRegionName,
                         fullRegionMin,
                         fullRegionMax
                 );
@@ -134,8 +124,9 @@ public class QueueUtils {
                     regionManager.addRegion(fullRegion);
                 }
 
-                Mine mine = new Mine(privateMines);
-                MineData mineData = new MineData(player.getUniqueId(),
+                Mine mine = new Mine(PRIVATE_MINES);
+                MineData mineData = new MineData(
+                        player.getUniqueId(),
                         corner2,
                         corner1,
                         minimum,
