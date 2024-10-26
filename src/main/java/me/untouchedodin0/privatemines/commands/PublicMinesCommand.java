@@ -30,10 +30,10 @@ import dev.triumphteam.gui.guis.ScrollingGui;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
-import me.untouchedodin0.kotlin.mine.data.MineData;
-import me.untouchedodin0.kotlin.mine.storage.MineStorage;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.mine.Mine;
+import me.untouchedodin0.privatemines.mine.MineData;
+import me.untouchedodin0.privatemines.mine.MineService;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -50,7 +50,7 @@ import static io.papermc.paper.command.brigadier.Commands.literal;
 
 public class PublicMinesCommand {
     private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.getInstance();
-    private static final MineStorage MINE_STORAGE = PLUGIN_INSTANCE.getMineService();
+    private static final MineService MINE_SERVICE = PLUGIN_INSTANCE.getMineService();
     private static String TAX_STRING_FORMAT = "Tax: %.2f%%";
 
     private PublicMinesCommand() {
@@ -86,7 +86,7 @@ public class PublicMinesCommand {
                     .create();
 
             int count = 0;
-            for (Mine mine : MINE_STORAGE.getMines().values()) {
+            for (Mine mine : MINE_SERVICE.getMines().values()) {
                 MineData mineData = mine.getMineData();
                 if (!mineData.isOpen()) continue;
 

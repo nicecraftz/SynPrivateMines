@@ -22,16 +22,17 @@
 package me.untouchedodin0.privatemines.factory;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.managers.RegionManager;
-import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
 import me.untouchedodin0.privatemines.events.PrivateMineCreationEvent;
+import me.untouchedodin0.privatemines.hook.HookHandler;
+import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
+import me.untouchedodin0.privatemines.hook.WorldguardHook;
 import me.untouchedodin0.privatemines.mine.*;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
@@ -39,18 +40,19 @@ import me.untouchedodin0.privatemines.utils.schematic.PastedMine;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.entity.Player;
-import redempt.redlib.misc.Task;
+import org.bukkit.util.BoundingBox;
 
 import java.io.File;
-import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 public class MineFactory {
     private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
     private static final PasteHelper PASTE_HELPER = PRIVATE_MINES.getPasteHelper();
-    private static final MineService MINE_STORAGE = PRIVATE_MINES.getMineService();
+    private static final MineService MINE_SERVICE = PRIVATE_MINES.getMineService();
+
+    private static final RegionOrchestrator regionOrchestrator = HookHandler.get(WorldguardHook.PLUGIN_NAME,
+            WorldguardHook.class
+    ).getRegionOrchestrator();
 
     @ConfigurationEntry(key = "is-closed-by-default", section = "mine", type = ConfigurationValueType.BOOLEAN, value = "true")
     private boolean defaultClosed;
@@ -59,153 +61,52 @@ public class MineFactory {
         InstanceRegistry.registerInstance(this);
     }
 
-    /**
-     * Creates a mine for the {@link Player} at {@link Location} with {@link MineType}
-     *
-     * @param player   the player the mine should be created forá
-     * @param location the location of the mine
-     * @param mineType the type of mine to paste
-     */
-    public void create(Player player, Location location, MineType mineType) {
-        UUID uuid = player.getUniqueId();
-        File schematicFile = new File("plugins/PrivateMines/schematics/" + mineType.schematicFile());
+    public Mine create(UUID uuid, Location location, MineType mineType) {
+        File schematicFile = mineType.schematicFile();
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionManager regionManager = container.get(BukkitAdapter.adapt(location.getWorld()));
-
-        if (!schematicFile.exists()) {
-            PRIVATE_MINES.getLogger().warning("Schematic file does not exist: " + schematicFile.getName());
-            return;
-        }
-
-        String mineRegionName = String.format("mine-%s", player.getUniqueId());
-        String fullRegionName = String.format("full-mine-%s", player.getUniqueId());
-
-        // todo: make class to handle worldedit functions to isolate it from all the code.
-        Task.asyncDelayed(() -> {
-            PastedMine pastedMine = PASTE_HELPER.paste(schematicFile, location);
-
-            Location spawn = location.clone().add(0, 0, 1);
-            Location corner1 = pastedMine.getLowerRailsLocation();
-            Location corner2 = pastedMine.getUpperRailsLocation();
-            Location minimum = PASTE_HELPER.getMinimum();
-            Location maximum = PASTE_HELPER.getMaximum();
-            BlockVector3 miningRegionMin = BukkitAdapter.asBlockVector(corner1);
-            BlockVector3 miningRegionMax = BukkitAdapter.asBlockVector(corner2);
-            BlockVector3 fullRegionMin = BukkitAdapter.asBlockVector(minimum);
-            BlockVector3 fullRegionMax = BukkitAdapter.asBlockVector(maximum);
-
-            ProtectedCuboidRegion fullRegion = new ProtectedCuboidRegion(fullRegionName, fullRegionMin, fullRegionMax);
-            ProtectedCuboidRegion miningRegion = new ProtectedCuboidRegion(mineRegionName,
-                    miningRegionMin,
-                    miningRegionMax
-            );
-
-            createMineWithRegionConfiguration(player,
-                    location,
-                    mineType,
-                    uuid,
-                    regionManager,
-                    spawn,
-                    corner1,
-                    corner2,
-                    minimum,
-                    maximum,
-                    fullRegion,
-                    miningRegion
-            );
-        });
-    }
-
-    public Mine createMine(Player player, Location location, MineType mineType) {
-        UUID uuid = player.getUniqueId();
-        File schematicFile = new File("plugins/PrivateMines/schematics/" + mineType.getFile());
-        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
-        RegionManager regionManager = container.get(BukkitAdapter.adapt(location.getWorld()));
-
-        Map<Material, Double> materials = mineType.getMaterials();
 
         if (!schematicFile.exists()) {
             PRIVATE_MINES.getLogger().warning("Schematic file does not exist: " + schematicFile.getName());
             return null;
         }
 
-        String mineRegionName = String.format("mine-%s", player.getUniqueId());
-        String fullRegionName = String.format("full-mine-%s", player.getUniqueId());
+        String mineRegionName = String.format("mine-%s", uuid.toString());
+        String fullRegionName = String.format("full-mine-%s", uuid.toString());
 
-        PasteHelper pasteHelper = new PasteHelper();
-        PastedMine pastedMine = pasteHelper.paste(schematicFile, location);
+        PastedMine pastedMine = PASTE_HELPER.paste(schematicFile, location);
 
         Location spawn = location.clone().add(0, 0, 1);
-        Location corner1 = pastedMine.getLowerRailsLocation();
-        Location corner2 = pastedMine.getUpperRailsLocation();
-        Location minimum = pasteHelper.getMinimum();
-        Location maximum = pasteHelper.getMaximum();
+        BoundingBox mineArea = BoundingBox.of(pastedMine.getLowerRailsLocation(), pastedMine.getUpperRailsLocation());
+        BoundingBox schematicArea = BoundingBox.of(PASTE_HELPER.getMinimum(), PASTE_HELPER.getMaximum());
 
-        BlockVector3 miningRegionMin = BukkitAdapter.asBlockVector(corner1);
-        BlockVector3 miningRegionMax = BukkitAdapter.asBlockVector(corner2);
-        BlockVector3 fullRegionMin = BukkitAdapter.asBlockVector(minimum);
-        BlockVector3 fullRegionMax = BukkitAdapter.asBlockVector(maximum);
 
-        ProtectedCuboidRegion miningRegion = new ProtectedCuboidRegion(mineRegionName,
-                miningRegionMin,
-                miningRegionMax
-        );
+        RegionOrchestrator regionOrchestrator = HookHandler.get(WorldguardHook.PLUGIN_NAME, WorldguardHook.class)
+                .getRegionOrchestrator();
 
-        ProtectedCuboidRegion fullRegion = new ProtectedCuboidRegion(fullRegionName, fullRegionMin, fullRegionMax);
+        regionOrchestrator.addRegion(fullRegionName, schematicArea);
+        regionOrchestrator.addRegion(mineRegionName, mineArea);
 
-        createMineWithRegionConfiguration(player,
-                location,
-                mineType,
-                uuid,
-                regionManager,
-                spawn,
-                corner1,
-                corner2,
-                minimum,
-                maximum,
-                miningRegion,
-                fullRegion
-        );
-        Mine mine;
-        return mine;
+        return createMineWithRegionConfiguration(uuid, mineType, mineArea, schematicArea, location, spawn);
     }
 
-    private void createMineWithRegionConfiguration(Player player, Location location, MineType mineType, UUID uuid, RegionManager regionManager, Location spawn, Location corner1, Location corner2, Location minimum, Location maximum, ProtectedCuboidRegion miningRegion, ProtectedCuboidRegion fullRegion) {
-        if (regionManager != null) {
-            regionManager.addRegion(miningRegion);
-            regionManager.addRegion(fullRegion);
-        }
 
-        MineStructure mineStructure = new MineStructure(corner2, corner1, minimum, maximum, location, spawn);
+    private Mine createMineWithRegionConfiguration(UUID uuid, MineType mineType, BoundingBox mineArea, BoundingBox schematicArea, Location mineLocation, Location spawnLocation) {
+        MineStructure mineStructure = MineStructure.fromBoundingBoxes(PRIVATE_MINES.getMineWorldManager()
+                .getMinesWorld(), mineArea, schematicArea, mineLocation, spawnLocation);
         MineData mineData = new MineData(uuid, mineStructure, mineType);
         Mine mine = new Mine(mineData);
         mineData.setOpen(!defaultClosed);
 
         SQLUtils.insert(mine);
-        MINE_STORAGE.addMine(uuid, mine);
+        MINE_SERVICE.cache(mine);
         mine.handleReset();
 
-        Task.syncDelayed(() -> {
-            spawn.getBlock().setType(Material.AIR);
-            player.teleport(spawn);
-            FlagUtils flagUtils = new FlagUtils();
-            flagUtils.setFlags(mine);
-
-            PrivateMineCreationEvent creationEvent = new PrivateMineCreationEvent(mine);
-            Bukkit.getPluginManager().callEvent(creationEvent);
-        });
-    }
-
-    public void createUpgraded(UUID uuid, Location location, MineType mineType) {
-        MineStorage mineStorage = PRIVATE_MINES.getMineService();
-        if (!mineStorage.hasMine(uuid)) return;
-
-        Mine mine = createMine(Objects.requireNonNull(Bukkit.getPlayer(uuid)), location, mineType);
-        mineStorage.replaceMine(uuid, mine);
-
-        SQLUtils.replace(mine);
-
+        spawnLocation.getBlock().setType(Material.AIR);
         PrivateMineCreationEvent creationEvent = new PrivateMineCreationEvent(mine);
         Bukkit.getPluginManager().callEvent(creationEvent);
+
+        regionOrchestrator.setFlagsForMine(mine);
+        return mine;
     }
 }

@@ -1,8 +1,10 @@
 package me.untouchedodin0.privatemines.hook;
 
-import me.untouchedodin0.kotlin.mine.storage.MineStorage;
+import me.clip.autosell.events.AutoSellEvent;
+import me.clip.autosell.events.SellAllEvent;
 import me.untouchedodin0.privatemines.mine.Mine;
 import me.untouchedodin0.privatemines.mine.MineData;
+import me.untouchedodin0.privatemines.mine.MineService;
 import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -14,7 +16,7 @@ import org.bukkit.event.Listener;
 
 public class AutoSellHook extends Hook implements Listener {
     private static final MineWorldManager MINE_WORLD_MANAGER = PLUGIN_INSTANCE.getMineWorldManager();
-    private static final MineStorage MINE_STORAGE = PLUGIN_INSTANCE.getMineService();
+    private static final MineService MINE_SERVICE = PLUGIN_INSTANCE.getMineService();
     private static final Economy ECONOMY = PLUGIN_INSTANCE.getEconomy();
 
     @Override
@@ -29,7 +31,7 @@ public class AutoSellHook extends Hook implements Listener {
 
     private boolean isValidEvent(Player player, Location location) {
         return player.getWorld()
-                .equals(MINE_WORLD_MANAGER.getMinesWorld()) && MINE_STORAGE.getClosest(location) != null;
+                .equals(MINE_WORLD_MANAGER.getMinesWorld()) && MINE_SERVICE.getNearest(location) != null;
     }
 
     private double applyTax(Player eventPlayer, MineData mineData, double totalCost) {
@@ -53,7 +55,7 @@ public class AutoSellHook extends Hook implements Listener {
 
         if (!isValidEvent(eventPlayer, location)) return;
 
-        Mine mine = MINE_STORAGE.getClosest(location);
+        Mine mine = MINE_SERVICE.getNearest(location);
         double totalCost = sellAllEvent.getTotalCost();
         double afterTax = applyTax(eventPlayer, mine.getMineData(), totalCost);
         sellAllEvent.setTotalCost(afterTax);
@@ -66,7 +68,7 @@ public class AutoSellHook extends Hook implements Listener {
 
         if (!isValidEvent(eventPlayer, location)) return;
 
-        Mine mine = MINE_STORAGE.getClosest(location);
+        Mine mine = MINE_SERVICE.getNearest(location);
         double price = autoSellEvent.getPrice();
         double afterTax = applyTax(eventPlayer, mine.getMineData(), price);
         autoSellEvent.setMultiplier(afterTax);

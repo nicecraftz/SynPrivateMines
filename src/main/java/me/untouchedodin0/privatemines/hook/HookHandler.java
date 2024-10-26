@@ -20,14 +20,14 @@ public class HookHandler {
     }
 
     public static void add(Hook hook) {
-        hooks.put(hook.getPluginName(), hook);
+        hooks.put(hook.getPluginName().toLowerCase(), hook);
     }
 
     public static boolean hooked(String name) {
-        return hooks.containsKey(name);
+        return hooks.containsKey(name.toLowerCase());
     }
 
-    public <T extends Hook> T get(String hookIdentifier, Class<T> hookClass) {
-        return hookClass.cast(hooks.get(hookIdentifier));
+    public static <T extends Hook> T get(String hookIdentifier, Class<T> hookClass) {
+        return hookClass.cast(hooks.get(hookIdentifier.toLowerCase()));
     }
 }

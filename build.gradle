@@ -4,7 +4,6 @@ plugins {
     id 'maven-publish'
     id 'io.github.gradle-nexus.publish-plugin' version "1.1.0"
     id 'com.github.johnrengelman.shadow' version '7.1.2'
-    id 'org.jetbrains.kotlin.jvm' version '1.8.22'
 }
 
 group 'me.untouchedodin0.privatemines'
@@ -16,6 +15,9 @@ if (devBuild) version = version + "-DEV"
 repositories {
     mavenLocal()
     mavenCentral()
+    maven {
+        url = "https://raw.githubusercontent.com/TeamVK/maven-repository/master/release/"
+    }
 
     maven { url = 'https://repo.papermc.io/repository/maven-public/' }
     maven { url = 'https://maven.enginehub.org/repo/' }
@@ -42,25 +44,18 @@ dependencies {
 
     compileOnly 'com.fastasyncworldedit:FastAsyncWorldEdit-Core:2.6.2'
     compileOnly 'com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit:2.6.3'
-
     compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.8'
 
     compileOnly 'com.github.MilkBowl:VaultAPI:1.7.1'
-    compileOnly 'com.mojang:authlib:1.11'
     compileOnly 'me.clip:placeholderapi:2.11.6'
-
-
+    compileOnly 'me.clip.autosell:AutoSellAPI:1.9.3'
     compileOnly 'com.github.oraxen:oraxen:1.157.2'
     compileOnly 'com.github.LoneDev6:API-ItemsAdder:3.6.1'
 
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     implementation 'org.bstats:bstats-bukkit:3.0.0'
-
     implementation 'org.apache.httpcomponents:httpclient:4.5.14'
     implementation "dev.triumphteam:triumph-gui:3.1.2"
 
-    implementation 'io.papermc:paperlib:1.0.7'
-    implementation 'com.convallyria.languagy:api:3.0.2'
 }
 
 shadowJar {
@@ -75,16 +70,4 @@ java {
 
 test {
     useJUnitPlatform()
-}
-
-compileKotlin {
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-}
-
-compileTestKotlin {
-    kotlinOptions {
-        jvmTarget = "17"
-    }
 }

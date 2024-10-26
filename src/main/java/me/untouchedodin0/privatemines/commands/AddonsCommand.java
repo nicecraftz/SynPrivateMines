@@ -1,23 +1,3 @@
-/**
- * MIT License
- * <p>
- * Copyright (c) 2021 - 2023 Kyle Hicks
- * <p>
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- * associated documentation files (the "Software"), to deal in the Software without restriction,
- * including without limitation the rights to use, copy, modify, merge, publish, distribute,
- * sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * <p>
- * The above copyright notice and this permission notice shall be included in all copies or
- * substantial portions of the Software.
- * <p>
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
- * NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
 package me.untouchedodin0.privatemines.commands;
 
 import com.mojang.brigadier.Command;
@@ -39,10 +19,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 
 import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
@@ -142,30 +118,13 @@ public class AddonsCommand {
             CommandSender sender = context.getSource().getSender();
             String searchInput = context.getArgument("search", String.class);
             File addonsDirectory = PLUGIN_INSTANCE.getAddonsDirectory();
-
-            FileWalkerFilter fileWalkerFilter = new FileWalkerFilter(searchInput);
-
-            try {
-                Files.walkFileTree(addonsDirectory.toPath(), fileWalkerFilter);
-            } catch (IOException e) {
-                PLUGIN_INSTANCE.logError("There was an error while trying to walk the addons directory path: ", e);
-                return SINGLE_SUCCESS;
-            }
-
             TextComponent.Builder messageBuilder = Component.text()
                     .append(Component.text("Addon Files:", NamedTextColor.GOLD))
                     .decorate(TextDecoration.BOLD)
                     .append(Component.newline());
 
-
-            List<Path> matches = fileWalkerFilter.getMatches();
-            if (matches.isEmpty()) {
-                sender.sendMessage("<red>Unable to find any files matching that file name!");
-            }
-
-            for (Path filePath : matches) {
-                String fileName = filePath.getFileName().toString();
-
+            for (File file : addonsDirectory.listFiles((dir, name) -> name.contains(searchInput))) {
+                String fileName = file.getName();
                 TextComponent fileComponent = Component.text()
                         .append(Component.text("- " + fileName + " ", NamedTextColor.YELLOW)
                                 .hoverEvent(Component.text("Click to load " + fileName, NamedTextColor.GREEN)))

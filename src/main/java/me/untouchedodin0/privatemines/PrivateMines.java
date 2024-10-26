@@ -21,12 +21,12 @@
 
 package me.untouchedodin0.privatemines;
 
-import me.untouchedodin0.kotlin.mine.storage.PregenStorage;
 import me.untouchedodin0.privatemines.commands.AddonsCommand;
 import me.untouchedodin0.privatemines.commands.PrivateMinesCommand;
 import me.untouchedodin0.privatemines.commands.PublicMinesCommand;
 import me.untouchedodin0.privatemines.configuration.ConfigurationProcessor;
 import me.untouchedodin0.privatemines.factory.MineFactory;
+import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.iterator.SchematicIterator;
 import me.untouchedodin0.privatemines.listener.MineResetListener;
 import me.untouchedodin0.privatemines.listener.PlayerJoinListener;
@@ -50,14 +50,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.List;
-import java.util.stream.Stream;
-
-import static me.untouchedodin0.privatemines.utils.hook.HookHandler.handleHooks;
 
 public class PrivateMines extends JavaPlugin {
     private static PrivateMines instance;
@@ -72,8 +65,6 @@ public class PrivateMines extends JavaPlugin {
 
     private MineFactory mineFactory;
     private MineService mineService;
-
-    private PregenStorage pregenStorage;
 
     private MineWorldManager mineWorldManager;
     private MineTypeRegistry mineTypeRegistry;
@@ -109,7 +100,6 @@ public class PrivateMines extends JavaPlugin {
         mineWorldManager = new MineWorldManager();
         mineFactory = new MineFactory();
         mineService = new MineService();
-        pregenStorage = new PregenStorage();
         mineTypeRegistry = new MineTypeRegistry();
         queueUtils = new QueueUtils();
         addonManager = new AddonManager();
@@ -120,7 +110,7 @@ public class PrivateMines extends JavaPlugin {
         // TODO : Handle Tax System for mines.
 
         registerListeners();
-        handleHooks();
+        HookHandler.handleHooks();
 
         pasteHelper = new PasteHelper();
 
@@ -238,8 +228,8 @@ public class PrivateMines extends JavaPlugin {
     }
 
     private void registerListeners() {
-        getServer().getPluginManager().registerEvents(new PlayerJoinListener(), this);
-        getServer().getPluginManager().registerEvents(new MineResetListener(), this);
+        getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
+        getServer().getPluginManager().registerEvents(new MineResetListener(mineService), this);
     }
 
 //    public void loadSQLMines() {
@@ -302,20 +292,20 @@ public class PrivateMines extends JavaPlugin {
 //        });
 //    }
 
-    public void loadAddons() {
-        final PathMatcher jarMatcher = FileSystems.getDefault()
-                .getPathMatcher("glob:**/*.jar"); // Credits to Brister Mitten
-        PrivateMinesAPIImpl privateMinesAPIImpl = new PrivateMinesAPIImpl();
-
-        try (Stream<Path> paths = Files.walk(addonsDirectory.toPath()).filter(jarMatcher::matches)) {
-            paths.forEach(jar -> {
-                File file = jar.toFile();
-                privateMinesAPIImpl.loadAddon(file);
-            });
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
+//    public void loadAddons() {
+//        final PathMatcher jarMatcher = FileSystems.getDefault()
+//                .getPathMatcher("glob:**/*.jar"); // Credits to Brister Mitten
+//        PrivateMinesAPIImpl privateMinesAPIImpl = new PrivateMinesAPIImpl();
+//
+//        try (Stream<Path> paths = Files.walk(addonsDirectory.toPath()).filter(jarMatcher::matches)) {
+//            paths.forEach(jar -> {
+//                File file = jar.toFile();
+//                privateMinesAPIImpl.loadAddon(file);
+//            });
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
     public void saveMines() {
         for (Mine mine : mineService.getMines().values()) {
@@ -337,10 +327,6 @@ public class PrivateMines extends JavaPlugin {
 
     public MineFactory getMineFactory() {
         return mineFactory;
-    }
-
-    public PregenStorage getPregenStorage() {
-        return pregenStorage;
     }
 
     public MineService getMineService() {
@@ -365,10 +351,6 @@ public class PrivateMines extends JavaPlugin {
 
     public Economy getEconomy() {
         return economy;
-    }
-
-    public SQLHelper getSqlHelper() {
-        return sqlHelper;
     }
 
     public QueueUtils getQueueUtils() {

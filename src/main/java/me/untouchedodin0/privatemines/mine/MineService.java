@@ -11,8 +11,6 @@ import me.untouchedodin0.privatemines.events.PrivateMineUpgradeEvent;
 import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.hook.ItemsAdderHook;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
-import me.untouchedodin0.privatemines.utils.hook.HookHandler;
-import me.untouchedodin0.privatemines.utils.hook.ItemsAdderHook;
 import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
 import me.untouchedodin0.privatemines.utils.schematic.PastedMine;
 import me.untouchedodin0.privatemines.hook.WorldEditWorldWriter;
@@ -102,6 +100,7 @@ public class MineService {
         // todo: this could be just made a constant to accept a uuid parameter or just the mine object.
         String regionName = String.format("mine-%s", uuid);
         String fullRegionName = String.format("full-mine-%s", uuid);
+
         PrivateMines.getInstance().getRegionOrchestrator().removeRegion(regionName);
         PrivateMines.getInstance().getRegionOrchestrator().removeRegion(fullRegionName);
 

@@ -22,9 +22,6 @@
 package me.untouchedodin0.kotlin.menu
 
 import org.bukkit.Material
-import redempt.redlib.config.annotations.ConfigMappable
-import redempt.redlib.config.annotations.ConfigPath
-
 @ConfigMappable
 class MenuItem {
 

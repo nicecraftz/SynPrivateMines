@@ -6,20 +6,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Objects;
 import java.util.UUID;
-import me.untouchedodin0.kotlin.mine.data.MineData;
-import me.untouchedodin0.kotlin.mine.pregen.PregenMine;
-import me.untouchedodin0.kotlin.mine.storage.PregenStorage;
-import me.untouchedodin0.kotlin.mine.type.MineType;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.mine.Mine;
 import me.untouchedodin0.privatemines.utils.Utils;
 import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import redempt.redlib.misc.LocationUtils;
-import redempt.redlib.misc.Task;
-import redempt.redlib.sql.SQLHelper;
-import redempt.redlib.sql.SQLHelper.Results;
 
 public class SQLUtils {
 
