@@ -14,6 +14,7 @@ materials:
   quarry: SHULKER_BOX
 
 mine:
+  border-upgrade: true
   reset-cooldown: 15
   first-join-creation: true
   is-closed-by-default: true
@@ -26,7 +27,7 @@ mine:
     gap: 1
 
 onlyReplaceAir: true
-borderUpgrade: true
+
 
 mine-types:
   default:

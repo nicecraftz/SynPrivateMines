@@ -29,10 +29,7 @@ public class AddonsCommand {
     private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.getInstance();
     private static final String ADDONS_LIST_FORMAT = "<green>Name: %s\n<aqua>Version: %s\n<aqua>Description: %s";
 
-    private AddonsCommand() {
-    }
-
-    public static void registerCommands() {
+    public void registerCommands() {
         LifecycleEventManager<Plugin> lifecycleManager = PLUGIN_INSTANCE.getLifecycleManager();
         lifecycleManager.registerEventHandler(
                 LifecycleEvents.COMMANDS,
@@ -40,7 +37,7 @@ public class AddonsCommand {
         );
     }
 
-    private static LiteralCommandNode<CommandSourceStack> buildCommand() {
+    private LiteralCommandNode<CommandSourceStack> buildCommand() {
         return literal("addons").executes(noArgsCommand())
                 .then(addonsLoadWithSearchLogic())
                 .then(reloadCommandLogic())
@@ -48,7 +45,7 @@ public class AddonsCommand {
                 .build();
     }
 
-    private static Command<CommandSourceStack> noArgsCommand() {
+    private Command<CommandSourceStack> noArgsCommand() {
         return context -> {
             CommandSender commandSender = context.getSource().getSender();
             Map<String, Addon> addons = AddonManager.getAddons();
@@ -78,7 +75,7 @@ public class AddonsCommand {
         };
     }
 
-    private static ArgumentBuilder<CommandSourceStack, ?> disableCommandLogic() {
+    private ArgumentBuilder<CommandSourceStack, ?> disableCommandLogic() {
         return literal("disable").then(argument("addon", StringArgumentType.word())).executes(context -> {
             CommandSender sender = context.getSource().getSender();
             String addonNameInput = context.getArgument("addon", String.class);
@@ -93,7 +90,7 @@ public class AddonsCommand {
         });
     }
 
-    private static ArgumentBuilder<CommandSourceStack, ?> reloadCommandLogic() {
+    private ArgumentBuilder<CommandSourceStack, ?> reloadCommandLogic() {
         return literal("reload").then(argument("addonList", StringArgumentType.word())).executes(context -> {
             CommandSender sender = context.getSource().getSender();
 
@@ -113,7 +110,7 @@ public class AddonsCommand {
         });
     }
 
-    private static ArgumentBuilder<CommandSourceStack, ?> addonsLoadWithSearchLogic() {
+    private ArgumentBuilder<CommandSourceStack, ?> addonsLoadWithSearchLogic() {
         return literal("load").then(argument("search", StringArgumentType.word()).executes(context -> {
             CommandSender sender = context.getSource().getSender();
             String searchInput = context.getArgument("search", String.class);

@@ -1,4 +1,4 @@
-package me.untouchedodin0.privatemines.hook;
+package me.untouchedodin0.privatemines.hook.plugin;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.world.World;
@@ -11,6 +11,8 @@ import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
+import me.untouchedodin0.privatemines.hook.Hook;
+import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
 import me.untouchedodin0.privatemines.mine.Mine;
 import me.untouchedodin0.privatemines.mine.MineType;
 import org.bukkit.Location;
@@ -68,6 +70,11 @@ public class WorldGuardHook extends Hook {
             MineType mineType = mine.getMineData().getMineType();
             applyFlagStates(mineType.mineFlags(), mineRegion);
             applyFlagStates(mineType.schematicAreaFlags(), schematicRegion);
+        }
+
+        @Override
+        public void removeMineRegions(Mine mine) {
+
         }
 
         @Override

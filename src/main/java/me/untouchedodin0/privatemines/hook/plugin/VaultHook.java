@@ -1,5 +1,6 @@
-package me.untouchedodin0.privatemines.hook;
+package me.untouchedodin0.privatemines.hook.plugin;
 
+import me.untouchedodin0.privatemines.hook.Hook;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.plugin.RegisteredServiceProvider;
 

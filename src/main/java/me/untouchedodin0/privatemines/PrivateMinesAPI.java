@@ -10,15 +10,9 @@ public interface PrivateMinesAPI {
 
     boolean hasMine(UUID uuid);
 
-    CreateResult createMine(UUID uuid, Location location, MineType mineType);
+    void createMine(UUID uuid, Location location, MineType mineType);
 
     Mine getPlayerMine(UUID uuid);
 
     Mine getNearestMine(Location location);
-
-    enum CreateResult {
-        FAILED,
-        SUCCESS,
-        ALREADY_EXISTS
-    }
 }

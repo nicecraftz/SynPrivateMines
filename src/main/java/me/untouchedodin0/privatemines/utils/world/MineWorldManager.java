@@ -21,85 +21,77 @@
 
 package me.untouchedodin0.privatemines.utils.world;
 
-import static me.untouchedodin0.privatemines.utils.world.utils.Direction.NORTH;
+import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
+import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
+import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
+import org.bukkit.*;
 
-import me.untouchedodin0.privatemines.PrivateMines;
-import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
-import me.untouchedodin0.privatemines.utils.world.utils.Direction;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.WorldCreator;
-import org.bukkit.WorldType;
+import static me.untouchedodin0.privatemines.utils.world.Direction.NORTH;
 
 public class MineWorldManager {
+    private final Location defaultLocation;
+    private Location nextLocation;
+    private int distance = 0;
+    private Direction direction;
 
-  private final Location defaultLocation;
-  private Location nextLocation;
-  private final int borderDistance;
-  private int distance = 0;
-  private Direction direction;
-  private final World minesWorld;
+    private World minesWorld;
 
-  public MineWorldManager() {
-    if (Bukkit.getWorld("privatemines") == null) {
-      this.minesWorld = Bukkit.createWorld(new WorldCreator("privatemines").type(WorldType.FLAT)
-          .generator(new EmptyWorldGenerator()));
-    } else {
-      this.minesWorld = Bukkit.getWorld("privatemines");
+    @ConfigurationEntry(key = "distance", section = "mine", value = "150", type = ConfigurationValueType.INT)
+    private int borderDistance;
+
+    @ConfigurationEntry(key = "y-level", section = "mine", value = "50", type = ConfigurationValueType.INT)
+    private int yLevel;
+
+
+    // todo: rewrite this class, the best way to create mines is by slotting them,
+    //  we can create a line long 500 mines then create a new mine by expanding on a new axis.
+
+    public MineWorldManager() {
+        InstanceRegistry.registerInstance(this);
+        minesWorld = Bukkit.getWorld("privatemines");
+        minesWorld = minesWorld == null ? Bukkit.createWorld(new WorldCreator("privatemines")
+                .type(WorldType.FLAT)
+                .generator(new EmptyWorldGenerator())) : minesWorld;
+        yLevel = yLevel > minesWorld.getMaxHeight() ? 50 : yLevel;
+        defaultLocation = minesWorld.getSpawnLocation();
     }
 
-    int yLevel = PrivateMines.getInstance().getConfig().getInt("mineYLevel");
-    this.borderDistance = PrivateMines.getInstance().getConfig().getInt("mineDistance");
+    public Location getNextFreeLocation() {
+        // todo handle this better!
+//    Location sqlLocation = SQLUtils.getCurrentLocation();
 
-    if (minesWorld != null) {
-      PrivateMines privateMines = PrivateMines.getInstance();
-      if (yLevel > minesWorld.getMaxHeight()) {
-        privateMines.getLogger().info(String.format(
-            "Mine Y level was set to %d but the maxMineCorner height of the world is %d Mine Y level has been set to %d!",
-            yLevel, minesWorld.getMaxHeight(), 50));
-        yLevel = 50;
-        PrivateMines.getInstance().getConfig().set("mineYLevel", 50);
-        privateMines.saveConfig();
-      }
+        Location sqlLocation = new Location(minesWorld, 0, 0, 0);
+        if (distance == 0) {
+            distance++;
+            return defaultLocation;
+        }
+
+        if (direction == null) {
+            direction = NORTH;
+        }
+        if (sqlLocation == null) {
+            sqlLocation = direction.addTo(defaultLocation, distance * borderDistance);
+            return sqlLocation;
+        } else {
+            if (nextLocation == null) {
+                this.nextLocation = getDefaultLocation();
+            }
+
+            switch (direction) {
+                case NORTH -> nextLocation.subtract(0, 0, distance * borderDistance);
+                case EAST -> nextLocation.add(distance * borderDistance, 0, 0);
+                case SOUTH -> nextLocation.add(0, 0, distance * borderDistance);
+                case WEST -> nextLocation.subtract(distance * borderDistance, 0, 0);
+            }
+        }
+        return nextLocation;
     }
-    this.defaultLocation = new Location(minesWorld, 0, yLevel, 0);
-  }
 
-  public Location getNextFreeLocation() {
-    Location sqlLocation = SQLUtils.getCurrentLocation();
-
-    if (distance == 0) {
-      distance++;
-      return defaultLocation;
+    public World getMinesWorld() {
+        return minesWorld;
     }
 
-    if (direction == null) {
-      direction = NORTH;
+    public Location getDefaultLocation() {
+        return defaultLocation;
     }
-    if (sqlLocation == null) {
-      sqlLocation = direction.addTo(defaultLocation, distance * borderDistance);
-      return sqlLocation;
-    } else {
-      if (nextLocation == null) {
-        this.nextLocation = getDefaultLocation();
-      }
-
-      switch (direction) {
-        case NORTH -> nextLocation.subtract(0, 0, distance * borderDistance);
-        case EAST -> nextLocation.add(distance * borderDistance, 0, 0);
-        case SOUTH -> nextLocation.add(0, 0, distance * borderDistance);
-        case WEST -> nextLocation.subtract(distance * borderDistance, 0, 0);
-      }
-    }
-    return nextLocation;
-  }
-
-  public World getMinesWorld() {
-    return minesWorld;
-  }
-
-  public Location getDefaultLocation() {
-    return defaultLocation;
-  }
 }

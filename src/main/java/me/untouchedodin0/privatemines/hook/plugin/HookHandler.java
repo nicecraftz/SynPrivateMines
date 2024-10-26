@@ -1,4 +1,6 @@
-package me.untouchedodin0.privatemines.hook;
+package me.untouchedodin0.privatemines.hook.plugin;
+
+import me.untouchedodin0.privatemines.hook.Hook;
 
 import java.util.HashMap;
 import java.util.Map;

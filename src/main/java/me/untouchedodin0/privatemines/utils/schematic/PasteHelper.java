@@ -7,6 +7,8 @@ import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
 import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.world.World;
+import me.untouchedodin0.privatemines.hook.plugin.HookHandler;
+import me.untouchedodin0.privatemines.hook.plugin.WorldEditHook;
 import org.bukkit.Location;
 
 import java.io.File;
@@ -15,8 +17,6 @@ import static com.sk89q.worldedit.bukkit.BukkitAdapter.adapt;
 import static com.sk89q.worldedit.bukkit.BukkitAdapter.asBlockVector;
 
 public class PasteHelper {
-    private static final WorldEditWorldWriter WORLD_EDIT_SCHEMATIC_PLACER = WorldEditWorldWriter.getWriter();
-
     private Location minimum, maximum;
     private Region newRegion;
 
@@ -45,7 +45,11 @@ public class PasteHelper {
         BlockVector3 to = asBlockVector(location);
         World world = adapt(location.getWorld());
 
-        try (Clipboard clipboard = WORLD_EDIT_SCHEMATIC_PLACER.getClipboard(file)) {
+        try (
+                Clipboard clipboard = HookHandler.get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
+                        .getWorldEditWorldWriter()
+                        .getClipboard(file)
+        ) {
             ClipboardHolder clipboardHolder = new ClipboardHolder(clipboard);
             Region region = clipboard.getRegion();
 

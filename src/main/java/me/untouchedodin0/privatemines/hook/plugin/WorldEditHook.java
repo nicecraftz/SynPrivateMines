@@ -1,4 +1,4 @@
-package me.untouchedodin0.privatemines.hook;
+package me.untouchedodin0.privatemines.hook.plugin;
 
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.WorldEdit;
@@ -14,8 +14,11 @@ import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.session.ClipboardHolder;
+import me.untouchedodin0.privatemines.hook.Hook;
+import me.untouchedodin0.privatemines.hook.WorldWriter;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.util.BoundingBox;
 
@@ -25,13 +28,15 @@ import java.io.IOException;
 import java.util.Map;
 
 public class WorldEditHook extends Hook {
-    public static final String WORLD_EDIT_PLUGIN_NAME = "WorldEdit";
+    public static final Map<Material, Double> EMPTY = Map.of(Material.AIR, 1d);
+    public static final String PLUGIN_NAME = "WorldEdit";
+    private static final World MINES_WORLD = PLUGIN_INSTANCE.getMineWorldManager().getMinesWorld();
     private WorldEdit worldEdit;
     private WorldEditWorldWriter worldEditWorldWriter;
 
     @Override
     public String getPluginName() {
-        return WORLD_EDIT_PLUGIN_NAME;
+        return PLUGIN_NAME;
     }
 
     @Override
@@ -44,7 +49,7 @@ public class WorldEditHook extends Hook {
         return worldEditWorldWriter;
     }
 
-    private class WorldEditWorldWriter implements WorldWriter<Clipboard> {
+    public class WorldEditWorldWriter implements WorldWriter<Clipboard> {
 
         @Override
         public void placeSchematic(File schematicFile, Location location) {
@@ -71,7 +76,7 @@ public class WorldEditHook extends Hook {
                 Clipboard clipboard = reader.read();
                 return clipboard;
             } catch (IOException e) {
-                PRIVATE_MINES.logError("There was an error while trying to load the worldedit clipboard", e);
+                PLUGIN_INSTANCE.logError("There was an error while trying to load the worldedit clipboard", e);
                 return null;
             }
         }

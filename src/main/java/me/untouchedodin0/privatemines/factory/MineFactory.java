@@ -26,11 +26,10 @@ import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
 import me.untouchedodin0.privatemines.events.PrivateMineCreationEvent;
-import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
-import me.untouchedodin0.privatemines.hook.WorldGuardHook;
+import me.untouchedodin0.privatemines.hook.plugin.HookHandler;
+import me.untouchedodin0.privatemines.hook.plugin.WorldGuardHook;
 import me.untouchedodin0.privatemines.mine.*;
-import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
 import me.untouchedodin0.privatemines.utils.schematic.PastedMine;
 import org.bukkit.Bukkit;
@@ -90,8 +89,7 @@ public class MineFactory {
 
 
     private Mine createMineWithRegionConfiguration(UUID uuid, MineType mineType, BoundingBox mineArea, BoundingBox schematicArea, Location mineLocation, Location spawnLocation) {
-        MineStructure mineStructure = MineStructure.fromBoundingBoxes(privateMines.getMineWorldManager()
-                .getMinesWorld(), mineArea, schematicArea, mineLocation, spawnLocation);
+        MineStructure mineStructure = new MineStructure(mineArea, schematicArea, mineLocation, spawnLocation);
         MineData mineData = new MineData(uuid, mineStructure, mineType);
         Mine mine = new Mine(mineData);
         mineData.setOpen(!defaultClosed);
@@ -100,7 +98,7 @@ public class MineFactory {
 //        SQLUtils.insert(mine);
 
         mineService.cache(mine);
-        mine.handleReset();
+        mineService.handleReset(mine);
 
         spawnLocation.getBlock().setType(Material.AIR);
         PrivateMineCreationEvent creationEvent = new PrivateMineCreationEvent(mine);

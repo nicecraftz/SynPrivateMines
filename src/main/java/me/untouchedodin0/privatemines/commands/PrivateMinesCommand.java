@@ -13,7 +13,6 @@ import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
 import me.untouchedodin0.privatemines.factory.MineFactory;
 import me.untouchedodin0.privatemines.mine.*;
-import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import me.untouchedodin0.privatemines.utils.Cooldowns;
 import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
 import net.milkbowl.vault.economy.Economy;
@@ -47,7 +46,8 @@ public class PrivateMinesCommand {
 
     public void registerCommands() {
         LifecycleEventManager<Plugin> lifecycleManager = PLUGIN_INSTANCE.getLifecycleManager();
-        lifecycleManager.registerEventHandler(LifecycleEvents.COMMANDS,
+        lifecycleManager.registerEventHandler(
+                LifecycleEvents.COMMANDS,
                 event -> event.registrar().register(buildCommand())
         );
     }
@@ -129,7 +129,7 @@ public class PrivateMinesCommand {
                     Mine mine = MINE_SERVICE.get(target.getUniqueId());
                     mine.stopTasks();
                     MINE_SERVICE.delete(mine);
-                    SQLUtils.delete(mine);
+//                    SQLUtils.delete(mine);
 
                     commandSender.sendRichMessage("<green>Successfully deleted mine of player " + target.getName());
                     return SINGLE_SUCCESS;
@@ -171,7 +171,7 @@ public class PrivateMinesCommand {
 
                 ECONOMY.withdrawPlayer(player, cost);
                 MINE_SERVICE.upgrade(mine);
-                mine.handleReset();
+                MINE_SERVICE.handleReset(mine);
                 player.sendRichMessage("<green>Mine upgraded successfully!");
             }
 
@@ -233,7 +233,6 @@ public class PrivateMinesCommand {
         })).build();
     }
 
-
     private CommandNode<CommandSourceStack> forceResetMineLogic() {
         return literal("forcereset").requires(commandSourceStack -> {
             return commandSourceStack.getSender().hasPermission("privatemines.forcereset");
@@ -267,7 +266,7 @@ public class PrivateMinesCommand {
 
 
             if (resetCooldown == 0) {
-                mine.handleReset();
+                MINE_SERVICE.handleReset(mine);
                 return SINGLE_SUCCESS;
             }
 
@@ -279,7 +278,7 @@ public class PrivateMinesCommand {
 
             Cooldowns.set(uuid, resetCooldown);
 
-            mine.handleReset();
+            MINE_SERVICE.handleReset(mine);
             return SINGLE_SUCCESS;
         }).build();
     }
@@ -336,7 +335,8 @@ public class PrivateMinesCommand {
         return literal("expand").requires(commandSourceStack -> {
                     return commandSourceStack.getSender().hasPermission("privatemines.expand");
                 })
-                .then(argument("target", ArgumentTypes.player()).then(argument("amount",
+                .then(argument("target", ArgumentTypes.player()).then(argument(
+                        "amount",
                         IntegerArgumentType.integer(1)
                 ).executes(context -> {
                     CommandSender commandSender = context.getSource().getSender();
@@ -349,19 +349,18 @@ public class PrivateMinesCommand {
                     }
 
                     Mine mine = MINE_SERVICE.get(target.getUniqueId());
-                    if (!mine.canExpand(amount)) {
+                    if (!MINE_SERVICE.canExpand(mine, amount)) {
                         commandSender.sendRichMessage("<red>Cannot expand mine by that amount!");
                         return SINGLE_SUCCESS;
                     }
 
-                    mine.expand(amount);
+                    MINE_SERVICE.expand(mine, amount);
                     commandSender.sendRichMessage("<green>Successfully expanded " + target.getName() + "'s mine!");
                     return SINGLE_SUCCESS;
                 })))
                 .build();
 
     }
-
 
     private CommandNode<CommandSourceStack> openCloseMineLogic(String literal, boolean state) {
         return literal(literal).requires(commandSourceStack -> {
@@ -379,7 +378,7 @@ public class PrivateMinesCommand {
             mineData.setOpen(state);
 
             String message = state ? "opened" : "closed";
-            SQLUtils.update(mine);
+//            SQLUtils.update(mine);
             player.sendRichMessage("<green>Mine " + message + " successfully!");
             return SINGLE_SUCCESS;
         }).build();
@@ -453,7 +452,7 @@ public class PrivateMinesCommand {
             Mine mine = MINE_SERVICE.get(player.getUniqueId());
             MineData mineData = mine.getMineData();
             mineData.setTax(tax);
-            SQLUtils.update(mine);
+//            SQLUtils.update(mine);
 
             player.sendRichMessage("<green>Successfully updated tax to " + tax + "%");
             return SINGLE_SUCCESS;
@@ -464,7 +463,8 @@ public class PrivateMinesCommand {
         return literal("setblocks").requires(commandSourceStack -> {
                     return commandSourceStack.getSender().hasPermission("privatemines.setblocks");
                 })
-                .then(argument("target", ArgumentTypes.player()).then(argument("material",
+                .then(argument("target", ArgumentTypes.player()).then(argument(
+                        "material",
                         ArgumentTypes.namespacedKey()
                 ).executes(context -> {
                     Player player = (Player) context.getSource().getSender();
@@ -486,7 +486,7 @@ public class PrivateMinesCommand {
                     MineData mineData = mine.getMineData();
                     mineData.getMaterials().add(1, registryMaterial);
 
-                    SQLUtils.update(mine);
+//                    SQLUtils.update(mine);
 
                     player.sendRichMessage("<green>Successfully updated materials!");
                     return SINGLE_SUCCESS;

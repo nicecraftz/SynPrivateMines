@@ -1,10 +1,12 @@
-package me.untouchedodin0.privatemines.hook;
+package me.untouchedodin0.privatemines.hook.plugin;
 
 import io.th0rgal.oraxen.api.OraxenBlocks;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
 import me.untouchedodin0.privatemines.events.PrivateMineResetEvent;
+import me.untouchedodin0.privatemines.hook.Hook;
+import me.untouchedodin0.privatemines.hook.MineBlockHandler;
 import me.untouchedodin0.privatemines.mine.*;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -14,7 +16,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.BoundingBox;
 
 public class OraxenHook extends Hook {
-    public static final String ORAXEN_NAME = "Oraxen";
+    public static final String PLUGIN_NAME = "Oraxen";
     private static final World MINES_WORLD = PLUGIN_INSTANCE.getMineWorldManager().getMinesWorld();
     private OraxenBlockHandler oraxenBlockHandler;
 
@@ -29,7 +31,7 @@ public class OraxenHook extends Hook {
 
     @Override
     public String getPluginName() {
-        return ORAXEN_NAME;
+        return PLUGIN_NAME;
     }
 
     @Override
@@ -54,22 +56,23 @@ public class OraxenHook extends Hook {
 
         BoundingBox boundingBox = mineStructure.mineBoundingBox();
         if (shouldCreateWallGap) boundingBox.expand(-Math.abs(wallsGap));
-        WorldEditWorldWriter.getWriter().fill(boundingBox, mineType.materials());
+        HookHandler.get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
+                .getWorldEditWorldWriter().fill(boundingBox, WorldEditHook.EMPTY);
 
         for (Player online : Bukkit.getOnlinePlayers()) {
             Location location = online.getLocation();
             boolean isPlayerInRegion = boundingBox.contains(location.toVector());
-            if (isPlayerInRegion && location.getWorld().equals(MINES_WORLD)) mine.teleport(player);
+            if (isPlayerInRegion && location.getWorld().equals(MINES_WORLD)) mine.teleport(online);
         }
 
-        for (int x = (int) Math.floor(boundingBox.getMinX()); x < Math.ceil(boundingBox.getMaxX()); x++) {
-            for (int y = (int) Math.floor(boundingBox.getMinX()); y < Math.ceil(boundingBox.getMaxX()); y++) {
-                for (int z = (int) Math.floor(boundingBox.getMinX()); z < Math.ceil(boundingBox.getMaxX()); z++) {
-                    String randomMaterial;
-                    oraxenBlockHandler.place(randomMaterial, new Location(MINES_WORLD, x, y, z));
-                }
-            }
-        }
+//        for (int x = (int) Math.floor(boundingBox.getMinX()); x < Math.ceil(boundingBox.getMaxX()); x++) {
+//            for (int y = (int) Math.floor(boundingBox.getMinX()); y < Math.ceil(boundingBox.getMaxX()); y++) {
+//                for (int z = (int) Math.floor(boundingBox.getMinX()); z < Math.ceil(boundingBox.getMaxX()); z++) {
+//                    String randomMaterial;
+//                    oraxenBlockHandler.place(randomMaterial, new Location(MINES_WORLD, x, y, z));
+//                }
+//            }
+//        }
     }
 
     public static class OraxenBlockHandler implements MineBlockHandler {

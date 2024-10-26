@@ -53,23 +53,18 @@ public class PublicMinesCommand {
     private static final MineService MINE_SERVICE = PLUGIN_INSTANCE.getMineService();
     private static String TAX_STRING_FORMAT = "Tax: %.2f%%";
 
-    private PublicMinesCommand() {
-
-    }
-
-    public static void registerCommands() {
+    public void registerCommands() {
         LifecycleEventManager<Plugin> lifecycleManager = PLUGIN_INSTANCE.getLifecycleManager();
-        lifecycleManager.registerEventHandler(
-                LifecycleEvents.COMMANDS,
+        lifecycleManager.registerEventHandler(LifecycleEvents.COMMANDS,
                 event -> event.registrar().register(buildCommand())
         );
     }
 
-    private static LiteralCommandNode<CommandSourceStack> buildCommand() {
+    private LiteralCommandNode<CommandSourceStack> buildCommand() {
         return literal("publicmines").executes(defaultCommand()).build();
     }
 
-    private static Command<CommandSourceStack> defaultCommand() {
+    private Command<CommandSourceStack> defaultCommand() {
         return context -> {
             CommandSender sender = context.getSource().getSender();
 
@@ -98,8 +93,7 @@ public class PublicMinesCommand {
 
                 GuiItem guiItem = ItemBuilder.from(Material.EMERALD)
                         .name(Component.text(ownerName).color(NamedTextColor.GREEN))
-                        .lore(List.of(
-                                Component.text(ChatColor.GREEN + "Click to teleport"),
+                        .lore(List.of(Component.text(ChatColor.GREEN + "Click to teleport"),
                                 Component.text(ChatColor.GREEN + formattedTax)
                         ))
                         .asGuiItem(event -> {
@@ -122,7 +116,7 @@ public class PublicMinesCommand {
         };
     }
 
-    private static void addDirectionalItems(ScrollingGui scrollingGui) {
+    private void addDirectionalItems(ScrollingGui scrollingGui) {
         GuiItem back = ItemBuilder.from(Material.ARROW)
                 .name(Component.text(ChatColor.GREEN + "<-"))
                 .lore(Component.text(ChatColor.GRAY + "Go Back"))

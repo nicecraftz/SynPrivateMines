@@ -1,11 +1,13 @@
-package me.untouchedodin0.privatemines.hook;
+package me.untouchedodin0.privatemines.hook.plugin;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import me.untouchedodin0.privatemines.PrivateMines;
+import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.mine.Mine;
 import me.untouchedodin0.privatemines.mine.MineData;
 import me.untouchedodin0.privatemines.mine.MineService;
 import me.untouchedodin0.privatemines.utils.QueueUtils;
+import me.untouchedodin0.privatemines.utils.SerializationUtil;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -71,8 +73,8 @@ public class PlaceholderAPIHook extends Hook {
                     return handleMineLocationPlaceholder(playerUniqueId);
                 case "spawn":
                     return handleSpawnPlaceholder(playerUniqueId);
-                case "inqueue":
-                    return String.valueOf(QUEUE_UTILS.isInQueue(playerUniqueId));
+//                case "inqueue":
+//                    return String.valueOf(QUEUE_UTILS.isInQueue(playerUniqueId));
                 case "hasmine":
                     return String.valueOf(MINE_SERVICE.has(playerUniqueId));
             }
@@ -83,7 +85,7 @@ public class PlaceholderAPIHook extends Hook {
         private String handleSpawnPlaceholder(UUID playerUUID) {
             Mine mine = MINE_SERVICE.get(playerUUID);
             if (mine == null) return NO_RESULT;
-            return LocationUtils.toString(mine.getSpawnLocation());
+            return SerializationUtil.locationToString(mine.getSpawnLocation());
         }
 
         private String handleMineLocationPlaceholder(UUID playerUUID) {

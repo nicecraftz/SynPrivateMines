@@ -8,6 +8,8 @@ import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
+import me.untouchedodin0.privatemines.hook.plugin.HookHandler;
+import me.untouchedodin0.privatemines.hook.plugin.WorldEditHook;
 import org.bukkit.Material;
 import org.bukkit.util.Vector;
 
@@ -17,7 +19,6 @@ import static com.sk89q.worldedit.bukkit.BukkitAdapter.adapt;
 
 public class SchematicIterator {
     private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
-
     private BlockVector3 spawnBlockVector3;
     private BlockVector3 npcBlockVector3;
     private BlockVector3 quarryBlockVector3;
@@ -42,7 +43,11 @@ public class SchematicIterator {
 
 
     public MineBlocks findRelativePoints(File file) {
-        try (Clipboard clipboard = WorldEditWorldWriter.getWriter().getClipboard(file)) {
+        try (
+                Clipboard clipboard = HookHandler.get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
+                        .getWorldEditWorldWriter()
+                        .getClipboard(file)
+        ) {
             Region region = clipboard.getRegion();
             for (BlockVector3 regionBlock : region) {
                 BlockType blockType = clipboard.getBlock(regionBlock).getBlockType();
@@ -71,8 +76,7 @@ public class SchematicIterator {
         }
 
         BlockVector3[] corners = new BlockVector3[]{cornerMinBlockVector3, cornerMaxBlockVector3};
-        MineBlocks mineBlocks = MineBlocks.fromWorldGuardElements(
-                spawnBlockVector3,
+        MineBlocks mineBlocks = MineBlocks.fromWorldGuardElements(spawnBlockVector3,
                 corners,
                 npcBlockVector3,
                 quarryBlockVector3
