@@ -125,6 +125,7 @@ public class AddonsCommand {
 
             for (File file : addonsDirectory.listFiles((dir, name) -> name.contains(searchInput))) {
                 String fileName = file.getName();
+
                 TextComponent fileComponent = Component.text()
                         .append(Component.text("- " + fileName + " ", NamedTextColor.YELLOW)
                                 .hoverEvent(Component.text("Click to load " + fileName, NamedTextColor.GREEN)))

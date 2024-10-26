@@ -18,7 +18,7 @@ import org.bukkit.util.BoundingBox;
 
 import java.util.Map;
 
-public class WorldguardHook extends Hook {
+public class WorldGuardHook extends Hook {
     public static final String PLUGIN_NAME = "WorldGuard";
     private org.bukkit.World bukkitMinesWorld;
     private World worldGuardMinesWorld;

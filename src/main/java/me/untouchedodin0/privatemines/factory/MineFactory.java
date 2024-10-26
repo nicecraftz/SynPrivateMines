@@ -21,10 +21,6 @@
 
 package me.untouchedodin0.privatemines.factory;
 
-import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldguard.WorldGuard;
-import com.sk89q.worldguard.protection.managers.RegionManager;
-import com.sk89q.worldguard.protection.regions.RegionContainer;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
@@ -32,7 +28,7 @@ import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
 import me.untouchedodin0.privatemines.events.PrivateMineCreationEvent;
 import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
-import me.untouchedodin0.privatemines.hook.WorldguardHook;
+import me.untouchedodin0.privatemines.hook.WorldGuardHook;
 import me.untouchedodin0.privatemines.mine.*;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
@@ -46,42 +42,44 @@ import java.io.File;
 import java.util.UUID;
 
 public class MineFactory {
-    private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
-    private static final PasteHelper PASTE_HELPER = PRIVATE_MINES.getPasteHelper();
-    private static final MineService MINE_SERVICE = PRIVATE_MINES.getMineService();
+    private final PrivateMines privateMines;
+    private final PasteHelper pasteHelper;
+    private final MineService mineService;
 
-    private static final RegionOrchestrator regionOrchestrator = HookHandler.get(WorldguardHook.PLUGIN_NAME,
-            WorldguardHook.class
+    private static final RegionOrchestrator regionOrchestrator = HookHandler.get(
+            WorldGuardHook.PLUGIN_NAME,
+            WorldGuardHook.class
     ).getRegionOrchestrator();
 
     @ConfigurationEntry(key = "is-closed-by-default", section = "mine", type = ConfigurationValueType.BOOLEAN, value = "true")
     private boolean defaultClosed;
 
-    public MineFactory() {
+    public MineFactory(PrivateMines privateMines) {
+        this.privateMines = privateMines;
+        this.pasteHelper = privateMines.getPasteHelper();
+        this.mineService = privateMines.getMineService();
         InstanceRegistry.registerInstance(this);
     }
 
     public Mine create(UUID uuid, Location location, MineType mineType) {
         File schematicFile = mineType.schematicFile();
-        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
-        RegionManager regionManager = container.get(BukkitAdapter.adapt(location.getWorld()));
 
         if (!schematicFile.exists()) {
-            PRIVATE_MINES.getLogger().warning("Schematic file does not exist: " + schematicFile.getName());
+            privateMines.logWarn("Schematic file does not exists: " + schematicFile.getName());
             return null;
         }
 
         String mineRegionName = String.format("mine-%s", uuid.toString());
         String fullRegionName = String.format("full-mine-%s", uuid.toString());
 
-        PastedMine pastedMine = PASTE_HELPER.paste(schematicFile, location);
+        PastedMine pastedMine = pasteHelper.paste(schematicFile, location);
 
         Location spawn = location.clone().add(0, 0, 1);
         BoundingBox mineArea = BoundingBox.of(pastedMine.getLowerRailsLocation(), pastedMine.getUpperRailsLocation());
-        BoundingBox schematicArea = BoundingBox.of(PASTE_HELPER.getMinimum(), PASTE_HELPER.getMaximum());
+        BoundingBox schematicArea = BoundingBox.of(pasteHelper.getMinimum(), pasteHelper.getMaximum());
 
 
-        RegionOrchestrator regionOrchestrator = HookHandler.get(WorldguardHook.PLUGIN_NAME, WorldguardHook.class)
+        RegionOrchestrator regionOrchestrator = HookHandler.get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
                 .getRegionOrchestrator();
 
         regionOrchestrator.addRegion(fullRegionName, schematicArea);
@@ -92,14 +90,16 @@ public class MineFactory {
 
 
     private Mine createMineWithRegionConfiguration(UUID uuid, MineType mineType, BoundingBox mineArea, BoundingBox schematicArea, Location mineLocation, Location spawnLocation) {
-        MineStructure mineStructure = MineStructure.fromBoundingBoxes(PRIVATE_MINES.getMineWorldManager()
+        MineStructure mineStructure = MineStructure.fromBoundingBoxes(privateMines.getMineWorldManager()
                 .getMinesWorld(), mineArea, schematicArea, mineLocation, spawnLocation);
         MineData mineData = new MineData(uuid, mineStructure, mineType);
         Mine mine = new Mine(mineData);
         mineData.setOpen(!defaultClosed);
 
-        SQLUtils.insert(mine);
-        MINE_SERVICE.cache(mine);
+        // todo: Handle this
+//        SQLUtils.insert(mine);
+
+        mineService.cache(mine);
         mine.handleReset();
 
         spawnLocation.getBlock().setType(Material.AIR);

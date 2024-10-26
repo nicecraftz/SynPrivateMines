@@ -10,10 +10,10 @@ import me.untouchedodin0.privatemines.events.PrivateMineResetEvent;
 import me.untouchedodin0.privatemines.events.PrivateMineUpgradeEvent;
 import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.hook.ItemsAdderHook;
+import me.untouchedodin0.privatemines.hook.WorldGuardHook;
 import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
 import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
 import me.untouchedodin0.privatemines.utils.schematic.PastedMine;
-import me.untouchedodin0.privatemines.hook.WorldEditWorldWriter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -87,8 +87,6 @@ public class MineService {
 
     private void handleMineDeletion(Mine mine) {
         MineData mineData = mine.getMineData();
-        UUID uuid = mineData.getMineOwner();
-
         PrivateMineDeleteEvent privateMineDeleteEvent = new PrivateMineDeleteEvent(mine);
         Bukkit.getPluginManager().callEvent(privateMineDeleteEvent);
         if (privateMineDeleteEvent.isCancelled()) return;
@@ -97,23 +95,22 @@ public class MineService {
         BoundingBox schematicBoundingBox = structure.schematicBoundingBox();
         BoundingBox mineBoundingBox = structure.mineBoundingBox();
 
-        // todo: this could be just made a constant to accept a uuid parameter or just the mine object.
-        String regionName = String.format("mine-%s", uuid);
-        String fullRegionName = String.format("full-mine-%s", uuid);
-
-        PrivateMines.getInstance().getRegionOrchestrator().removeRegion(regionName);
-        PrivateMines.getInstance().getRegionOrchestrator().removeRegion(fullRegionName);
+        HookHandler.get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
+                .getRegionOrchestrator()
+                .removeMineRegions(mine);
 
         WorldEditWorldWriter.getWriter().fill(schematicBoundingBox, WorldEditWorldWriter.EMPTY);
+
         if (mineData.getMineType().useItemsAdder() && HookHandler.hooked(ItemsAdderHook.ITEMSADDER_NAME)) {
-            ItemsAdderHook.removeItemsAdderBlocksFromBoundingBox(mineBoundingBox);
+            HookHandler.get(ItemsAdderHook.ITEMSADDER_NAME, ItemsAdderHook.class)
+                    .removeItemsAdderBlocksFromBoundingBox(mineBoundingBox);
         }
 
         mine.stopTasks();
 
 //        todo: make this better
 //        databaseSomething.delete(mine);
-        SQLUtils.delete(mine);
+//        SQLUtils.delete(mine);
     }
 
     public void upgrade(Mine mine) {

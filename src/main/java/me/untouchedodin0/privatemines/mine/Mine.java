@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 public class Mine {
     private final MineData mineData;
@@ -171,34 +172,17 @@ public class Mine {
     }
 
 
-    public void ban(Player player) {
-        if (mineData.getBannedPlayers().contains(player.getUniqueId())) {
-            return;
-        }
-        Player owner = Bukkit.getPlayer(mineData.getMineOwner());
-        if (player.equals(owner)) {
-            return;
-        }
+    public boolean isBanned(UUID uuid) {
+        return mineData.isBanned(uuid);
+    }
 
-        audienceUtils.sendMessage(
-                player,
-                Objects.requireNonNull(owner),
-                MessagesConfig.successfullyBannedPlayer
-        );
-        audienceUtils.sendMessage(player, Objects.requireNonNull(owner), MessagesConfig.bannedFromMine);
-
-        mineData.getBannedPlayers().add(player.getUniqueId());
-        setMineData(mineData);
+    public void ban(UUID uuid) {
+        mineData.addBannedPlayer(uuid);
         SQLUtils.update(this);
     }
 
-    public void unban(Player player) {
-        Player owner = Bukkit.getPlayer(mineData.getMineOwner());
-        audienceUtils.sendMessage(player, Objects.requireNonNull(owner), MessagesConfig.unbannedPlayer);
-        audienceUtils.sendMessage(player, Objects.requireNonNull(owner), MessagesConfig.unbannedFromMine);
-
-        mineData.getBannedPlayers().remove(player.getUniqueId());
-        setMineData(mineData);
+    public void unban(UUID uuid) {
+        mineData.removeBannedPlayer(uuid);
         SQLUtils.update(this);
     }
 
@@ -225,7 +209,7 @@ public class Mine {
         return canExpand;
     }
 
-    public void expand() {
+    public void expand(int amount) {
         final World world = privateMines.getMineWorldManager().getMinesWorld();
         boolean canExpand = canExpand(1);
 

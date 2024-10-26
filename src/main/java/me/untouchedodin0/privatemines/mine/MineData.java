@@ -69,6 +69,19 @@ public class MineData {
         this.tax = tax;
     }
 
+    public void removeBannedPlayer(UUID uuid) {
+        bannedPlayers.remove(uuid);
+    }
+
+    public boolean isBanned(UUID uuid) {
+        return bannedPlayers.contains(uuid);
+    }
+
+    public void addBannedPlayer(UUID uuid) {
+        if (uuid.equals(mineOwner)) return;
+        bannedPlayers.add(uuid);
+    }
+
     public Set<UUID> getBannedPlayers() {
         return ImmutableSet.copyOf(bannedPlayers);
     }

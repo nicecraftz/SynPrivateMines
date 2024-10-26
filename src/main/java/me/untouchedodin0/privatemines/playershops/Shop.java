@@ -1,18 +1,18 @@
 /**
  * MIT License
- *
+ * <p>
  * Copyright (c) 2021 - 2023 Kyle Hicks
- *
+ * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * <p>
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *
+ * <p>
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,7 +24,6 @@
 
 package me.untouchedodin0.privatemines.playershops;
 
-import com.sk89q.worldedit.regions.Region;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -35,44 +34,36 @@ import java.util.Map;
 import java.util.UUID;
 
 public class Shop {
-
     //todo Create a shop
     // A shop needs to hold the following things
     // Owner - UUID
     // Prices - Map of Materials and Doubles
-    // WorldGuardRegion
 
-    UUID owner;
-    Map<Material, Double> prices = new HashMap<>();
-    Region region;
+    private final UUID owner;
+    private final Map<Material, Double> materialPrices = new HashMap<>();
+
+    public Shop(UUID owner) {
+        this.owner = owner;
+    }
 
     public UUID getOwner() {
         return owner;
     }
 
-    public void setOwner(UUID owner) {
-        this.owner = owner;
-    }
-
-    public Map<Material, Double> getPrices() {
-        return prices;
+    public Map<Material, Double> getMaterialPrices() {
+        return materialPrices;
     }
 
     public void setPrice(Material material, Double price) {
         Player player = Bukkit.getPlayer(getOwner());
-        if (prices.containsKey(material)) {
-            prices.put(material, price);
-            if (player != null) {
-                player.sendMessage(ChatColor.GREEN + "Updated prices of " + material + " to $" + price);
-            }
-        }
+        if (!materialPrices.containsKey(material)) return;
+        materialPrices.put(material, price);
+        if (player == null) return;
+
+        player.sendMessage(ChatColor.GREEN + "Updated prices of " + material + " to $" + price);
     }
 
-    public void setRegion(Region region) {
-        this.region = region;
-    }
-
-    public void setPrices(Map<Material, Double> prices) {
-        this.prices = prices;
+    public void addMaterialPrices(Map<Material, Double> materialPrices) {
+        this.materialPrices.putAll(materialPrices);
     }
 }

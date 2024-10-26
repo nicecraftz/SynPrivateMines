@@ -14,12 +14,12 @@ materials:
   quarry: SHULKER_BOX
 
 mine:
+  reset-cooldown: 15
   first-join-creation: true
   is-closed-by-default: true
   distance: 150
   y-level: 50
   tp-delay: 5
-  reset-cooldown: 15
   configuration:
     should-create-wall-gap: true
     walls-go-up: false

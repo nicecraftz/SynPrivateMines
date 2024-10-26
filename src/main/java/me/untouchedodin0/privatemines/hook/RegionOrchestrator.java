@@ -9,6 +9,8 @@ public interface RegionOrchestrator<R, F> {
 
     void setFlagsForMine(Mine mine);
 
+    void removeMineRegions(Mine mine);
+
     void removeRegion(String name);
 
     void addRegion(String name, BoundingBox boundingBox);

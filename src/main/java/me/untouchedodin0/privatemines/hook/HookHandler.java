@@ -9,7 +9,8 @@ public class HookHandler {
         add(new OraxenHook());
         add(new ItemsAdderHook());
         add(new VaultHook());
-        add(new WorldguardHook());
+        add(new WorldGuardHook());
+        add(new WorldEditHook());
     }};
 
     private HookHandler() {

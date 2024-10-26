@@ -7,7 +7,6 @@ import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
 import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.world.World;
-import me.untouchedodin0.privatemines.hook.WorldEditWorldWriter;
 import org.bukkit.Location;
 
 import java.io.File;
@@ -38,8 +37,7 @@ public class PasteHelper {
     }
 
     private PastedMine create(File file, Location location) {
-        BlockVector3 blockVector3 = asBlockVector(location);
-        return new PastedMine(blockVector3).setLocation(location).setFile(file).create();
+        return new PastedMine(location.toVector()).setLocation(location).setFile(file).create();
     }
 
     public PastedMine paste(File file, Location location) {

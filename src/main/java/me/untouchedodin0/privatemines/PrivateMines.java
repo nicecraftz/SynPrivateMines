@@ -34,11 +34,8 @@ import me.untouchedodin0.privatemines.mine.Mine;
 import me.untouchedodin0.privatemines.mine.MineService;
 import me.untouchedodin0.privatemines.mine.MineTypeRegistry;
 import me.untouchedodin0.privatemines.storage.SchematicStorage;
-import me.untouchedodin0.privatemines.storage.sql.SQLUtils;
-import me.untouchedodin0.privatemines.storage.sql.SQLite;
 import me.untouchedodin0.privatemines.utils.QueueUtils;
 import me.untouchedodin0.privatemines.utils.UpdateChecker;
-import me.untouchedodin0.privatemines.utils.addon.AddonManager;
 import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
 import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
 import net.milkbowl.vault.economy.Economy;
@@ -72,11 +69,7 @@ public class PrivateMines extends JavaPlugin {
     private QueueUtils queueUtils;
 
     private Economy economy = null;
-
-    private SQLite sqLite;
     private PasteHelper pasteHelper;
-
-    private AddonManager addonManager;
 
     public static PrivateMines getInstance() {
         return instance;
@@ -98,11 +91,10 @@ public class PrivateMines extends JavaPlugin {
         saveInitialResources();
 
         mineWorldManager = new MineWorldManager();
-        mineFactory = new MineFactory();
         mineService = new MineService();
         mineTypeRegistry = new MineTypeRegistry();
+        mineFactory = new MineFactory(this);
         queueUtils = new QueueUtils();
-        addonManager = new AddonManager();
 
         schematicStorage = new SchematicStorage();
         schematicIterator = new SchematicIterator();
@@ -133,54 +125,54 @@ public class PrivateMines extends JavaPlugin {
 
         AddonsCommand.registerCommands();
         PublicMinesCommand.registerCommands();
-        PrivateMinesCommand.registerCommands();
+        new PrivateMinesCommand().registerCommands();
         ensureDatabaseFileCreation();
 
         // TODO: rewrite whole sql data handle system.
-        sqLite = new SQLite();
-        sqLite.load();
-        sqlHelper = new SQLHelper(sqLite.getSQLConnection());
+//        sqLite = new SQLite();
+//        sqLite.load();
+//        sqlHelper = new SQLHelper(sqLite.getSQLConnection());
 
-        sqlHelper.executeUpdate("""
-                CREATE TABLE IF NOT EXISTS privatemines (
-                owner VARCHAR(36) UNIQUE NOT NULL,
-                mineType VARCHAR(10) NOT NULL,
-                mineLocation VARCHAR(30) NOT NULL,
-                corner1 VARCHAR(30) NOT NULL,
-                corner2 VARCHAR(30) NOT NULL,
-                fullRegionMin VARCHAR(30) NOT NULL,
-                fullRegionMax VARCHAR(30) NOT NULL,
-                spawn VARCHAR(30) NOT NULL,
-                tax FLOAT NOT NULL,
-                isOpen INT NOT NULL,
-                maxPlayers INT NOT NULL,
-                maxMineSize INT NOT NULL,
-                materials VARCHAR(50) NOT NULL
-                );""");
-
-        sqlHelper.executeUpdate("""
-                CREATE TABLE IF NOT EXISTS pregenmines (
-                location VARCHAR(20),
-                min_mining VARCHAR(20),
-                max_mining VARCHAR(20),
-                spawn VARCHAR(20),
-                min_full VARCHAR(20),
-                max_full VARCHAR(20)
-                );
-                """);
-        sqlHelper.setAutoCommit(true);
-
-        String databaseName = "privatemines";
-        List<String> cacheNames = List.of("owner", "mineType", "mineLocation", "corner1", "corner2");
-
-        cacheNames.forEach(string -> {
-            SQLCache sqlCache = sqlHelper.createCache(databaseName, string);
-            caches.put(string, sqlCache);
-        });
-
-        Task.asyncDelayed(this::loadSQLMines);
-        Task.asyncDelayed(SQLUtils::loadPregens);
-        Task.asyncDelayed(this::loadAddons);
+//        sqlHelper.executeUpdate("""
+//                CREATE TABLE IF NOT EXISTS privatemines (
+//                owner VARCHAR(36) UNIQUE NOT NULL,
+//                mineType VARCHAR(10) NOT NULL,
+//                mineLocation VARCHAR(30) NOT NULL,
+//                corner1 VARCHAR(30) NOT NULL,
+//                corner2 VARCHAR(30) NOT NULL,
+//                fullRegionMin VARCHAR(30) NOT NULL,
+//                fullRegionMax VARCHAR(30) NOT NULL,
+//                spawn VARCHAR(30) NOT NULL,
+//                tax FLOAT NOT NULL,
+//                isOpen INT NOT NULL,
+//                maxPlayers INT NOT NULL,
+//                maxMineSize INT NOT NULL,
+//                materials VARCHAR(50) NOT NULL
+//                );""");
+//
+//        sqlHelper.executeUpdate("""
+//                CREATE TABLE IF NOT EXISTS pregenmines (
+//                location VARCHAR(20),
+//                min_mining VARCHAR(20),
+//                max_mining VARCHAR(20),
+//                spawn VARCHAR(20),
+//                min_full VARCHAR(20),
+//                max_full VARCHAR(20)
+//                );
+//                """);
+//        sqlHelper.setAutoCommit(true);
+//
+//        String databaseName = "privatemines";
+//        List<String> cacheNames = List.of("owner", "mineType", "mineLocation", "corner1", "corner2");
+//
+//        cacheNames.forEach(string -> {
+//            SQLCache sqlCache = sqlHelper.createCache(databaseName, string);
+//            caches.put(string, sqlCache);
+//        });
+//
+//        Task.asyncDelayed(this::loadSQLMines);
+//        Task.asyncDelayed(SQLUtils::loadPregens);
+//        Task.asyncDelayed(this::loadAddons);
 
         Metrics metrics = new Metrics(this, PLUGIN_ID);
         metrics.addCustomChart(new SingleLineChart("mines", () -> mineService.getMinesCount()));
@@ -312,7 +304,8 @@ public class PrivateMines extends JavaPlugin {
             Player player = Bukkit.getOfflinePlayer(mine.getMineData().getMineOwner()).getPlayer();
             if (player == null) return;
 
-            SQLUtils.update(mine);
+            // todo: update mines
+//            SQLUtils.update(mine);
             mine.stopTasks();
         }
     }
@@ -341,10 +334,6 @@ public class PrivateMines extends JavaPlugin {
         return mineTypeRegistry;
     }
 
-    public AddonManager getAddonManager() {
-        return addonManager;
-    }
-
     public void setEconomy(Economy economy) {
         this.economy = economy;
     }
@@ -365,7 +354,7 @@ public class PrivateMines extends JavaPlugin {
         return addonsDirectory;
     }
 
-    public File getSchematicsDirectory() {
-        return schematicsDirectory;
+    public void logWarn(String message) {
+        getLogger().warning(message);
     }
 }

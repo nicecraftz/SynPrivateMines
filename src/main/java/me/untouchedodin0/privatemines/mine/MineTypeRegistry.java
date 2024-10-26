@@ -1,14 +1,11 @@
 package me.untouchedodin0.privatemines.mine;
 
-import me.untouchedodin0.privatemines.PrivateMines;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class MineTypeRegistry {
-    private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
     private final HashMap<String, MineType> mineRegistry = new HashMap<>();
-    private Mine defaultMine = null;
+    private MineType defaultMineType = null;
 
     public void register(MineType mineType) {
         mineRegistry.put(mineType.name().toLowerCase(), mineType);
@@ -18,12 +15,16 @@ public class MineTypeRegistry {
         return mineRegistry.get(name.toLowerCase());
     }
 
-    public boolean isDefaultMineSet() {
-        return defaultMine != null;
+    public void setDefaultMineType(MineType defaultMineType) {
+        this.defaultMineType = defaultMineType;
     }
 
-    public Mine getDefaultMine() {
-        return defaultMine;
+    public boolean isDefaultMineSet() {
+        return defaultMineType != null;
+    }
+
+    public MineType getDefaultMineType() {
+        return defaultMineType;
     }
 
     public MineType getNextMineType(MineType current) {
@@ -37,6 +38,7 @@ public class MineTypeRegistry {
                         .orElse(current);
             }
         }
+
         return null;
     }
 
