@@ -1,5 +1,9 @@
 package me.untouchedodin0.privatemines.utils.addon;
 
+import me.untouchedodin0.privatemines.PrivateMines;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -8,32 +12,28 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
-import me.untouchedodin0.privatemines.PrivateMines;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 public class AddonManager {
-    private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
-    private static final Map<String, Addon> ADDONS = new HashMap<>();
+    private final PrivateMines privateMines;
+    private final Map<String, Addon> addons = new HashMap<>();
+
+    public AddonManager(PrivateMines privateMines) {
+        this.privateMines = privateMines;
+    }
 
     @NotNull
-    public static CompletableFuture<@Nullable Class<? extends Addon>> findExpansionInFile(@NotNull final File file) {
+    public CompletableFuture<@Nullable Class<? extends Addon>> findExpansionInFile(@NotNull final File file) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Class<? extends Addon> addonClass = FileUtil.findClass(file, Addon.class);
-
-                if (addonClass == null) {
-                    PRIVATE_MINES.getLogger().warning(String.format(
-                            "Failed to load addon %s, as it does not have a class which extends Addon",
-                            file.getName()
-                    ));
-                    return null;
-                }
-
-                return addonClass;
+                if (addonClass != null) return addonClass;
+                privateMines.logWarn(String.format("Failed to load addon %s, as it does not have a class which extends Addon",
+                        file.getName()
+                ));
+                return null;
             } catch (VerifyError | NoClassDefFoundError e) {
-                PRIVATE_MINES.getLogger()
-                        .warning(String.format("Failed to load addon %s (is a dependency missing?)", file.getName()));
+                privateMines.logWarn(String.format("Failed to load addon %s, as it has a linkage error",
+                        file.getName()
+                ));
                 return null;
             } catch (Exception e) {
                 throw new CompletionException(e.getMessage() + " (addon file: " + file.getAbsolutePath() + ")", e);
@@ -43,21 +43,14 @@ public class AddonManager {
 
     public Optional<Addon> register(final CompletableFuture<@Nullable Class<? extends Addon>> clazz) {
         try {
-            Addon addon = createAddonInstance(clazz);
-
-            if (addon == null) {
-                return Optional.empty();
-            }
-            ADDONS.put(addon.getName(), addon);
-            return Optional.of(addon);
+            Optional<Addon> addonOptional = Optional.ofNullable(createAddonInstance(clazz));
+            addonOptional.ifPresent(addon -> addons.put(addon.addonDescription().name().toLowerCase(), addon));
+            return addonOptional;
         } catch (LinkageError | NullPointerException ex) {
             String reason = ex instanceof LinkageError ? " (Is a dependency missing?)" : " - One of its properties is null which is not allowed!";
-            PrivateMines privateMines = PrivateMines.getInstance();
-
             try {
                 privateMines.getLogger()
-                        .warning(String.format(
-                                "Failed to load addon class %s %s",
+                        .warning(String.format("Failed to load addon class %s %s",
                                 clazz.get().getSimpleName(),
                                 reason
                         ));
@@ -70,7 +63,7 @@ public class AddonManager {
     }
 
     public Addon createAddonInstance(final CompletableFuture<@Nullable Class<? extends Addon>> clazz) throws LinkageError {
-        PrivateMines privateMines = PrivateMines.getInstance();
+        PrivateMines privateMines = PrivateMines.inst();
 
         try {
             return clazz.get().getDeclaredConstructor().newInstance();
@@ -84,15 +77,15 @@ public class AddonManager {
         }
     }
 
-    public static Map<String, Addon> getAddons() {
-        return ADDONS;
+    public Map<String, Addon> getAddons() {
+        return Map.copyOf(addons);
     }
 
-    public static Addon get(String name) {
-        return ADDONS.get(name);
+    public Optional<Addon> get(String name) {
+        return Optional.ofNullable(addons.get(name.toLowerCase()));
     }
 
-    public static void remove(String name) {
-        ADDONS.remove(name);
+    public Optional<Addon> remove(String name) {
+        return Optional.ofNullable(addons.remove(name.toLowerCase()));
     }
 }
