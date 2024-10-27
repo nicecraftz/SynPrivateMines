@@ -21,9 +21,7 @@ import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.hook.WorldIO;
 import me.untouchedodin0.privatemines.mine.WeightedCollection;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
@@ -68,7 +66,7 @@ public class WorldEditHook extends Hook {
         worldEditWorldWriter = new WorldEditWorldIO();
     }
 
-    public WorldEditWorldIO getWorldEditWorldWriter() {
+    public WorldEditWorldIO getWorldEditWorldIO() {
         return worldEditWorldWriter;
     }
 
@@ -91,7 +89,7 @@ public class WorldEditHook extends Hook {
                         new Vector(minimumPoint.getX(), minimumPoint.getY(), minimumPoint.getZ()),
                         new Vector(maximumPoint.getX(), maximumPoint.getY(), maximumPoint.getZ())
                 );
-                
+
                 Operation operation = new ClipboardHolder(clipboard).createPaste(editSession)
                         .to(adaptedLocation)
                         .ignoreAirBlocks(true)
@@ -107,9 +105,13 @@ public class WorldEditHook extends Hook {
             RandomPattern randomPattern = new RandomPattern();
             boundingBox.expand(-Math.abs(gap));
 
-            for (Map.Entry<Material, Double> materialDoubleEntry : materials.entrySet()) {
-                BlockData blockData = materialDoubleEntry.getKey().createBlockData();
-                double chance = materialDoubleEntry.getValue();
+            for (Map.Entry<Double, String> materialDoubleEntry : materials.entrySet()) {
+                Material material = Registry.MATERIAL.get(NamespacedKey.minecraft(materialDoubleEntry.getValue()
+                        .toString()));
+                if (material == null) continue;
+
+                BlockData blockData = material.createBlockData();
+                double chance = materialDoubleEntry.getKey();
                 randomPattern.add(BukkitAdapter.adapt(blockData), chance);
             }
 

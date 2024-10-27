@@ -29,7 +29,7 @@ public class WorldGuardHook extends Hook {
     private RegionManager regionManager;
     private FlagRegistry flags;
 
-    private RegionOrchestrator<ProtectedRegion, Flag> regionOrchestrator;
+    private RegionOrchestrator regionOrchestrator;
 
     @Override
     public String getPluginName() {
@@ -48,17 +48,22 @@ public class WorldGuardHook extends Hook {
         regionOrchestrator = new WorldGuardRegionOrchestrator();
     }
 
-    public RegionOrchestrator<ProtectedRegion, Flag> getRegionOrchestrator() {
+    public RegionOrchestrator getRegionOrchestrator() {
         return regionOrchestrator;
     }
 
-    public class WorldGuardRegionOrchestrator implements RegionOrchestrator<ProtectedRegion, Flag> {
-
-        @Override
-        public void setFlag(ProtectedRegion region, Flag flag, boolean state) {
+    public class WorldGuardRegionOrchestrator implements RegionOrchestrator {
+        private void setFlag(ProtectedRegion region, Flag flag, boolean state) {
             String stateString = state ? "allow" : "deny";
             FlagContext regionContext = FlagContext.create().setInput(stateString).setObject("region", region).build();
             region.setFlag(flag, regionContext);
+        }
+
+        @Override
+        public void setFlag(String region, String flag, boolean state) {
+            ProtectedRegion protectedRegion = regionManager.getRegion(region);
+            Flag<?> matchFlag = Flags.fuzzyMatchFlag(flags, flag);
+            setFlag(protectedRegion, matchFlag, state);
         }
 
         @Override

@@ -3,9 +3,9 @@ package me.untouchedodin0.privatemines.hook;
 import me.untouchedodin0.privatemines.mine.Mine;
 import org.bukkit.util.BoundingBox;
 
-public interface RegionOrchestrator<R, F> {
+public interface RegionOrchestrator {
 
-    void setFlag(R region, F flag, boolean state);
+    void setFlag(String region, String flag, boolean state);
 
     void setFlagsForMine(Mine mine);
 

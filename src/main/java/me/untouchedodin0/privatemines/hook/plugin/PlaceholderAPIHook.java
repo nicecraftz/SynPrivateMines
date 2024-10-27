@@ -6,7 +6,6 @@ import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.mine.Mine;
 import me.untouchedodin0.privatemines.mine.MineData;
 import me.untouchedodin0.privatemines.mine.MineService;
-import me.untouchedodin0.privatemines.utils.QueueUtils;
 import me.untouchedodin0.privatemines.utils.SerializationUtil;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -19,8 +18,7 @@ import java.util.UUID;
 public class PlaceholderAPIHook extends Hook {
     private static final String NO_RESULT = "";
 
-    private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.getInstance();
-    private static final QueueUtils QUEUE_UTILS = PLUGIN_INSTANCE.getQueueUtils();
+    private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.inst();
     private static final MineService MINE_SERVICE = PLUGIN_INSTANCE.getMineService();
 
     @Override

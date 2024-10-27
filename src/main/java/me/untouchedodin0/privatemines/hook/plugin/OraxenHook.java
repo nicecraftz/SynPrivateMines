@@ -58,7 +58,7 @@ public class OraxenHook extends Hook {
         BoundingBox boundingBox = mineStructure.mineBoundingBox();
         if (shouldCreateWallGap) boundingBox.expand(-Math.abs(wallsGap));
         HookHandler.getHookHandler().get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
-                .getWorldEditWorldWriter().fill(boundingBox, 0, WorldEditHook.EMPTY);
+                .getWorldEditWorldIO().fill(boundingBox, 0, WorldEditHook.EMPTY);
 
         for (Player online : Bukkit.getOnlinePlayers()) {
             Location location = online.getLocation();

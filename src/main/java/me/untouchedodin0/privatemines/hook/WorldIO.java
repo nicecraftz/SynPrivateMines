@@ -16,10 +16,10 @@ public interface WorldIO {
     MineBlocks findRelativePoints(File schematicFile);
 
 
-    record MineBlocks(Vector spawnLocation, BoundingBox area, Vector npcLocation, Vector quarryLocation) {
+    record MineBlocks(Vector spawnLocation, BoundingBox miningArea, Vector npcLocation, Vector quarryLocation) {
         public MineBlocks {
             if (spawnLocation == null) throw new IllegalArgumentException("Spawn location cannot be null");
-            if (area == null) throw new IllegalArgumentException("Area cannot be null");
+            if (miningArea == null) throw new IllegalArgumentException("Area cannot be null");
         }
 
         public boolean hasNpcLocation() {
