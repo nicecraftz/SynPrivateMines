@@ -11,13 +11,16 @@ public enum ConfigurationValueType {
     MATERIAL(new MaterialConfigurationEntryBridge()),
     STRING_LIST(new StringListConfigurationEntryBridge()),
     PARTICLE(new ParticleConfigurationEntryBridge()),
-    COMPONENT(new ComponentConfigurationEntryBridge()),
-    MINE_TYPE(new MineTypeConfigurationEntryBridge());
+    COMPONENT(new ComponentConfigurationEntryBridge());
 
     private final ConfigurationEntryBridge<?> bridge;
 
     ConfigurationValueType(ConfigurationEntryBridge<?> bridge) {
         this.bridge = bridge;
+    }
+
+    public <T extends ConfigurationEntryBridge> ConfigurationEntryBridge<T> getBridge(Class<T> clazz) {
+        return clazz.cast(bridge);
     }
 
     public ConfigurationEntryBridge<?> getBridge() {

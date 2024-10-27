@@ -49,7 +49,7 @@ import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
 import static io.papermc.paper.command.brigadier.Commands.literal;
 
 public class PublicMinesCommand {
-    private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.getInstance();
+    private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.inst();
     private static final MineService MINE_SERVICE = PLUGIN_INSTANCE.getMineService();
     private static String TAX_STRING_FORMAT = "Tax: %.2f%%";
 

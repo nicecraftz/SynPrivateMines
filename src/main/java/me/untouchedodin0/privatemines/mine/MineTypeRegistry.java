@@ -1,22 +1,27 @@
 package me.untouchedodin0.privatemines.mine;
 
+import me.untouchedodin0.privatemines.storage.SchematicStorage;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class MineTypeRegistry {
+    private final SchematicStorage schematicStorage;
     private final HashMap<String, MineType> mineRegistry = new HashMap<>();
     private MineType defaultMineType = null;
 
+    public MineTypeRegistry(SchematicStorage schematicStorage) {
+        this.schematicStorage = schematicStorage;
+    }
+
     public void register(MineType mineType) {
+        if (mineType.isDefault()) defaultMineType = mineType;
         mineRegistry.put(mineType.name().toLowerCase(), mineType);
+        schematicStorage.computeThenAdd(mineType.schematicFile());
     }
 
     public MineType get(String name) {
         return mineRegistry.get(name.toLowerCase());
-    }
-
-    public void setDefaultMineType(MineType defaultMineType) {
-        this.defaultMineType = defaultMineType;
     }
 
     public boolean isDefaultMineSet() {

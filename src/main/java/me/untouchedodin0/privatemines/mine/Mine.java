@@ -21,9 +21,7 @@
 
 package me.untouchedodin0.privatemines.mine;
 
-import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.mine.task.MinePercentageTask;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -55,17 +53,6 @@ public class Mine {
         if (!block.getType().isBlock()) return;
         block.setType(Material.AIR, false);
         entity.teleportAsync(spawnLocation);
-    }
-
-    public void startTasks() {
-        MineType mineType = mineData.getMineType();
-        Bukkit.getScheduler().runTaskTimer(PrivateMines.getInstance(), task, 0L, mineType.resetTime() * 20L);
-        Bukkit.getScheduler().runTaskTimerAsynchronously(PrivateMines.getInstance(), percentageTask, 0L, 20L * 10);
-    }
-
-    public void stopTasks() {
-        task.cancel();
-        // todo: recreate percentageTask
     }
 
     public boolean isBanned(UUID uuid) {

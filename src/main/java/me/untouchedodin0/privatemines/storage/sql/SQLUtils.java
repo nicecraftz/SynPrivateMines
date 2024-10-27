@@ -3,7 +3,7 @@ package me.untouchedodin0.privatemines.storage.sql;
 import me.untouchedodin0.privatemines.PrivateMines;
 
 public class SQLUtils {
-    private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
+    private static final PrivateMines PRIVATE_MINES = PrivateMines.inst();
 
 //  public static Location getCurrentLocation() {
 //    MineWorldManager mineWorldManager = PrivateMines.getInstance().getMineWorldManager();

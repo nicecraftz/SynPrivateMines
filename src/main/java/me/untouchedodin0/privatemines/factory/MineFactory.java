@@ -23,15 +23,18 @@ package me.untouchedodin0.privatemines.factory;
 
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
-import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
+import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.events.PrivateMineCreationEvent;
-import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
 import me.untouchedodin0.privatemines.hook.HookHandler;
+import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
+import me.untouchedodin0.privatemines.hook.WorldIO;
+import me.untouchedodin0.privatemines.hook.plugin.WorldEditHook;
 import me.untouchedodin0.privatemines.hook.plugin.WorldGuardHook;
-import me.untouchedodin0.privatemines.mine.*;
-import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
-import me.untouchedodin0.privatemines.utils.schematic.PastedMine;
+import me.untouchedodin0.privatemines.mine.Mine;
+import me.untouchedodin0.privatemines.mine.MineData;
+import me.untouchedodin0.privatemines.mine.MineStructure;
+import me.untouchedodin0.privatemines.mine.MineType;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -42,21 +45,15 @@ import java.util.UUID;
 
 public class MineFactory {
     private final PrivateMines privateMines;
-    private final PasteHelper pasteHelper;
-    private final MineService mineService;
-
-    private static final RegionOrchestrator regionOrchestrator = HookHandler.getHookHandler().get(
-            WorldGuardHook.PLUGIN_NAME,
-            WorldGuardHook.class
-    ).getRegionOrchestrator();
+    private static final RegionOrchestrator regionOrchestrator = HookHandler.getHookHandler()
+            .get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
+            .getRegionOrchestrator();
 
     @ConfigurationEntry(key = "is-closed-by-default", section = "mine", type = ConfigurationValueType.BOOLEAN, value = "true")
     private boolean defaultClosed;
 
     public MineFactory(PrivateMines privateMines) {
         this.privateMines = privateMines;
-        this.pasteHelper = privateMines.getPasteHelper();
-        this.mineService = privateMines.getMineService();
         ConfigurationInstanceRegistry.registerInstance(this);
     }
 
@@ -69,16 +66,19 @@ public class MineFactory {
         }
 
         String mineRegionName = String.format("mine-%s", uuid.toString());
-        String fullRegionName = String.format("full-mine-%s", uuid.toString());
+        String fullRegionName = String.format("full-mine-%s", uuid);
 
-        PastedMine pastedMine = pasteHelper.paste(schematicFile, location);
+        WorldIO worldIO = HookHandler.getHookHandler()
+                .get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
+                .getWorldEditWorldIO();
 
+        BoundingBox schematicArea = worldIO.placeSchematic(schematicFile, location);
         Location spawn = location.clone().add(0, 0, 1);
-        BoundingBox mineArea = BoundingBox.of(pastedMine.getLowerRailsLocation(), pastedMine.getUpperRailsLocation());
-        BoundingBox schematicArea = BoundingBox.of(pasteHelper.getMinimum(), pasteHelper.getMaximum());
+        WorldIO.MineBlocks mineBlocks = privateMines.getSchematicStorage().get(schematicFile);
+        BoundingBox mineArea = mineBlocks.miningArea();
 
-
-        RegionOrchestrator regionOrchestrator = HookHandler.getHookHandler().get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
+        RegionOrchestrator regionOrchestrator = HookHandler.getHookHandler()
+                .get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
                 .getRegionOrchestrator();
 
         regionOrchestrator.addRegion(fullRegionName, schematicArea);
@@ -96,9 +96,6 @@ public class MineFactory {
 
         // todo: Handle this
 //        SQLUtils.insert(mine);
-
-        mineService.cache(mine);
-        mineService.handleReset(mine);
 
         spawnLocation.getBlock().setType(Material.AIR);
         PrivateMineCreationEvent creationEvent = new PrivateMineCreationEvent(mine);

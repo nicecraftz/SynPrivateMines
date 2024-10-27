@@ -10,7 +10,7 @@ public interface PrivateMinesAPI {
 
     boolean hasMine(UUID uuid);
 
-    void createMine(UUID uuid, Location location, MineType mineType);
+    void createMine(UUID uuid, MineType mineType);
 
     Mine getPlayerMine(UUID uuid);
 

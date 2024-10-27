@@ -1,7 +1,9 @@
 package me.untouchedodin0.privatemines.mine;
 
 
+import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 
 public class WeightedCollection<E> {
@@ -29,6 +31,10 @@ public class WeightedCollection<E> {
 
     public void clear() {
         map.clear();
+    }
+
+    public Set<Map.Entry<Double, E>> entrySet() {
+        return Set.copyOf(map.entrySet());
     }
 
     public static <T> WeightedCollection<T> single(T value, double chance) {

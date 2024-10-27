@@ -20,8 +20,8 @@ public class PrivateMinesAPIImpl implements PrivateMinesAPI {
     }
 
     @Override
-    public void createMine(UUID uuid, Location location, MineType mineType) {
-        mineService.create(uuid, location, mineType);
+    public void createMine(UUID uuid, MineType mineType) {
+        mineService.create(uuid, mineType);
     }
 
     @Override

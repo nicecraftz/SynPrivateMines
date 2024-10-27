@@ -1,7 +1,6 @@
 package me.untouchedodin0.privatemines.storage;
 
 
-import com.google.common.collect.ImmutableMap;
 import me.untouchedodin0.privatemines.hook.WorldIO;
 
 import java.io.File;
@@ -9,14 +8,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SchematicStorage {
+    private final WorldIO worldIO;
     private final Map<File, WorldIO.MineBlocks> mineBlocksMap = new HashMap<>();
 
-    public void add(File schematicFile, WorldIO.MineBlocks mineBlocks) {
-        mineBlocksMap.putIfAbsent(schematicFile, mineBlocks);
+    public SchematicStorage(WorldIO worldIO) {
+        this.worldIO = worldIO;
     }
 
-    public Map<File, WorldIO.MineBlocks> getMineBlocksMap() {
-        return ImmutableMap.copyOf(mineBlocksMap);
+    public void computeThenAdd(File file) {
+        WorldIO.MineBlocks mineBlocks = worldIO.findRelativePoints(file);
+        mineBlocksMap.putIfAbsent(file, mineBlocks);
     }
 
     public WorldIO.MineBlocks get(File file) {

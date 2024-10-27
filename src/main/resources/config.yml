@@ -38,9 +38,6 @@ mine-types:
       percentage: 15
     expand: 1
     upgrade-cost: 1.0
-    hooks:
-      oraxen: false
-      itemsAdder: false
     materials:
       cobblestone: 99.0
       oraxen_your_block_id: 0.5

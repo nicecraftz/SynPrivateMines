@@ -20,17 +20,25 @@ import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
 import static io.papermc.paper.command.brigadier.Commands.argument;
 import static io.papermc.paper.command.brigadier.Commands.literal;
 
 public class AddonsCommand {
-    private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.getInstance();
     private static final String ADDONS_LIST_FORMAT = "<green>Name: %s\n<aqua>Version: %s\n<aqua>Description: %s";
+    private final PrivateMines privateMines;
+    private final AddonManager addonManager;
+
+    public AddonsCommand(PrivateMines privateMines) {
+        this.privateMines = privateMines;
+        this.addonManager = privateMines.getAddonManager();
+    }
+
 
     public void registerCommands() {
-        LifecycleEventManager<Plugin> lifecycleManager = PLUGIN_INSTANCE.getLifecycleManager();
+        LifecycleEventManager<Plugin> lifecycleManager = privateMines.getLifecycleManager();
         lifecycleManager.registerEventHandler(
                 LifecycleEvents.COMMANDS,
                 event -> event.registrar().register(buildCommand())
@@ -48,7 +56,7 @@ public class AddonsCommand {
     private Command<CommandSourceStack> noArgsCommand() {
         return context -> {
             CommandSender commandSender = context.getSource().getSender();
-            Map<String, Addon> addons = AddonManager.getAddons();
+            Map<String, Addon> addons = privateMines.getAddonManager().getAddons();
 
             if (addons.isEmpty()) {
                 commandSender.sendRichMessage("<green>Addons: <red>(None)");
@@ -61,12 +69,13 @@ public class AddonsCommand {
             for (Map.Entry<String, Addon> entry : addons.entrySet()) {
                 String name = entry.getKey();
                 Addon addon = entry.getValue();
+                Addon.AddonDescription addonDescription = addon.addonDescription();
 
                 stringBuilder.append(String.format(
                         ADDONS_LIST_FORMAT,
                         name,
-                        addon.getVersion(),
-                        addon.getDescription()
+                        addonDescription.version(),
+                        addonDescription.description()
                 ));
             }
 
@@ -80,11 +89,16 @@ public class AddonsCommand {
             CommandSender sender = context.getSource().getSender();
             String addonNameInput = context.getArgument("addon", String.class);
 
-            Addon addon = AddonManager.get(addonNameInput);
+            Optional<Addon> removedAddonOptional = addonManager.remove(addonNameInput);
 
-            sender.sendRichMessage("<gold>Disabling " + addon.getName());
-            addon.onDisable();
-            AddonManager.remove(addonNameInput);
+            if (removedAddonOptional.isEmpty()) {
+                sender.sendRichMessage("<red>Failed to disable " + addonNameInput + " as it does not exist");
+                return SINGLE_SUCCESS;
+            }
+
+            Addon removedAddon = removedAddonOptional.get();
+            sender.sendRichMessage("<gold>Disabling " + removedAddon.addonDescription().description());
+            removedAddon.disable();
             sender.sendRichMessage("<green>Successfully disabled " + addonNameInput);
             return SINGLE_SUCCESS;
         });
@@ -99,10 +113,16 @@ public class AddonsCommand {
 
             for (String addonName : serializedAddons) {
                 String trimmedAddonName = addonName.trim();
-                Addon addon = AddonManager.get(addonName);
+                Optional<Addon> addonOptional = addonManager.get(addonName);
 
+                if (addonOptional.isEmpty()) {
+                    sender.sendRichMessage("<red>Failed to reload " + trimmedAddonName + " as it does not exist");
+                    return SINGLE_SUCCESS;
+                }
+
+                Addon addon = addonOptional.get();
                 sender.sendRichMessage("<gold>Reloading " + trimmedAddonName);
-                addon.onReload();
+                addon.reload();
                 sender.sendRichMessage("<green>Successfully reloaded " + trimmedAddonName);
             }
 
@@ -114,7 +134,7 @@ public class AddonsCommand {
         return literal("load").then(argument("search", StringArgumentType.word()).executes(context -> {
             CommandSender sender = context.getSource().getSender();
             String searchInput = context.getArgument("search", String.class);
-            File addonsDirectory = PLUGIN_INSTANCE.getAddonsDirectory();
+            File addonsDirectory = privateMines.getAddonsDirectory();
             TextComponent.Builder messageBuilder = Component.text()
                     .append(Component.text("Addon Files:", NamedTextColor.GOLD))
                     .decorate(TextDecoration.BOLD)

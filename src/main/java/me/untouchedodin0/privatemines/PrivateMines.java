@@ -6,24 +6,23 @@ import me.untouchedodin0.privatemines.commands.PublicMinesCommand;
 import me.untouchedodin0.privatemines.configuration.ConfigurationProcessor;
 import me.untouchedodin0.privatemines.factory.MineFactory;
 import me.untouchedodin0.privatemines.hook.HookHandler;
-import me.untouchedodin0.privatemines.listener.MineResetListener;
-import me.untouchedodin0.privatemines.listener.PlayerJoinListener;
+import me.untouchedodin0.privatemines.hook.plugin.WorldEditHook;
+import me.untouchedodin0.privatemines.listener.ConnectionListener;
 import me.untouchedodin0.privatemines.mine.Mine;
 import me.untouchedodin0.privatemines.mine.MineService;
+import me.untouchedodin0.privatemines.mine.MineType;
 import me.untouchedodin0.privatemines.mine.MineTypeRegistry;
 import me.untouchedodin0.privatemines.storage.SchematicStorage;
-import me.untouchedodin0.privatemines.utils.QueueUtils;
 import me.untouchedodin0.privatemines.utils.UpdateChecker;
-import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
+import me.untouchedodin0.privatemines.utils.addon.AddonManager;
 import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.List;
 
 public class PrivateMines extends JavaPlugin {
     private static PrivateMines instance;
@@ -43,12 +42,11 @@ public class PrivateMines extends JavaPlugin {
     private MineWorldManager mineWorldManager;
     private MineTypeRegistry mineTypeRegistry;
 
-    private QueueUtils queueUtils;
+    private AddonManager addonManager;
 
     private Economy economy = null;
-    private PasteHelper pasteHelper;
 
-    public static PrivateMines getInstance() {
+    public static PrivateMines inst() {
         return instance;
     }
 
@@ -59,28 +57,30 @@ public class PrivateMines extends JavaPlugin {
         instance = this;
         configurationProcessor = new ConfigurationProcessor(this);
         saveDefaultConfig();
-
-        schematicsDirectory = new File(getDataFolder(), "schematics");
-        addonsDirectory = new File(getDataFolder(), "addons");
-        if (!schematicsDirectory.exists()) schematicsDirectory.mkdirs();
-        if (!addonsDirectory.exists()) schematicsDirectory.mkdirs();
-
-        saveInitialResources();
+        esnureDirectoriesCreation();
 
         mineWorldManager = new MineWorldManager();
-        mineService = new MineService();
-        mineTypeRegistry = new MineTypeRegistry();
         mineFactory = new MineFactory(this);
-        queueUtils = new QueueUtils();
-
-        schematicStorage = new SchematicStorage();
+        mineService = new MineService(this);
 
         registerListeners();
         HookHandler.getHookHandler().registerHooks();
 
-        pasteHelper = new PasteHelper();
+        schematicStorage = new SchematicStorage(HookHandler.getHookHandler()
+                .get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
+                .getWorldEditWorldIO());
 
+        minesAPI = new PrivateMinesAPIImpl(mineService);
+        mineTypeRegistry = new MineTypeRegistry(schematicStorage);
+
+        addonManager = new AddonManager(this);
         // todo: register mine types.
+
+        registerMineTypes();
+
+        new AddonsCommand(this).registerCommands();
+        new PublicMinesCommand().registerCommands();
+        new PrivateMinesCommand(this).registerCommands();
 
 //        MineConfig.getMineTypes().forEach((s, mineType) -> mineTypeManager.registerMineType(mineType));
 //        MineConfig.mineTypes.forEach((name, mineType) -> {
@@ -97,10 +97,7 @@ public class PrivateMines extends JavaPlugin {
 //            schematicStorage.addSchematic(schematicFile, mineBlocks);
 //        });
 
-        new AddonsCommand().registerCommands();
-        new PublicMinesCommand().registerCommands();
-        new PrivateMinesCommand(this).registerCommands();
-        ensureDatabaseFileCreation();
+//        ensureDatabaseFileCreation();
 
         // TODO: rewrite whole sql data handle system.
 //        sqLite = new SQLite();
@@ -157,6 +154,22 @@ public class PrivateMines extends JavaPlugin {
         configurationProcessor.refreshFields();
     }
 
+    private void registerMineTypes() {
+        ConfigurationSection configurationSection = getConfig().getConfigurationSection("mine-types");
+        for (String key : configurationSection.getKeys(false)) {
+            MineType mineType = MineType.fromConfigurationSection(configurationSection.getConfigurationSection(key));
+            mineTypeRegistry.register(mineType);
+        }
+
+    }
+
+    private void esnureDirectoriesCreation() {
+        schematicsDirectory = new File(getDataFolder(), "schematics");
+        addonsDirectory = new File(getDataFolder(), "addons");
+        if (!schematicsDirectory.exists()) schematicsDirectory.mkdirs();
+        if (!addonsDirectory.exists()) schematicsDirectory.mkdirs();
+    }
+
     @Override
     public void reloadConfig() {
         super.reloadConfig();
@@ -169,26 +182,20 @@ public class PrivateMines extends JavaPlugin {
         saveMines();
     }
 
-    private void saveInitialResources() {
-        List<String> locales = List.of("en", "es");
-        for (String localeCodeName : locales) saveResource(String.format("messages_%s.yml", localeCodeName), false);
-        saveResource("menus.yml", false);
-    }
+//    private void ensureDatabaseFileCreation() {
+//        File databaseFile = new File(instance.getDataFolder(), "privatemines.db");
+//        if (!databaseFile.exists()) {
+//            databaseFile.getParentFile().mkdirs();
+//            try {
+//                databaseFile.createNewFile();
+//            } catch (IOException e) {
+//                logError("There was an error while trying to save the database file to the plugin's datafolder", e);
+//            }
+//        }
+//    }
 
-    private void ensureDatabaseFileCreation() {
-        File databaseFile = new File(instance.getDataFolder(), "privatemines.db");
-        if (!databaseFile.exists()) {
-            databaseFile.getParentFile().mkdirs();
-            try {
-                databaseFile.createNewFile();
-            } catch (IOException e) {
-                logError("There was an error while trying to save the database file to the plugin's datafolder", e);
-            }
-        }
-    }
-
-    public void logError(Exception exception) {
-        logError("An error occurred: ", exception);
+    public void logError(String message) {
+        getLogger().severe(message);
     }
 
     public void logError(String message, Exception ex) {
@@ -196,8 +203,7 @@ public class PrivateMines extends JavaPlugin {
     }
 
     private void registerListeners() {
-        getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
-        getServer().getPluginManager().registerEvents(new MineResetListener(mineService), this);
+        getServer().getPluginManager().registerEvents(new ConnectionListener(this), this);
     }
 
 //    public void loadSQLMines() {
@@ -275,6 +281,11 @@ public class PrivateMines extends JavaPlugin {
 //        }
 //    }
 
+
+    public PrivateMinesAPI getMinesAPI() {
+        return minesAPI;
+    }
+
     public void saveMines() {
         for (Mine mine : mineService.getMines().values()) {
             Player player = Bukkit.getOfflinePlayer(mine.getMineData().getMineOwner()).getPlayer();
@@ -282,12 +293,7 @@ public class PrivateMines extends JavaPlugin {
 
             // todo: update mines
 //            SQLUtils.update(mine);
-            mine.stopTasks();
         }
-    }
-
-    public PasteHelper getPasteHelper() {
-        return pasteHelper;
     }
 
     public SchematicStorage getSchematicStorage() {
@@ -318,10 +324,6 @@ public class PrivateMines extends JavaPlugin {
         return economy;
     }
 
-    public QueueUtils getQueueUtils() {
-        return queueUtils;
-    }
-
     public void logInfo(String message) {
         getLogger().info(message);
     }
@@ -336,5 +338,9 @@ public class PrivateMines extends JavaPlugin {
 
     public File getSchematicsDirectory() {
         return schematicsDirectory;
+    }
+
+    public AddonManager getAddonManager() {
+        return addonManager;
     }
 }
