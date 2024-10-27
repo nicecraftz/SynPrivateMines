@@ -7,11 +7,11 @@ settings:
   storage: "YAML" # Or SQLite
 
 materials:
-  spawn-point: SPONGE
-  mine-corner: POWERED_RAIL
-  sell-npc: WHITE_WOOL
-  upgrade: OBSIDIAN
-  quarry: SHULKER_BOX
+  spawn-point: sponge
+  mine-corner: powered_rail
+  sell-npc: white_wool
+  upgrade: obsidian
+  quarry: shulker_box
 
 mine:
   border-upgrade: true

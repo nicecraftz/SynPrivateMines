@@ -7,6 +7,7 @@
 /build/resources/
 /build/tmp/
 /server/
+/run/
 
 # Ignore Gradle project-specific cache directory
 .gradle

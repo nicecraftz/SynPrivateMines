@@ -27,7 +27,7 @@ import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
 import me.untouchedodin0.privatemines.events.PrivateMineCreationEvent;
 import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
-import me.untouchedodin0.privatemines.hook.plugin.HookHandler;
+import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.hook.plugin.WorldGuardHook;
 import me.untouchedodin0.privatemines.mine.*;
 import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
@@ -45,7 +45,7 @@ public class MineFactory {
     private final PasteHelper pasteHelper;
     private final MineService mineService;
 
-    private static final RegionOrchestrator regionOrchestrator = HookHandler.get(
+    private static final RegionOrchestrator regionOrchestrator = HookHandler.getHookHandler().get(
             WorldGuardHook.PLUGIN_NAME,
             WorldGuardHook.class
     ).getRegionOrchestrator();
@@ -78,7 +78,7 @@ public class MineFactory {
         BoundingBox schematicArea = BoundingBox.of(pasteHelper.getMinimum(), pasteHelper.getMaximum());
 
 
-        RegionOrchestrator regionOrchestrator = HookHandler.get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
+        RegionOrchestrator regionOrchestrator = HookHandler.getHookHandler().get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
                 .getRegionOrchestrator();
 
         regionOrchestrator.addRegion(fullRegionName, schematicArea);

@@ -11,8 +11,12 @@ import me.untouchedodin0.privatemines.events.PrivateMineDeleteEvent;
 import me.untouchedodin0.privatemines.events.PrivateMineExpandEvent;
 import me.untouchedodin0.privatemines.events.PrivateMineResetEvent;
 import me.untouchedodin0.privatemines.events.PrivateMineUpgradeEvent;
+import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
-import me.untouchedodin0.privatemines.hook.plugin.*;
+import me.untouchedodin0.privatemines.hook.plugin.ItemsAdderHook;
+import me.untouchedodin0.privatemines.hook.plugin.OraxenHook;
+import me.untouchedodin0.privatemines.hook.plugin.WorldEditHook;
+import me.untouchedodin0.privatemines.hook.plugin.WorldGuardHook;
 import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
 import me.untouchedodin0.privatemines.utils.schematic.PastedMine;
 import org.bukkit.Bukkit;
@@ -26,6 +30,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static me.untouchedodin0.privatemines.hook.HookHandler.getHookHandler;
+
 public class MineService {
     private static final PrivateMines PRIVATE_MINES = PrivateMines.getInstance();
     private final HashMap<UUID, Mine> mines = Maps.newHashMap();
@@ -36,7 +42,7 @@ public class MineService {
     @ConfigurationEntry(key = "border-upgrade", section = "mine", value = "true", type = ConfigurationValueType.BOOLEAN)
     boolean borderUpgrade;
 
-    @ConfigurationEntry(key = "upgrade", section = "materials", value = "OBSIDIAN", type = ConfigurationValueType.MATERIAL)
+    @ConfigurationEntry(key = "upgrade", section = "materials", value = "obsidian", type = ConfigurationValueType.MATERIAL)
     Material upgradeMaterial;
 
     @ConfigurationEntry(key = "gap", section = "mine.configuration", value = "1", type = ConfigurationValueType.INT)
@@ -90,8 +96,7 @@ public class MineService {
         if (privateMineResetEvent.isCancelled()) return;
         if (materials != null && materials.isEmpty()) return;
 
-        WorldEditHook.WorldEditWorldWriter worldEditWorldWriter = HookHandler.get(
-                WorldEditHook.PLUGIN_NAME,
+        WorldEditHook.WorldEditWorldWriter worldEditWorldWriter = HookHandler.getHookHandler().get(WorldEditHook.PLUGIN_NAME,
                 WorldEditHook.class
         ).getWorldEditWorldWriter();
 
@@ -112,16 +117,16 @@ public class MineService {
         BoundingBox schematicBoundingBox = structure.schematicBoundingBox();
         BoundingBox mineBoundingBox = structure.mineBoundingBox();
 
-        HookHandler.get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
+        getHookHandler().get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
                 .getRegionOrchestrator()
                 .removeMineRegions(mine);
 
-        HookHandler.get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
+        getHookHandler().get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
                 .getWorldEditWorldWriter()
                 .fill(schematicBoundingBox, WorldEditHook.EMPTY);
 
-        if (mineData.getMineType().useItemsAdder() && HookHandler.hooked(ItemsAdderHook.PLUGIN_NAME)) {
-            HookHandler.get(ItemsAdderHook.PLUGIN_NAME, ItemsAdderHook.class)
+        if (mineData.getMineType().useItemsAdder() && getHookHandler().hooked(ItemsAdderHook.PLUGIN_NAME)) {
+            getHookHandler().get(ItemsAdderHook.PLUGIN_NAME, ItemsAdderHook.class)
                     .removeItemsAdderBlocksFromBoundingBox(mineBoundingBox);
         }
 
@@ -157,7 +162,7 @@ public class MineService {
         BoundingBox schematicArea = mineData.getMineStructure().schematicBoundingBox();
 
 
-        HookHandler.get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
+        HookHandler.getHookHandler().get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
                 .getWorldEditWorldWriter()
                 .fill(schematicArea, WorldEditHook.EMPTY);
 
@@ -173,16 +178,14 @@ public class MineService {
         BoundingBox mineRegion = BoundingBox.of(mineMinCorner, mineMaxCorner);
         BoundingBox schematicRegion = BoundingBox.of(schematicMinCorner, schematicMaxCorner);
 
-        RegionOrchestrator<ProtectedRegion, Flag> regionOrchestrator = HookHandler.get(
-                WorldGuardHook.PLUGIN_NAME,
+        RegionOrchestrator<ProtectedRegion, Flag> regionOrchestrator = HookHandler.getHookHandler().get(WorldGuardHook.PLUGIN_NAME,
                 WorldGuardHook.class
         ).getRegionOrchestrator();
 
         regionOrchestrator.addRegion(mineRegionName, mineRegion);
         regionOrchestrator.addRegion(fullRegionName, schematicRegion);
 
-        MineStructure mineStructure = new MineStructure(
-                mineRegion,
+        MineStructure mineStructure = new MineStructure(mineRegion,
                 schematicRegion,
                 mineData.getMineStructure().mineLocation(),
                 spawn
@@ -201,15 +204,15 @@ public class MineService {
         MineData mineData = mine.getMineData();
         MineType mineType = mineData.getMineType();
 
-        boolean useAndResetWithOraxen = mineType.useOraxen() && HookHandler.hooked(OraxenHook.PLUGIN_NAME);
-        boolean useAndResetWithItemsAdder = mineType.useItemsAdder() && HookHandler.hooked(ItemsAdderHook.PLUGIN_NAME);
+        boolean useAndResetWithOraxen = mineType.useOraxen() && HookHandler.getHookHandler().hooked(OraxenHook.PLUGIN_NAME);
+        boolean useAndResetWithItemsAdder = mineType.useItemsAdder() && HookHandler.getHookHandler().hooked(ItemsAdderHook.PLUGIN_NAME);
 
         if (!useAndResetWithItemsAdder || !useAndResetWithOraxen) {
             reset(mine);
         } else if (useAndResetWithItemsAdder) {
-            HookHandler.get(ItemsAdderHook.PLUGIN_NAME, ItemsAdderHook.class).resetMineWithItemsAdder(mine);
+            HookHandler.getHookHandler().get(ItemsAdderHook.PLUGIN_NAME, ItemsAdderHook.class).resetMineWithItemsAdder(mine);
         } else if (useAndResetWithOraxen) {
-            HookHandler.get(OraxenHook.PLUGIN_NAME, OraxenHook.class).resetMineWithOraxen(mine);
+            HookHandler.getHookHandler().get(OraxenHook.PLUGIN_NAME, OraxenHook.class).resetMineWithOraxen(mine);
         }
 
         World minesWorld = PrivateMines.getInstance().getMineWorldManager().getMinesWorld();
@@ -248,8 +251,7 @@ public class MineService {
         Bukkit.getPluginManager().callEvent(privateMineExpandEvent);
         if (privateMineExpandEvent.isCancelled()) return;
 
-        WorldEditHook.WorldEditWorldWriter worldEditWorldWriter = HookHandler.get(
-                WorldEditHook.PLUGIN_NAME,
+        WorldEditHook.WorldEditWorldWriter worldEditWorldWriter = HookHandler.getHookHandler().get(WorldEditHook.PLUGIN_NAME,
                 WorldEditHook.class
         ).getWorldEditWorldWriter();
 
@@ -259,8 +261,7 @@ public class MineService {
         BoundingBox schematicBoundingBox = mineStructure.schematicBoundingBox().clone();
         schematicBoundingBox.expand(1, 1, 1);
 
-        MineStructure newMineStructure = new MineStructure(
-                mineBoundingBox,
+        MineStructure newMineStructure = new MineStructure(mineBoundingBox,
                 schematicBoundingBox,
                 mineStructure.mineLocation(),
                 mineStructure.spawnLocation()
@@ -268,7 +269,7 @@ public class MineService {
 
         String mineRegionName = String.format("mineRegion-%s", mine.getMineData().getMineOwner());
 
-        HookHandler.get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
+        HookHandler.getHookHandler().get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
                 .getRegionOrchestrator()
                 .addRegion(mineRegionName, mineBoundingBox);
 

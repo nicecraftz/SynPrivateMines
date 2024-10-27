@@ -6,6 +6,7 @@ import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
 import me.untouchedodin0.privatemines.events.PrivateMineResetEvent;
 import me.untouchedodin0.privatemines.hook.Hook;
+import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.hook.MineBlockHandler;
 import me.untouchedodin0.privatemines.mine.Mine;
 import me.untouchedodin0.privatemines.mine.MineData;
@@ -60,7 +61,7 @@ public class ItemsAdderHook extends Hook {
 
         BoundingBox boundingBox = mineStructure.mineBoundingBox();
         if (shouldCreateWallGap) boundingBox.expand(-Math.abs(wallsGap));
-        HookHandler.get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
+        HookHandler.getHookHandler().get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
                 .getWorldEditWorldWriter().fill(boundingBox, WorldEditHook.EMPTY);
 
         for (Player online : Bukkit.getOnlinePlayers()) {

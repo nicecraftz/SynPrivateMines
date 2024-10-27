@@ -3,5 +3,29 @@ version: '1.0'
 main: me.untouchedodin0.privatemines.PrivateMines
 description: PrivateMines plugin
 api-version: '1.21.1'
-bootstrapper: me.untouchedodin0.privatemines.PrivateMinesBootstrapper
-loader: me.untouchedodin0.privatemines.PrivateMinesLoader
+#bootstrapper: me.untouchedodin0.privatemines.PrivateMinesBootstrapper
+#loader: me.untouchedodin0.privatemines.PrivateMinesLoader
+
+dependencies:
+  server:
+    Vault:
+      required: true
+      load: BEFORE
+    PlaceholderAPI:
+      required: false
+      load: BEFORE
+    Oraxen:
+      required: false
+      load: BEFORE
+    AutoSell:
+      required: false
+      load: BEFORE
+    ItemsAdder:
+      required: false
+      load: BEFORE
+    WorldGuard:
+      required: true
+      load: BEFORE
+    FastAsyncWorldEdit:
+      required: true
+      load: BEFORE

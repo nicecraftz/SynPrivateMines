@@ -7,7 +7,7 @@ import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
 import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.world.World;
-import me.untouchedodin0.privatemines.hook.plugin.HookHandler;
+import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.hook.plugin.WorldEditHook;
 import org.bukkit.Location;
 
@@ -46,7 +46,7 @@ public class PasteHelper {
         World world = adapt(location.getWorld());
 
         try (
-                Clipboard clipboard = HookHandler.get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
+                Clipboard clipboard = HookHandler.getHookHandler().get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
                         .getWorldEditWorldWriter()
                         .getClipboard(file)
         ) {

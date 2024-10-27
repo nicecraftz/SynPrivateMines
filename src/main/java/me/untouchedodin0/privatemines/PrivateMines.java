@@ -5,7 +5,7 @@ import me.untouchedodin0.privatemines.commands.PrivateMinesCommand;
 import me.untouchedodin0.privatemines.commands.PublicMinesCommand;
 import me.untouchedodin0.privatemines.configuration.ConfigurationProcessor;
 import me.untouchedodin0.privatemines.factory.MineFactory;
-import me.untouchedodin0.privatemines.hook.plugin.HookHandler;
+import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.iterator.SchematicIterator;
 import me.untouchedodin0.privatemines.listener.MineResetListener;
 import me.untouchedodin0.privatemines.listener.PlayerJoinListener;
@@ -83,7 +83,7 @@ public class PrivateMines extends JavaPlugin {
         // TODO : Handle Tax System for mines.
 
         registerListeners();
-        HookHandler.handleHooks();
+        HookHandler.getHookHandler().registerHooks();
 
         pasteHelper = new PasteHelper();
 
@@ -154,9 +154,9 @@ public class PrivateMines extends JavaPlugin {
 //        Task.asyncDelayed(this::loadSQLMines);
 //        Task.asyncDelayed(SQLUtils::loadPregens);
 //        Task.asyncDelayed(this::loadAddons);
-
-        Metrics metrics = new Metrics(this, PLUGIN_ID);
-        metrics.addCustomChart(new SingleLineChart("mines", () -> mineService.getMinesCount()));
+//
+//        Metrics metrics = new Metrics(this, PLUGIN_ID);
+//        metrics.addCustomChart(new SingleLineChart("mines", () -> mineService.getMinesCount()));
 
         new UpdateChecker(this).fetch();
         minesAPI = new PrivateMinesAPIImpl(mineService);

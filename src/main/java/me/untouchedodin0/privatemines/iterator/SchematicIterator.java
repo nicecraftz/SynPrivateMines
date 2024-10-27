@@ -8,7 +8,7 @@ import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
-import me.untouchedodin0.privatemines.hook.plugin.HookHandler;
+import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.hook.plugin.WorldEditHook;
 import org.bukkit.Material;
 import org.bukkit.util.Vector;
@@ -44,7 +44,7 @@ public class SchematicIterator {
 
     public MineBlocks findRelativePoints(File file) {
         try (
-                Clipboard clipboard = HookHandler.get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
+                Clipboard clipboard = HookHandler.getHookHandler().get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
                         .getWorldEditWorldWriter()
                         .getClipboard(file)
         ) {
