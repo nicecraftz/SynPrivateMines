@@ -3,7 +3,7 @@ package me.untouchedodin0.privatemines.hook.plugin;
 import dev.lone.itemsadder.api.CustomBlock;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
-import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
+import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
 import me.untouchedodin0.privatemines.events.PrivateMineResetEvent;
 import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.hook.HookHandler;
@@ -30,7 +30,7 @@ public class ItemsAdderHook extends Hook {
     int wallsGap;
 
     public ItemsAdderHook() {
-        InstanceRegistry.registerInstance(this);
+        ConfigurationInstanceRegistry.registerInstance(this);
     }
 
 
@@ -62,7 +62,7 @@ public class ItemsAdderHook extends Hook {
         BoundingBox boundingBox = mineStructure.mineBoundingBox();
         if (shouldCreateWallGap) boundingBox.expand(-Math.abs(wallsGap));
         HookHandler.getHookHandler().get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
-                .getWorldEditWorldWriter().fill(boundingBox, WorldEditHook.EMPTY);
+                .getWorldEditWorldWriter().fill(boundingBox, 0, WorldEditHook.EMPTY);
 
         for (Player online : Bukkit.getOnlinePlayers()) {
             Location location = online.getLocation();

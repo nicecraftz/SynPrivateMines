@@ -23,7 +23,7 @@ package me.untouchedodin0.privatemines.utils.world;
 
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
-import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
+import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
 import org.bukkit.*;
 
 import static me.untouchedodin0.privatemines.utils.world.Direction.NORTH;
@@ -47,7 +47,7 @@ public class MineWorldManager {
     //  we can create a line long 500 mines then create a new mine by expanding on a new axis.
 
     public MineWorldManager() {
-        InstanceRegistry.registerInstance(this);
+        ConfigurationInstanceRegistry.registerInstance(this);
         minesWorld = Bukkit.getWorld("privatemines");
         minesWorld = minesWorld == null ? Bukkit.createWorld(new WorldCreator("privatemines")
                 .type(WorldType.FLAT)

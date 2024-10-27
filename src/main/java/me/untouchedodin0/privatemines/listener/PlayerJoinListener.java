@@ -3,7 +3,7 @@ package me.untouchedodin0.privatemines.listener;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
-import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
+import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
 import me.untouchedodin0.privatemines.mine.Mine;
 import me.untouchedodin0.privatemines.mine.MineService;
 import org.bukkit.entity.Player;
@@ -20,7 +20,7 @@ public class PlayerJoinListener implements Listener {
 
     public PlayerJoinListener(PrivateMines privateMines) {
         this.mineService = privateMines.getMineService();
-        InstanceRegistry.registerInstance(this);
+        ConfigurationInstanceRegistry.registerInstance(this);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

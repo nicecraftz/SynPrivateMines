@@ -86,6 +86,15 @@ public class MineData {
         return ImmutableSet.copyOf(bannedPlayers);
     }
 
+    public void addFriend(UUID uuid) {
+        if (uuid.equals(mineOwner)) return;
+        friends.add(uuid);
+    }
+
+    public void removeFriend(UUID uuid) {
+        friends.remove(uuid);
+    }
+
     public Set<UUID> getFriends() {
         return ImmutableSet.copyOf(friends);
     }

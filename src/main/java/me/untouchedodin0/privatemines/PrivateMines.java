@@ -6,7 +6,6 @@ import me.untouchedodin0.privatemines.commands.PublicMinesCommand;
 import me.untouchedodin0.privatemines.configuration.ConfigurationProcessor;
 import me.untouchedodin0.privatemines.factory.MineFactory;
 import me.untouchedodin0.privatemines.hook.HookHandler;
-import me.untouchedodin0.privatemines.iterator.SchematicIterator;
 import me.untouchedodin0.privatemines.listener.MineResetListener;
 import me.untouchedodin0.privatemines.listener.PlayerJoinListener;
 import me.untouchedodin0.privatemines.mine.Mine;
@@ -18,8 +17,6 @@ import me.untouchedodin0.privatemines.utils.UpdateChecker;
 import me.untouchedodin0.privatemines.utils.schematic.PasteHelper;
 import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
 import net.milkbowl.vault.economy.Economy;
-import org.bstats.bukkit.Metrics;
-import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -39,7 +36,6 @@ public class PrivateMines extends JavaPlugin {
 
     private ConfigurationProcessor configurationProcessor;
     private SchematicStorage schematicStorage;
-    private SchematicIterator schematicIterator;
 
     private MineFactory mineFactory;
     private MineService mineService;
@@ -78,9 +74,6 @@ public class PrivateMines extends JavaPlugin {
         queueUtils = new QueueUtils();
 
         schematicStorage = new SchematicStorage();
-        schematicIterator = new SchematicIterator();
-
-        // TODO : Handle Tax System for mines.
 
         registerListeners();
         HookHandler.getHookHandler().registerHooks();
@@ -106,7 +99,7 @@ public class PrivateMines extends JavaPlugin {
 
         new AddonsCommand().registerCommands();
         new PublicMinesCommand().registerCommands();
-        new PrivateMinesCommand().registerCommands();
+        new PrivateMinesCommand(this).registerCommands();
         ensureDatabaseFileCreation();
 
         // TODO: rewrite whole sql data handle system.
@@ -128,7 +121,7 @@ public class PrivateMines extends JavaPlugin {
 //                isOpen INT NOT NULL,
 //                maxPlayers INT NOT NULL,
 //                maxMineSize INT NOT NULL,
-//                materials VARCHAR(50) NOT NULL
+//                materialChance VARCHAR(50) NOT NULL
 //                );""");
 //
 //        sqlHelper.executeUpdate("""
@@ -226,7 +219,7 @@ public class PrivateMines extends JavaPlugin {
 ////      String resultsMaterial = result.getString(13);
 ////      resultsMaterial = resultsMaterial.substring(1); // remove starting '{'
 ////
-////      Map<Material, Double> materials = new HashMap<>();
+////      Map<Material, Double> materialChance = new HashMap<>();
 ////
 ////      String[] pairs = resultsMaterial.split("\\s*,\\s*");
 ////
@@ -235,7 +228,7 @@ public class PrivateMines extends JavaPlugin {
 ////        String matString = parts[0];
 ////        double percent = Double.parseDouble(parts[1].substring(0, parts[1].length() - 1));
 ////        Material material = Material.valueOf(matString);
-////        materials.put(material, percent);
+////        materialChance.put(material, percent);
 ////      }
 //            UUID uuid = UUID.fromString(owner);
 //            MineType type = mineTypeRegistry.get(mineType);
@@ -339,5 +332,9 @@ public class PrivateMines extends JavaPlugin {
 
     public void logWarn(String message) {
         getLogger().warning(message);
+    }
+
+    public File getSchematicsDirectory() {
+        return schematicsDirectory;
     }
 }

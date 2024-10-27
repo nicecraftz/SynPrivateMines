@@ -11,7 +11,8 @@ public enum ConfigurationValueType {
     MATERIAL(new MaterialConfigurationEntryBridge()),
     STRING_LIST(new StringListConfigurationEntryBridge()),
     PARTICLE(new ParticleConfigurationEntryBridge()),
-    COMPONENT(new ComponentConfigurationEntryBridge());
+    COMPONENT(new ComponentConfigurationEntryBridge()),
+    MINE_TYPE(new MineTypeConfigurationEntryBridge());
 
     private final ConfigurationEntryBridge<?> bridge;
 

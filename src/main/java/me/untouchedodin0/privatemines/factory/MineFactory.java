@@ -24,7 +24,7 @@ package me.untouchedodin0.privatemines.factory;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
-import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
+import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
 import me.untouchedodin0.privatemines.events.PrivateMineCreationEvent;
 import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
 import me.untouchedodin0.privatemines.hook.HookHandler;
@@ -57,7 +57,7 @@ public class MineFactory {
         this.privateMines = privateMines;
         this.pasteHelper = privateMines.getPasteHelper();
         this.mineService = privateMines.getMineService();
-        InstanceRegistry.registerInstance(this);
+        ConfigurationInstanceRegistry.registerInstance(this);
     }
 
     public Mine create(UUID uuid, Location location, MineType mineType) {

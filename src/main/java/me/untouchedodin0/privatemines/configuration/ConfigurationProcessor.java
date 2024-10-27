@@ -12,7 +12,7 @@ public class ConfigurationProcessor {
     }
 
     public void refreshFields() {
-        for (Object registeredInstance : InstanceRegistry.getRegisteredInstances()) {
+        for (Object registeredInstance : ConfigurationInstanceRegistry.getRegisteredInstances()) {
             Class<?> clazz = registeredInstance.getClass();
 
             for (Field field : clazz.getDeclaredFields()) {

@@ -5,12 +5,13 @@ import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
+import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
 import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
-import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
+import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
 import me.untouchedodin0.privatemines.factory.MineFactory;
 import me.untouchedodin0.privatemines.mine.*;
 import me.untouchedodin0.privatemines.utils.Cooldowns;
@@ -30,22 +31,29 @@ import static io.papermc.paper.command.brigadier.Commands.literal;
 
 
 public class PrivateMinesCommand {
-    private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.getInstance();
-    private static final Economy ECONOMY = PLUGIN_INSTANCE.getEconomy();
-    private static final MineService MINE_SERVICE = PLUGIN_INSTANCE.getMineService();
-    private static final MineTypeRegistry MINE_TYPE_MANAGER = PLUGIN_INSTANCE.getMineTypeRegistry();
-    private static final MineWorldManager MINE_WORLD_MANAGER = PLUGIN_INSTANCE.getMineWorldManager();
-    private static final MineFactory MINE_FACTORY = PLUGIN_INSTANCE.getMineFactory();
+    private final PrivateMines privateMines;
+    private final Economy economy;
+    private final MineService mineService;
+    private final MineTypeRegistry mineTypeRegistry;
+    private final MineWorldManager mineWorldManager;
+    private final MineFactory mineFactory;
 
     @ConfigurationEntry(key = "reset-cooldown", section = "mine", value = "15", type = ConfigurationValueType.INT)
     private int resetCooldown;
 
-    public PrivateMinesCommand() {
-        InstanceRegistry.registerInstance(this);
+    public PrivateMinesCommand(PrivateMines privateMines) {
+        this.privateMines = privateMines;
+        this.economy = privateMines.getEconomy();
+        this.mineService = privateMines.getMineService();
+        this.mineTypeRegistry = privateMines.getMineTypeRegistry();
+        this.mineWorldManager = privateMines.getMineWorldManager();
+        this.mineFactory = privateMines.getMineFactory();
+
+        ConfigurationInstanceRegistry.registerInstance(this);
     }
 
     public void registerCommands() {
-        LifecycleEventManager<Plugin> lifecycleManager = PLUGIN_INSTANCE.getLifecycleManager();
+        LifecycleEventManager<Plugin> lifecycleManager = privateMines.getLifecycleManager();
         lifecycleManager.registerEventHandler(
                 LifecycleEvents.COMMANDS,
                 event -> event.registrar().register(buildCommand())
@@ -75,7 +83,7 @@ public class PrivateMinesCommand {
 
     private CommandNode<CommandSourceStack> versionLogic() {
         return literal("version").executes(context -> {
-            String localVersion = PLUGIN_INSTANCE.getDescription().getVersion();
+            String localVersion = privateMines.getDescription().getVersion();
             context.getSource().getSender().sendRichMessage("<green>Private Mines is running v" + localVersion);
             return SINGLE_SUCCESS;
         }).build();
@@ -84,25 +92,33 @@ public class PrivateMinesCommand {
     private CommandNode<CommandSourceStack> giveLogic() {
         return literal("give").requires(commandSourceStack -> commandSourceStack.getSender()
                         .hasPermission("privatemines.give"))
-                .then(argument("target", ArgumentTypes.player()).executes(context -> {
-                    CommandSender commandSender = context.getSource().getSender();
-                    Player target = context.getArgument("target", Player.class);
+                .then(argument("player", ArgumentTypes.player()).executes(context -> {
+                    CommandSourceStack source = context.getSource();
+                    CommandSender commandSender = source.getSender();
+                    Player target = context.getArgument("player", PlayerSelectorArgumentResolver.class)
+                            .resolve(source)
+                            .getFirst();
 
                     if (target == null || !target.isOnline()) {
                         commandSender.sendRichMessage("<red>The specified player couldn't be found!");
                         return SINGLE_SUCCESS;
                     }
 
-                    Location location = MINE_WORLD_MANAGER.getNextFreeLocation();
-                    MineType defaultMineType = MINE_TYPE_MANAGER.getDefaultMineType();
+                    Location location = mineWorldManager.getNextFreeLocation();
+                    if (!mineTypeRegistry.isDefaultMineSet()) {
+                        commandSender.sendRichMessage("<red>Default mine type is not set!");
+                        return SINGLE_SUCCESS;
+                    }
+
+                    MineType defaultMineType = mineTypeRegistry.getDefaultMineType();
 
                     UUID targetUniqueId = target.getUniqueId();
-                    if (MINE_SERVICE.has(targetUniqueId)) {
+                    if (mineService.has(targetUniqueId)) {
                         commandSender.sendRichMessage("<red>The specified player already owns a mine!");
                         return SINGLE_SUCCESS;
                     }
 
-                    MINE_FACTORY.create(targetUniqueId, location, defaultMineType);
+                    mineFactory.create(targetUniqueId, location, defaultMineType);
                     commandSender.sendRichMessage("<green>Gave " + target.getName() + " a mine!");
                     return SINGLE_SUCCESS;
                 }))
@@ -112,23 +128,26 @@ public class PrivateMinesCommand {
     private CommandNode<CommandSourceStack> deleteMineLogic() {
         return literal("delete").requires(commandSourceStack -> commandSourceStack.getSender()
                         .hasPermission("privatemines.delete"))
-                .then(argument("target", ArgumentTypes.player()).executes(context -> {
-                    CommandSender commandSender = context.getSource().getSender();
-                    Player target = context.getArgument("target", Player.class);
+                .then(argument("player", ArgumentTypes.player()).executes(context -> {
+                    CommandSourceStack source = context.getSource();
+                    CommandSender commandSender = source.getSender();
+                    Player target = context.getArgument("player", PlayerSelectorArgumentResolver.class)
+                            .resolve(source)
+                            .getFirst();
 
                     if (target == null || !target.isOnline()) {
                         commandSender.sendRichMessage("<red>The specified player couldn't be found!");
                         return SINGLE_SUCCESS;
                     }
 
-                    if (!MINE_SERVICE.has(target.getUniqueId())) {
+                    if (!mineService.has(target.getUniqueId())) {
                         commandSender.sendRichMessage("<red>The specified player does not own a mine!");
                         return SINGLE_SUCCESS;
                     }
 
-                    Mine mine = MINE_SERVICE.get(target.getUniqueId());
+                    Mine mine = mineService.get(target.getUniqueId());
                     mine.stopTasks();
-                    MINE_SERVICE.delete(mine);
+                    mineService.delete(mine);
 //                    SQLUtils.delete(mine);
 
                     commandSender.sendRichMessage("<green>Successfully deleted mine of player " + target.getName());
@@ -145,18 +164,18 @@ public class PrivateMinesCommand {
             Player player = (Player) context.getSource().getSender();
             int times = context.getArgument("times", Integer.class);
 
-            if (!MINE_SERVICE.has(player.getUniqueId())) {
+            if (!mineService.has(player.getUniqueId())) {
                 player.sendRichMessage("<red>You do not own a mine!");
                 return SINGLE_SUCCESS;
             }
 
-            Mine mine = MINE_SERVICE.get(player.getUniqueId());
+            Mine mine = mineService.get(player.getUniqueId());
 
             for (int i = 0; i < times; i++) {
                 MineData mineData = mine.getMineData();
 
                 MineType currentType = mineData.getMineType();
-                MineType nextType = MINE_TYPE_MANAGER.getNextMineType(currentType);
+                MineType nextType = mineTypeRegistry.getNextMineType(currentType);
 
                 if (currentType == nextType) {
                     player.sendRichMessage("<green>Your mine is already at maxMineCorner level!");
@@ -164,14 +183,14 @@ public class PrivateMinesCommand {
                 }
 
                 double cost = nextType.upgradeCost();
-                if (!ECONOMY.has(player, cost)) {
+                if (!economy.has(player, cost)) {
                     player.sendRichMessage("<red>You cannot afford this upgrade!");
                     return SINGLE_SUCCESS;
                 }
 
-                ECONOMY.withdrawPlayer(player, cost);
-                MINE_SERVICE.upgrade(mine);
-                MINE_SERVICE.handleReset(mine);
+                economy.withdrawPlayer(player, cost);
+                mineService.upgrade(mine);
+                mineService.handleReset(mine);
                 player.sendRichMessage("<green>Mine upgraded successfully!");
             }
 
@@ -182,19 +201,22 @@ public class PrivateMinesCommand {
     private CommandNode<CommandSourceStack> forceUpgradeMineLogic() {
         return literal("forceupgrade").requires(commandSourceStack -> {
             return commandSourceStack.getSender().hasPermission("privatemines.forceupgrade");
-        }).then(argument("target", ArgumentTypes.player()).executes(context -> {
-            CommandSender sender = context.getSource().getSender();
-            Player target = context.getArgument("target", Player.class);
-            if (!MINE_SERVICE.has(target.getUniqueId())) {
+        }).then(argument("player", ArgumentTypes.player()).executes(context -> {
+            CommandSourceStack source = context.getSource();
+            CommandSender sender = source.getSender();
+            Player target = context.getArgument("player", PlayerSelectorArgumentResolver.class)
+                    .resolve(source)
+                    .getFirst();
+            if (!mineService.has(target.getUniqueId())) {
                 sender.sendRichMessage("<red>This player does not have a mine!");
                 return SINGLE_SUCCESS;
             }
 
-            Mine mine = MINE_SERVICE.get(target.getUniqueId());
+            Mine mine = mineService.get(target.getUniqueId());
 
             // todo: seems like this is used more than 2 times so its best to make a method.
-            MINE_SERVICE.upgrade(mine);
-            MINE_SERVICE.reset(mine);
+            mineService.upgrade(mine);
+            mineService.reset(mine);
 
             target.sendRichMessage("<green>Your mine has been upgraded!");
 
@@ -204,7 +226,7 @@ public class PrivateMinesCommand {
             BoundingBox schematicArea = mineStructure.schematicBoundingBox();
 
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                if (schematicArea.contains(onlinePlayer.getLocation().toVector()) && MINE_WORLD_MANAGER.getMinesWorld()
+                if (schematicArea.contains(onlinePlayer.getLocation().toVector()) && mineWorldManager.getMinesWorld()
                         .equals(onlinePlayer.getWorld())) {
                     Bukkit.dispatchCommand(onlinePlayer, "spawn"); //todo: change this since command may not exist.
                 }
@@ -213,7 +235,7 @@ public class PrivateMinesCommand {
             // todo: fix sql
 
 //            SQL_HELPER.executeUpdate(
-//                    "INSERT INTO privatemines (owner, mineType, mineLocation, corner1, corner2, fullRegionMin, fullRegionMax, spawn, tax, isOpen, maxPlayers, maxMineSize, materials) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+//                    "INSERT INTO privatemines (owner, mineType, mineLocation, corner1, corner2, fullRegionMin, fullRegionMax, spawn, tax, isOpen, maxPlayers, maxMineSize, materialChance) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 //                    String.valueOf(mineData.getMineOwner()),
 //                    mineData.getMineType(),
 //                    LocationUtils.toString(mineData.getMineLocation()),
@@ -236,15 +258,18 @@ public class PrivateMinesCommand {
     private CommandNode<CommandSourceStack> forceResetMineLogic() {
         return literal("forcereset").requires(commandSourceStack -> {
             return commandSourceStack.getSender().hasPermission("privatemines.forcereset");
-        }).then(argument("target", ArgumentTypes.player()).executes(context -> {
-            Player player = context.getArgument("target", Player.class);
-            if (!MINE_SERVICE.has(player.getUniqueId())) {
-                player.sendRichMessage("<red>This player does not have a mine!");
+        }).then(argument("player", ArgumentTypes.player()).executes(context -> {
+            CommandSourceStack source = context.getSource();
+            Player target = context.getArgument("player", PlayerSelectorArgumentResolver.class)
+                    .resolve(source)
+                    .getFirst();
+            if (!mineService.has(target.getUniqueId())) {
+                target.sendRichMessage("<red>This player does not have a mine!");
                 return SINGLE_SUCCESS;
             }
 
-            Mine mine = MINE_SERVICE.get(player.getUniqueId());
-            MINE_SERVICE.reset(mine);
+            Mine mine = mineService.get(target.getUniqueId());
+            mineService.reset(mine);
             return SINGLE_SUCCESS;
         })).build();
     }
@@ -257,16 +282,16 @@ public class PrivateMinesCommand {
             Player sender = (Player) context.getSource().getSender();
             UUID uuid = sender.getUniqueId();
 
-            if (MINE_SERVICE.has(uuid)) {
+            if (mineService.has(uuid)) {
                 sender.sendRichMessage("<red>You do not own a mine!");
                 return SINGLE_SUCCESS;
             }
 
-            Mine mine = MINE_SERVICE.get(uuid);
+            Mine mine = mineService.get(uuid);
 
 
             if (resetCooldown == 0) {
-                MINE_SERVICE.handleReset(mine);
+                mineService.handleReset(mine);
                 return SINGLE_SUCCESS;
             }
 
@@ -278,7 +303,7 @@ public class PrivateMinesCommand {
 
             Cooldowns.set(uuid, resetCooldown);
 
-            MINE_SERVICE.handleReset(mine);
+            mineService.handleReset(mine);
             return SINGLE_SUCCESS;
         }).build();
     }
@@ -289,12 +314,12 @@ public class PrivateMinesCommand {
             return commandSender.hasPermission("privatemines.teleport") && commandSender instanceof Player;
         }).executes(context -> {
             Player player = (Player) context.getSource().getSender();
-            if (!MINE_SERVICE.has(player.getUniqueId())) {
+            if (!mineService.has(player.getUniqueId())) {
                 player.sendRichMessage("<red>You do not own a mine!");
                 return SINGLE_SUCCESS;
             }
 
-            Mine mine = MINE_SERVICE.get(player.getUniqueId());
+            Mine mine = mineService.get(player.getUniqueId());
             mine.teleport(player);
             return SINGLE_SUCCESS;
         }).build();
@@ -304,16 +329,19 @@ public class PrivateMinesCommand {
         return literal("go").requires(commandSourceStack -> {
             CommandSender commandSender = commandSourceStack.getSender();
             return commandSender.hasPermission("privatemines.go") && commandSender instanceof Player;
-        }).then(argument("target", ArgumentTypes.player()).executes(context -> {
-            Player player = (Player) context.getSource().getSender();
-            Player target = context.getArgument("target", Player.class);
+        }).then(argument("player", ArgumentTypes.player()).executes(context -> {
+            CommandSourceStack source = context.getSource();
+            Player player = (Player) source.getSender();
+            Player target = context.getArgument("player", PlayerSelectorArgumentResolver.class)
+                    .resolve(source)
+                    .getFirst();
 
-            if (!MINE_SERVICE.has(target.getUniqueId())) {
+            if (!mineService.has(target.getUniqueId())) {
                 player.sendRichMessage("<red>This player does not have a mine!");
                 return SINGLE_SUCCESS;
             }
 
-            Mine mine = MINE_SERVICE.get(target.getUniqueId());
+            Mine mine = mineService.get(target.getUniqueId());
             MineData mineData = mine.getMineData();
 
             if (!mineData.isOpen()) {
@@ -335,26 +363,29 @@ public class PrivateMinesCommand {
         return literal("expand").requires(commandSourceStack -> {
                     return commandSourceStack.getSender().hasPermission("privatemines.expand");
                 })
-                .then(argument("target", ArgumentTypes.player()).then(argument(
+                .then(argument("player", ArgumentTypes.player()).then(argument(
                         "amount",
                         IntegerArgumentType.integer(1)
                 ).executes(context -> {
-                    CommandSender commandSender = context.getSource().getSender();
-                    Player target = context.getArgument("target", Player.class);
+                    CommandSourceStack source = context.getSource();
+                    CommandSender commandSender = source.getSender();
+                    Player target = context.getArgument("player", PlayerSelectorArgumentResolver.class)
+                            .resolve(source)
+                            .getFirst();
                     int amount = context.getArgument("amount", Integer.class);
 
-                    if (!MINE_SERVICE.has(target.getUniqueId())) {
+                    if (!mineService.has(target.getUniqueId())) {
                         commandSender.sendRichMessage("<red>This player does not have a mine!");
                         return SINGLE_SUCCESS;
                     }
 
-                    Mine mine = MINE_SERVICE.get(target.getUniqueId());
-                    if (!MINE_SERVICE.canExpand(mine, amount)) {
+                    Mine mine = mineService.get(target.getUniqueId());
+                    if (!mineService.canExpand(mine, amount)) {
                         commandSender.sendRichMessage("<red>Cannot expand mine by that amount!");
                         return SINGLE_SUCCESS;
                     }
 
-                    MINE_SERVICE.expand(mine, amount);
+                    mineService.expand(mine, amount);
                     commandSender.sendRichMessage("<green>Successfully expanded " + target.getName() + "'s mine!");
                     return SINGLE_SUCCESS;
                 })))
@@ -368,12 +399,12 @@ public class PrivateMinesCommand {
         }).executes(context -> {
             Player player = (Player) context.getSource().getSender();
 
-            if (!MINE_SERVICE.has(player.getUniqueId())) {
+            if (!mineService.has(player.getUniqueId())) {
                 player.sendRichMessage("<red>You do not own a mine!");
                 return SINGLE_SUCCESS;
             }
 
-            Mine mine = MINE_SERVICE.get(player.getUniqueId());
+            Mine mine = mineService.get(player.getUniqueId());
             MineData mineData = mine.getMineData();
             mineData.setOpen(state);
 
@@ -388,17 +419,20 @@ public class PrivateMinesCommand {
         return literal("ban").requires(commandSourceStack -> {
             CommandSender commandSender = commandSourceStack.getSender();
             return commandSender.hasPermission("privatemines.ban") && commandSender instanceof Player;
-        }).then(argument("target", ArgumentTypes.player()).executes(context -> {
-            Player player = (Player) context.getSource().getSender();
-            Player target = context.getArgument("target", Player.class);
+        }).then(argument("player", ArgumentTypes.player()).executes(context -> {
+            CommandSourceStack source = context.getSource();
+            Player player = (Player) source.getSender();
+            Player target = context.getArgument("player", PlayerSelectorArgumentResolver.class)
+                    .resolve(source)
+                    .getFirst();
 
             UUID playerUniqueId = player.getUniqueId();
-            if (!MINE_SERVICE.has(playerUniqueId)) {
+            if (!mineService.has(playerUniqueId)) {
                 player.sendRichMessage("<red>You do not own a mine!");
                 return SINGLE_SUCCESS;
             }
 
-            Mine mine = MINE_SERVICE.get(playerUniqueId);
+            Mine mine = mineService.get(playerUniqueId);
             UUID targetUniqueId = target.getUniqueId();
 
             if (mine.isBanned(targetUniqueId)) {
@@ -415,17 +449,20 @@ public class PrivateMinesCommand {
         return literal("unban").requires(commandSourceStack -> {
             CommandSender commandSender = commandSourceStack.getSender();
             return commandSender.hasPermission("privatemines.unban") && commandSender instanceof Player;
-        }).then(argument("target", ArgumentTypes.player()).executes(context -> {
-            Player player = (Player) context.getSource().getSender();
-            Player target = context.getArgument("target", Player.class);
+        }).then(argument("player", ArgumentTypes.player()).executes(context -> {
+            CommandSourceStack source = context.getSource();
+            Player player = (Player) source.getSender();
+            Player target = context.getArgument("player", PlayerSelectorArgumentResolver.class)
+                    .resolve(source)
+                    .getFirst();
 
             UUID playerUniqueId = player.getUniqueId();
-            if (!MINE_SERVICE.has(playerUniqueId)) {
+            if (!mineService.has(playerUniqueId)) {
                 player.sendRichMessage("<red>You do not own a mine!");
                 return SINGLE_SUCCESS;
             }
 
-            Mine mine = MINE_SERVICE.get(playerUniqueId);
+            Mine mine = mineService.get(playerUniqueId);
             if (!mine.isBanned(target.getUniqueId())) {
                 player.sendRichMessage("<red>This player is not banned from your mine!");
                 return SINGLE_SUCCESS;
@@ -444,12 +481,12 @@ public class PrivateMinesCommand {
             Player player = (Player) context.getSource().getSender();
             double tax = context.getArgument("tax", Double.class);
 
-            if (!MINE_SERVICE.has(player.getUniqueId())) {
+            if (!mineService.has(player.getUniqueId())) {
                 player.sendRichMessage("<red>You do not own a mine!");
                 return SINGLE_SUCCESS;
             }
 
-            Mine mine = MINE_SERVICE.get(player.getUniqueId());
+            Mine mine = mineService.get(player.getUniqueId());
             MineData mineData = mine.getMineData();
             mineData.setTax(tax);
 //            SQLUtils.update(mine);
@@ -463,12 +500,16 @@ public class PrivateMinesCommand {
         return literal("setblocks").requires(commandSourceStack -> {
                     return commandSourceStack.getSender().hasPermission("privatemines.setblocks");
                 })
-                .then(argument("target", ArgumentTypes.player()).then(argument(
+                .then(argument("player", ArgumentTypes.player()).then(argument(
                         "material",
                         ArgumentTypes.namespacedKey()
                 ).executes(context -> {
-                    Player player = (Player) context.getSource().getSender();
-                    Player target = context.getArgument("target", Player.class);
+                    CommandSourceStack source = context.getSource();
+                    Player player = (Player) source.getSender();
+                    Player target = context.getArgument("player", PlayerSelectorArgumentResolver.class)
+                            .resolve(source)
+                            .getFirst();
+
                     NamespacedKey material = context.getArgument("material", NamespacedKey.class);
                     Material registryMaterial = Registry.MATERIAL.get(material);
 
@@ -477,18 +518,18 @@ public class PrivateMinesCommand {
                         return SINGLE_SUCCESS;
                     }
 
-                    if (!MINE_SERVICE.has(target.getUniqueId())) {
+                    if (!mineService.has(target.getUniqueId())) {
                         player.sendRichMessage("<red>This player does not have a mine!");
                         return SINGLE_SUCCESS;
                     }
 
-                    Mine mine = MINE_SERVICE.get(target.getUniqueId());
+                    Mine mine = mineService.get(target.getUniqueId());
                     MineData mineData = mine.getMineData();
                     mineData.getMaterials().add(1, registryMaterial);
 
 //                    SQLUtils.update(mine);
 
-                    player.sendRichMessage("<green>Successfully updated materials!");
+                    player.sendRichMessage("<green>Successfully updated materialChance!");
                     return SINGLE_SUCCESS;
                 })))
                 .build();
@@ -498,19 +539,19 @@ public class PrivateMinesCommand {
 //    @Subcommand("claim")
 //    @CommandPermission("privatemines.claim")
 //    public void claim(Player player) {
-//        if (MINE_SERVICE.hasMine(player)) {
+//        if (mineService.hasMine(player)) {
 //            audienceUtils.sendMessage(player, MessagesConfig.playerAlreadyOwnsAMine);
 //        } else {
 //            String mineRegionName = String.format("mine-%s", player.getUniqueId());
 //            String fullRegionName = String.format("full-mine-%s", player.getUniqueId());
 //
-//            PregenStorage pregenStorage = PLUGIN_INSTANCE.getPregenStorage();
+//            PregenStorage pregenStorage = privateMines.getPregenStorage();
 //            if (pregenStorage.isAllRedeemed()) {
 ////        player.sendMessage(ChatColor.RED + "All the mines have been claimed...");
 //                audienceUtils.sendMessage(player, MessagesConfig.allMinesClaimed);
 //            } else {
 //                PregenMine pregenMine = pregenStorage.getAndRemove();
-//                MineType mineType = MINE_TYPE_MANAGER.getDefault();
+//                MineType mineType = mineTypeManager.getDefault();
 //                Location location = pregenMine.getLocation();
 //                Location spawn = pregenMine.getSpawnLocation();
 //                Location corner1 = pregenMine.getLowerRails();
@@ -542,7 +583,7 @@ public class PrivateMinesCommand {
 //                    regionManager.addRegion(fullRegion);
 //                }
 //
-//                Mine mine = new Mine(PLUGIN_INSTANCE);
+//                Mine mine = new Mine(privateMines);
 //                MineData mineData = new MineData(
 //                        player.getUniqueId(),
 //                        corner2,
@@ -559,7 +600,7 @@ public class PrivateMinesCommand {
 //                SQLUtils.claim(location);
 //                SQLUtils.insert(mine);
 //
-//                MINE_SERVICE.addMine(player.getUniqueId(), mine);
+//                mineService.addMine(player.getUniqueId(), mine);
 //
 //                Task.syncDelayed(() -> spawn.getBlock().setType(Material.AIR, false));
 //                pregenMine.teleport(player);

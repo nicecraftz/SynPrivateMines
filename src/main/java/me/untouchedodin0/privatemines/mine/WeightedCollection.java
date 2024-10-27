@@ -30,4 +30,11 @@ public class WeightedCollection<E> {
     public void clear() {
         map.clear();
     }
+
+    public static <T> WeightedCollection<T> single(T value, double chance) {
+        WeightedCollection<T> collection = new WeightedCollection<>();
+        collection.add(chance, value);
+        return collection;
+    }
+
 }

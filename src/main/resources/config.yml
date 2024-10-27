@@ -30,18 +30,19 @@ onlyReplaceAir: true
 
 
 mine-types:
+  # To set a mine as default, you can use the default key.
   default:
     file: defaultmine.schem
     reset:
       time: 5
       percentage: 15
     expand: 1
-    upgradeCost: 1.0
+    upgrade-cost: 1.0
     hooks:
       oraxen: false
       itemsAdder: false
     materials:
-      cobblestone: 100.0
+      cobblestone: 99.0
       oraxen_your_block_id: 0.5
       itemsadder_your_block_id: 0.5
     default-flags:

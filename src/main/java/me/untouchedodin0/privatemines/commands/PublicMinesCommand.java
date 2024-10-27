@@ -55,7 +55,8 @@ public class PublicMinesCommand {
 
     public void registerCommands() {
         LifecycleEventManager<Plugin> lifecycleManager = PLUGIN_INSTANCE.getLifecycleManager();
-        lifecycleManager.registerEventHandler(LifecycleEvents.COMMANDS,
+        lifecycleManager.registerEventHandler(
+                LifecycleEvents.COMMANDS,
                 event -> event.registrar().register(buildCommand())
         );
     }
@@ -93,7 +94,8 @@ public class PublicMinesCommand {
 
                 GuiItem guiItem = ItemBuilder.from(Material.EMERALD)
                         .name(Component.text(ownerName).color(NamedTextColor.GREEN))
-                        .lore(List.of(Component.text(ChatColor.GREEN + "Click to teleport"),
+                        .lore(List.of(
+                                Component.text(ChatColor.GREEN + "Click to teleport"),
                                 Component.text(ChatColor.GREEN + formattedTax)
                         ))
                         .asGuiItem(event -> {

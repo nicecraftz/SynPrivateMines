@@ -3,7 +3,7 @@ package me.untouchedodin0.privatemines.hook.plugin;
 import io.th0rgal.oraxen.api.OraxenBlocks;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
-import me.untouchedodin0.privatemines.configuration.InstanceRegistry;
+import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
 import me.untouchedodin0.privatemines.events.PrivateMineResetEvent;
 import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.hook.HookHandler;
@@ -27,7 +27,7 @@ public class OraxenHook extends Hook {
     int wallsGap;
 
     public OraxenHook() {
-        InstanceRegistry.registerInstance(this);
+        ConfigurationInstanceRegistry.registerInstance(this);
     }
 
     @Override
@@ -58,7 +58,7 @@ public class OraxenHook extends Hook {
         BoundingBox boundingBox = mineStructure.mineBoundingBox();
         if (shouldCreateWallGap) boundingBox.expand(-Math.abs(wallsGap));
         HookHandler.getHookHandler().get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
-                .getWorldEditWorldWriter().fill(boundingBox, WorldEditHook.EMPTY);
+                .getWorldEditWorldWriter().fill(boundingBox, 0, WorldEditHook.EMPTY);
 
         for (Player online : Bukkit.getOnlinePlayers()) {
             Location location = online.getLocation();

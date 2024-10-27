@@ -22,6 +22,7 @@
 package me.untouchedodin0.privatemines.mine;
 
 import me.untouchedodin0.privatemines.PrivateMines;
+import me.untouchedodin0.privatemines.mine.task.MinePercentageTask;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -33,14 +34,19 @@ import java.util.UUID;
 
 public class Mine {
     private final MineData mineData;
-    private final MineResetTask task = new MineResetTask(this);
+    private final MinePercentageTask percentageTask;
 
     public Mine(MineData mineData) {
         this.mineData = mineData;
+        percentageTask = new MinePercentageTask(mineData);
     }
 
     public MineData getMineData() {
         return mineData;
+    }
+
+    public int getAirPercentage() {
+        return (int) percentageTask.getAirPercentage();
     }
 
     public void teleport(Entity entity) {
@@ -54,6 +60,7 @@ public class Mine {
     public void startTasks() {
         MineType mineType = mineData.getMineType();
         Bukkit.getScheduler().runTaskTimer(PrivateMines.getInstance(), task, 0L, mineType.resetTime() * 20L);
+        Bukkit.getScheduler().runTaskTimerAsynchronously(PrivateMines.getInstance(), percentageTask, 0L, 20L * 10);
     }
 
     public void stopTasks() {
