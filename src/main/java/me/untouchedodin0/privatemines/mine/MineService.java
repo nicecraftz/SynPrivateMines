@@ -47,7 +47,6 @@ public class MineService {
     private Location nextLocation;
     private Direction direction;
 
-
     @ConfigurationEntry(key = "distance", section = "mine", value = "150", type = ConfigurationValueType.INT)
     private int borderDistance;
 
