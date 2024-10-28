@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static me.untouchedodin0.privatemines.hook.HookHandler.getHookHandler;
 import static me.untouchedodin0.privatemines.utils.world.Direction.NORTH;
@@ -98,6 +99,11 @@ public class MineService {
 
     public boolean has(UUID uuid) {
         return mines.containsKey(uuid);
+    }
+
+    public void ifMinePresent(UUID uuid, Consumer<Mine> mineConsumer) {
+        if (!has(uuid)) return;
+        mineConsumer.accept(get(uuid));
     }
 
     public Mine get(UUID uuid) {
@@ -252,7 +258,6 @@ public class MineService {
         worldIO.fill(schematicArea, 0, WorldEditHook.EMPTY);
 
         BoundingBox schematicRegion = worldIO.placeSchematic(schematicFile, mine.getMineLocation());
-
         SchematicStorage schematicStorage = privateMines.getSchematicStorage();
         MineBlocks mineBlocks = schematicStorage.get(schematicFile);
 

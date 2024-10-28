@@ -34,7 +34,7 @@ import static io.papermc.paper.command.brigadier.Commands.literal;
 public class PrivateMinesCommand {
     private final PrivateMines privateMines;
     private final Economy economy;
-    
+
     private final MineTypeRegistry mineTypeRegistry;
     private final MineService mineService;
 
@@ -278,13 +278,12 @@ public class PrivateMinesCommand {
             Player sender = (Player) context.getSource().getSender();
             UUID uuid = sender.getUniqueId();
 
-            if (mineService.has(uuid)) {
+            if (!mineService.has(uuid)) {
                 sender.sendRichMessage("<red>You do not own a mine!");
                 return SINGLE_SUCCESS;
             }
 
             Mine mine = mineService.get(uuid);
-
 
             if (resetCooldown == 0) {
                 mineService.handleReset(mine);
