@@ -16,9 +16,6 @@ import me.untouchedodin0.privatemines.mine.*;
 import me.untouchedodin0.privatemines.utils.Cooldowns;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -75,7 +72,6 @@ public class PrivateMinesCommand {
                 .then(banFromMineLogic())
                 .then(unbanFromMineLogic())
                 .then(taxLogic())
-                .then(setBlocksLogic())
                 .build();
     }
 
@@ -231,7 +227,7 @@ public class PrivateMinesCommand {
             // todo: fix sql
 
 //            SQL_HELPER.executeUpdate(
-//                    "INSERT INTO privatemines (owner, mineType, mineLocation, corner1, corner2, fullRegionMin, fullRegionMax, spawn, tax, isOpen, maxPlayers, maxMineSize, materialChance) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+//                    "INSERT INTO privatemines (owner, mineType, mineLocation, corner1, corner2, fullRegionMin, fullRegionMax, spawn, tax, isOpen, maxPlayers, maxMineSize, materials) " + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 //                    String.valueOf(mineData.getMineOwner()),
 //                    mineData.getMineType(),
 //                    LocationUtils.toString(mineData.getMineLocation()),
@@ -490,46 +486,6 @@ public class PrivateMinesCommand {
             return SINGLE_SUCCESS;
         })).build();
     }
-
-    private CommandNode<CommandSourceStack> setBlocksLogic() {
-        return literal("setblocks").requires(commandSourceStack -> {
-                    return commandSourceStack.getSender().hasPermission("privatemines.setblocks");
-                })
-                .then(argument("player", ArgumentTypes.player()).then(argument(
-                        "material",
-                        ArgumentTypes.namespacedKey()
-                ).executes(context -> {
-                    CommandSourceStack source = context.getSource();
-                    Player player = (Player) source.getSender();
-                    Player target = context.getArgument("player", PlayerSelectorArgumentResolver.class)
-                            .resolve(source)
-                            .getFirst();
-
-                    NamespacedKey material = context.getArgument("material", NamespacedKey.class);
-                    Material registryMaterial = Registry.MATERIAL.get(material);
-
-                    if (registryMaterial == null) {
-                        player.sendRichMessage("<red>Failed to find Material: " + material);
-                        return SINGLE_SUCCESS;
-                    }
-
-                    if (!mineService.has(target.getUniqueId())) {
-                        player.sendRichMessage("<red>This player does not have a mine!");
-                        return SINGLE_SUCCESS;
-                    }
-
-                    Mine mine = mineService.get(target.getUniqueId());
-                    MineData mineData = mine.getMineData();
-                    mineData.getMaterials().add(1, registryMaterial);
-
-//                    SQLUtils.update(mine);
-
-                    player.sendRichMessage("<green>Successfully updated materialChance!");
-                    return SINGLE_SUCCESS;
-                })))
-                .build();
-    }
-
 
 //    @Subcommand("claim")
 //    @CommandPermission("privatemines.claim")

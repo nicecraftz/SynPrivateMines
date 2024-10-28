@@ -21,6 +21,7 @@ public class Cooldowns {
 
     public static boolean hasExpiredCooldown(UUID uuid) {
         Cooldown cooldown = cooldowns.getOrDefault(uuid, new Cooldown(uuid, 0));
+        if (cooldown.time() == 0) return true;
         return System.currentTimeMillis() - cooldown.timestamp() > cooldown.time() * 1000;
     }
 

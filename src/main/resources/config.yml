@@ -7,8 +7,8 @@ settings:
   storage: "YAML" # Or SQLite
 
 materials:
-  spawn-point: sponge
-  mine-corner: powered_rail
+  spawn-point: lime_wool
+  mine-corner: red_wool
   sell-npc: white_wool
   upgrade: obsidian
   quarry: shulker_box

@@ -11,6 +11,7 @@ import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
+import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
 import me.untouchedodin0.privatemines.mine.Mine;
@@ -64,33 +65,39 @@ public class WorldGuardHook extends Hook {
         public void createRegionsThenSetFlagsForMine(Mine mine) {
             String ownerUUIDString = mine.getMineData().getMineOwner().toString();
             MineStructure structure = mine.getMineData().getMineStructure();
+            LoggerUtil.info("WorldGUardHook: " + structure.toString());
 
             String mineRegionName = format(MINE_REGION_FORMAT, ownerUUIDString);
             addRegion(mineRegionName, structure.mineBoundingBox());
+            LoggerUtil.info("Added mine region at %s", structure.mineBoundingBox());
 
             String fullMineRegionName = format(FULL_MINE_REGION_FORMAT, ownerUUIDString);
             addRegion(fullMineRegionName, structure.schematicBoundingBox());
+            LoggerUtil.info("Added schematic region at %s", structure.schematicBoundingBox());
 
             ProtectedRegion mineRegion = regionManager.getRegion(mineRegionName);
             ProtectedRegion schematicRegion = regionManager.getRegion(fullMineRegionName);
 
             MineType mineType = mine.getMineData().getMineType();
-
             applyFlagStates(mineType.mineFlags(), mineRegion);
             applyFlagStates(mineType.schematicAreaFlags(), schematicRegion);
         }
 
         @Override
         public void removeMineRegions(Mine mine) {
-
+            String ownerUUIDString = mine.getMineData().getMineOwner().toString();
+            String mineRegionName = format(MINE_REGION_FORMAT, ownerUUIDString);
+            String fullMineRegionName = format(FULL_MINE_REGION_FORMAT, ownerUUIDString);
+            regionManager.removeRegion(mineRegionName);
+            regionManager.removeRegion(fullMineRegionName);
         }
 
-        @Override
-        public void addRegion(String name, BoundingBox boundingBox) {
+        private void addRegion(String name, BoundingBox boundingBox) {
             Location min = boundingBox.getMin().toLocation(bukkitMinesWorld);
             Location max = boundingBox.getMax().toLocation(bukkitMinesWorld);
 
-            ProtectedCuboidRegion region = new ProtectedCuboidRegion(name,
+            ProtectedCuboidRegion region = new ProtectedCuboidRegion(
+                    name,
                     BukkitAdapter.asBlockVector(min),
                     BukkitAdapter.asBlockVector(max)
             );
@@ -98,18 +105,14 @@ public class WorldGuardHook extends Hook {
             regionManager.addRegion(region);
         }
 
-        private void setFlag(ProtectedRegion region, Flag<?> flag, boolean state) {
-            if (!(flag instanceof StateFlag stateFlag)) return;
-            StateFlag.State stateFlagState = state ? StateFlag.State.ALLOW : StateFlag.State.DENY;
-            region.setFlag(stateFlag, stateFlagState);
-        }
-
         private void applyFlagStates(Map<String, Boolean> flagStates, ProtectedRegion region) {
             for (Map.Entry<String, Boolean> flagStateEntry : flagStates.entrySet()) {
                 String flagName = flagStateEntry.getKey();
                 Flag<?> matchFlag = Flags.fuzzyMatchFlag(flags, flagName);
                 if (matchFlag == null) continue;
-                setFlag(region, matchFlag, flagStateEntry.getValue());
+                if (!(matchFlag instanceof StateFlag stateFlag)) return;
+                StateFlag.State stateFlagState = flagStateEntry.getValue() ? StateFlag.State.ALLOW : StateFlag.State.DENY;
+                region.setFlag(stateFlag, stateFlagState);
             }
         }
     }

@@ -4,7 +4,7 @@ package me.untouchedodin0.privatemines.utils;
 import org.bukkit.Location;
 
 public class SerializationUtil {
-    private static final String LOCATION_FORMAT = "%s-%s-%s";
+    private static final String LOCATION_FORMAT = "%s|%s|%s";
 
     private SerializationUtil() {
 

@@ -29,7 +29,7 @@ public class SQLUtils {
 //
 //    String insertQuery = String.format(
 //        "INSERT INTO privatemines (owner, mineType, mineLocation, corner1, corner2,"
-//            + " fullRegionMin, fullRegionMax, spawn, tax, isOpen, maxPlayers, maxMineSize, materialChance) "
+//            + " fullRegionMin, fullRegionMax, spawn, tax, isOpen, maxPlayers, maxMineSize, materials) "
 //            + "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %f, %b, %d, %d, '%s');"
 //            + "ON CONFLICT IGNORE;", owner, mineType.getName(),
 //        LocationUtils.toString(mineData.getMineLocation()),
@@ -53,13 +53,13 @@ public class SQLUtils {
 //    String dropQuery = String.format("DELETE FROM privatemines WHERE owner = '%s'", owner);
 //    String insertQuery = String.format(
 //        "INSERT INTO privatemines (owner, mineType, mineLocation, corner1, corner2,"
-//            + " fullRegionMin, fullRegionMax, spawn, tax, isOpen, maxPlayers, maxMineSize, materialChance) "
+//            + " fullRegionMin, fullRegionMax, spawn, tax, isOpen, maxPlayers, maxMineSize, materials) "
 //            + "VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %f, %b, %d, %d, '%s');"
 //            + "ON CONFLICT (owner, mineType, mineLocation) DO UPDATE SET "
 //            + "corner1 = EXCLUDED.corner1, corner2 = EXCLUDED.corner2, fullRegionMin = EXCLUDED.fullRegionMin, "
 //            + "fullRegionMax = EXCLUDED.fullRegionMax, spawn = EXCLUDED.spawn, tax = EXCLUDED.tax, "
 //            + "isOpen = EXCLUDED.isOpen, maxPlayers = EXCLUDED.maxPlayers, maxMineSize = EXCLUDED.maxMineSize, "
-//            + "materialChance = '%s';", owner, mineType.getName(),
+//            + "materials = '%s';", owner, mineType.getName(),
 //        LocationUtils.toString(mineData.getMineLocation()),
 //        LocationUtils.toString(mineData.getMinimumMining()),
 //        LocationUtils.toString(mineData.getMaximumMining()),
@@ -95,7 +95,7 @@ public class SQLUtils {
 //
 //    SQLHelper sqlHelper = PRIVATE_MINES.getSqlHelper();
 //    String command = String.format(
-//        "UPDATE privatemines SET mineType = '%s', corner1 = '%s', corner2 = '%s', fullRegionMin = '%s', fullRegionMax = '%s', isOpen = '%d', materialChance = '%s' WHERE owner = '%s';",
+//        "UPDATE privatemines SET mineType = '%s', corner1 = '%s', corner2 = '%s', fullRegionMin = '%s', fullRegionMax = '%s', isOpen = '%d', materials = '%s' WHERE owner = '%s';",
 //        mineType.getName(), LocationUtils.toString(minMining), LocationUtils.toString(maxMining),
 //        LocationUtils.toString(fullRegionMin), LocationUtils.toString(fullRegionMax), open,
 //        Utils.mapToString(mineData.getMaterials()), owner);

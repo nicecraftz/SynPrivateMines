@@ -7,7 +7,8 @@ import me.untouchedodin0.privatemines.configuration.ConfigurationProcessor;
 import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.listener.ConnectionListener;
 import me.untouchedodin0.privatemines.mine.*;
-import me.untouchedodin0.privatemines.storage.SchematicStorage;
+import me.untouchedodin0.privatemines.mine.SchematicStorage;
+import me.untouchedodin0.privatemines.mine.factory.MineFactory;
 import me.untouchedodin0.privatemines.utils.UpdateChecker;
 import me.untouchedodin0.privatemines.utils.addon.AddonManager;
 import net.milkbowl.vault.economy.Economy;
@@ -104,7 +105,7 @@ public class PrivateMines extends JavaPlugin {
 //                isOpen INT NOT NULL,
 //                maxPlayers INT NOT NULL,
 //                maxMineSize INT NOT NULL,
-//                materialChance VARCHAR(50) NOT NULL
+//                materials VARCHAR(50) NOT NULL
 //                );""");
 //
 //        sqlHelper.executeUpdate("""
@@ -146,7 +147,6 @@ public class PrivateMines extends JavaPlugin {
             MineType mineType = MineType.fromConfigurationSection(configurationSection.getConfigurationSection(key));
             mineTypeRegistry.register(mineType);
         }
-
     }
 
     private void esnureDirectoriesCreation() {
@@ -199,7 +199,7 @@ public class PrivateMines extends JavaPlugin {
 ////      String resultsMaterial = result.getString(13);
 ////      resultsMaterial = resultsMaterial.substring(1); // remove starting '{'
 ////
-////      Map<Material, Double> materialChance = new HashMap<>();
+////      Map<Material, Double> materials = new HashMap<>();
 ////
 ////      String[] pairs = resultsMaterial.split("\\s*,\\s*");
 ////
@@ -208,7 +208,7 @@ public class PrivateMines extends JavaPlugin {
 ////        String matString = parts[0];
 ////        double percent = Double.parseDouble(parts[1].substring(0, parts[1].length() - 1));
 ////        Material material = Material.valueOf(matString);
-////        materialChance.put(material, percent);
+////        materials.put(material, percent);
 ////      }
 //            UUID uuid = UUID.fromString(owner);
 //            MineType type = mineTypeRegistry.get(mineType);

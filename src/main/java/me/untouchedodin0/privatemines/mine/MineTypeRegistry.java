@@ -1,7 +1,6 @@
 package me.untouchedodin0.privatemines.mine;
 
 import me.untouchedodin0.privatemines.LoggerUtil;
-import me.untouchedodin0.privatemines.storage.SchematicStorage;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,9 +16,9 @@ public class MineTypeRegistry {
     }
 
     public void register(MineType mineType) {
-        MineBlocks mineBlocks = schematicStorage.computeThenAdd(mineType.schematicFile());
+        SchematicInformation schematicInformation = schematicStorage.computeThenAdd(mineType.schematicFile());
 
-        if (mineBlocks == null) {
+        if (schematicInformation == null) {
             LoggerUtil.severe("The schematic for " + mineType.name() + " is not set-up. (missing spawn or corners)");
             return;
         }

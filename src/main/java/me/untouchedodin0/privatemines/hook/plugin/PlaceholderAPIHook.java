@@ -82,13 +82,13 @@ public class PlaceholderAPIHook extends Hook {
         private String handleSpawnPlaceholder(UUID playerUUID) {
             Mine mine = MINE_SERVICE.get(playerUUID);
             if (mine == null) return NO_RESULT;
-            return SerializationUtil.locationToString(mine.getSpawnLocation());
+            return SerializationUtil.locationToString(mine.mineSpawnLocation());
         }
 
         private String handleMineLocationPlaceholder(UUID playerUUID) {
             Mine mine = MINE_SERVICE.get(playerUUID);
             if (mine == null) return NO_RESULT;
-            return mine.getMineLocation().toString();
+            return mine.mineSpawnLocation().toString();
         }
 
         private String handleOwnerPlaceholder(Location location) {

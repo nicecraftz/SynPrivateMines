@@ -13,13 +13,11 @@ import me.untouchedodin0.privatemines.events.PrivateMineUpgradeEvent;
 import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
 import me.untouchedodin0.privatemines.hook.WorldIO;
-import me.untouchedodin0.privatemines.hook.plugin.ItemsAdderHook;
 import me.untouchedodin0.privatemines.hook.plugin.WorldEditHook;
 import me.untouchedodin0.privatemines.hook.plugin.WorldGuardHook;
-import me.untouchedodin0.privatemines.storage.SchematicStorage;
+import me.untouchedodin0.privatemines.mine.factory.MineFactory;
+import me.untouchedodin0.privatemines.mine.world.EmptyWorldGenerator;
 import me.untouchedodin0.privatemines.storage.WeightedCollection;
-import me.untouchedodin0.privatemines.utils.world.Direction;
-import me.untouchedodin0.privatemines.utils.world.EmptyWorldGenerator;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BoundingBox;
@@ -32,21 +30,15 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import static me.untouchedodin0.privatemines.hook.HookHandler.getHookHandler;
-import static me.untouchedodin0.privatemines.utils.world.Direction.NORTH;
 
 public class MineService {
-    private static final int MAX_MINES_PER_LINE = 100;
+    private static final int MAX_MINES_PER_LINE = 3;
 
     private final HashMap<UUID, Mine> mines = Maps.newHashMap();
     private final PrivateMines privateMines;
     private final MineFactory mineFactory;
-
-    private final Location defaultLocation;
+    private final SchematicStorage schematicStorage;
     private final World minesWorld;
-
-
-    private Location nextLocation;
-    private Direction direction;
 
     @ConfigurationEntry(key = "distance", section = "mine", value = "150", type = ConfigurationValueType.INT)
     private int borderDistance;
@@ -60,7 +52,7 @@ public class MineService {
     @ConfigurationEntry(key = "border-upgrade", section = "mine", value = "true", type = ConfigurationValueType.BOOLEAN)
     private boolean borderUpgrade;
 
-    @ConfigurationEntry(key = "upgrade", section = "materialChance", value = "obsidian", type = ConfigurationValueType.MATERIAL)
+    @ConfigurationEntry(key = "upgrade", section = "materials", value = "obsidian", type = ConfigurationValueType.MATERIAL)
     private Material upgradeMaterial;
 
     @ConfigurationEntry(key = "gap", section = "mine.configuration", value = "1", type = ConfigurationValueType.INT)
@@ -73,11 +65,8 @@ public class MineService {
         ConfigurationInstanceRegistry.registerInstance(this);
         this.privateMines = privateMines;
         this.mineFactory = privateMines.getMineFactory();
-
+        this.schematicStorage = privateMines.getSchematicStorage();
         minesWorld = initializeWorld();
-        defaultLocation = new Location(minesWorld, 0, yLevel, 0);
-        this.nextLocation = defaultLocation;
-        this.direction = NORTH;
     }
 
     public void cache(Mine mine) {
@@ -95,6 +84,7 @@ public class MineService {
 
     public void delete(Mine mine) {
         uncache(mine);
+        deleteMineFromWorld(mine);
     }
 
     public boolean has(UUID uuid) {
@@ -129,32 +119,18 @@ public class MineService {
 
     public Location getNextFreeLocation() {
         int minesCount = getMinesCount();
-        if (++minesCount % MAX_MINES_PER_LINE == 0) moveToNextLine();
-        else moveToNextSlot();
-        return nextLocation.clone();
+        int newMineDistanceFromCenter = borderDistance + (minesCount * 2);
+        Location location = new Location(minesWorld, 0, yLevel, newMineDistanceFromCenter);
+        return location;
     }
 
-
-    private void moveToNextLine() {
-        nextLocation = direction.addTo(defaultLocation, (getMinesCount() / MAX_MINES_PER_LINE) * borderDistance);
-    }
-
-    private void moveToNextSlot() {
-        switch (direction) {
-            case NORTH -> nextLocation.add(0, 0, -borderDistance);
-            case EAST -> nextLocation.add(borderDistance, 0, 0);
-            case SOUTH -> nextLocation.add(0, 0, borderDistance);
-            case WEST -> nextLocation.add(-borderDistance, 0, 0);
-        }
-    }
 
     public World getMinesWorld() {
         return minesWorld;
     }
 
     public Mine getNearest(Location location) {
-        if (!minesWorld.equals(location.getWorld()))
-            throw new RuntimeException("Invalid world fetching");
+        if (!minesWorld.equals(location.getWorld())) throw new RuntimeException("Invalid world fetching");
 
         Mine nearest = null;
         for (Mine mine : mines.values()) {
@@ -167,7 +143,7 @@ public class MineService {
     }
 
     private double distanceToMine(Location location, Mine mine) {
-        return location.distance(mine.getMineLocation());
+        return location.distance(mine.mineSpawnLocation());
     }
 
     public void create(UUID uuid) {
@@ -176,7 +152,7 @@ public class MineService {
 
     public void create(UUID uuid, MineType mineType) {
         Mine mine = mineFactory.create(uuid, getNextFreeLocation(), mineType);
-        Vector mineLocation = mine.getMineLocation().toVector();
+        Vector mineLocation = mine.mineSpawnLocation().toVector();
         cache(mine);
 
         LoggerUtil.info("Creating mine for %s at %s", uuid, mineLocation);
@@ -188,22 +164,22 @@ public class MineService {
         BoundingBox boundingBox = mineData.getMineStructure().mineBoundingBox();
 
         // todo: handle oraxen/itemsadder blocks too.
-        WeightedCollection<String> materials = mineType.materialChance();
+        WeightedCollection<String> materials = mineType.materials();
+        if (materials != null && materials.isEmpty()) return;
 
         PrivateMineResetEvent privateMineResetEvent = new PrivateMineResetEvent(mine);
         Bukkit.getPluginManager().callEvent(privateMineResetEvent);
         if (privateMineResetEvent.isCancelled()) return;
-        if (materials != null && materials.isEmpty()) return;
 
         WorldEditHook.WorldEditWorldIO worldEditWorldWriter = HookHandler.getHookHandler()
                 .get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
                 .getWorldEditWorldIO();
 
-        wallsGap = shouldCreateWallGap ? wallsGap : 0;
+        wallsGap = shouldCreateWallGap ? wallsGap : 1;
         worldEditWorldWriter.fill(boundingBox, wallsGap, materials);
     }
 
-    public void handleMineDeletion(Mine mine) {
+    public void deleteMineFromWorld(Mine mine) {
         MineData mineData = mine.getMineData();
         PrivateMineDeleteEvent privateMineDeleteEvent = new PrivateMineDeleteEvent(mine);
         Bukkit.getPluginManager().callEvent(privateMineDeleteEvent);
@@ -211,21 +187,21 @@ public class MineService {
 
         MineStructure structure = mineData.getMineStructure();
         BoundingBox schematicBoundingBox = structure.schematicBoundingBox();
-        BoundingBox mineBoundingBox = structure.mineBoundingBox();
 
         getHookHandler().get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
                 .getRegionOrchestrator()
                 .removeMineRegions(mine);
 
+        // Removes the mine schematic from the world!
         getHookHandler().get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
                 .getWorldEditWorldIO()
                 .fill(schematicBoundingBox, 0, WorldEditHook.EMPTY);
 
-        if (mineData.getMineType()
-                .supportsPlugin(ItemsAdderHook.PLUGIN_NAME) && getHookHandler().hooked(ItemsAdderHook.PLUGIN_NAME)) {
-            getHookHandler().get(ItemsAdderHook.PLUGIN_NAME, ItemsAdderHook.class)
-                    .removeItemsAdderBlocksFromBoundingBox(mineBoundingBox);
-        }
+//        if (mineData.getMineType()
+//                .supportsPlugin(ItemsAdderHook.PLUGIN_NAME) && getHookHandler().hooked(ItemsAdderHook.PLUGIN_NAME)) {
+//            getHookHandler().get(ItemsAdderHook.PLUGIN_NAME, ItemsAdderHook.class)
+//                    .removeItemsAdderBlocksFromBoundingBox(mineBoundingBox);
+//        }
     }
 
     public void upgrade(Mine mine) {
@@ -247,41 +223,35 @@ public class MineService {
 
         File schematicFile = nextType.schematicFile();
         if (currentType.schematicFile().equals(schematicFile)) return;
+
         privateMines.getEconomy().withdrawPlayer(player, nextType.upgradeCost());
 
-        // todo: handle this better.
-        String mineRegionName = String.format("mine-%s", player.getUniqueId());
-        String fullRegionName = String.format("full-mine-%s", player.getUniqueId());
-        BoundingBox schematicArea = mineData.getMineStructure().schematicBoundingBox();
-
         WorldIO worldIO = getHookHandler().get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class).getWorldEditWorldIO();
-        worldIO.fill(schematicArea, 0, WorldEditHook.EMPTY);
 
-        BoundingBox schematicRegion = worldIO.placeSchematic(schematicFile, mine.getMineLocation());
-        SchematicStorage schematicStorage = privateMines.getSchematicStorage();
-        MineBlocks mineBlocks = schematicStorage.get(schematicFile);
+        // Removes the schematic from the world
+        BoundingBox oldSchematicArea = mineData.getMineStructure().schematicBoundingBox();
+        worldIO.fill(oldSchematicArea, 0, WorldEditHook.EMPTY);
 
-        Location spawn = mine.getMineLocation().clone().add(0, 0, 1);
-        BoundingBox mineRegion = mineBlocks.miningArea();
+        // Places a new schematic and gets the new MineBlocks for that schematic to build the new MineStructure
+        BoundingBox schematicRegion = worldIO.placeSchematic(schematicFile, mine.mineSpawnLocation());
+        SchematicInformation schematicInformation = schematicStorage.get(schematicFile);
+        BoundingBox mineRegion = schematicInformation.miningArea();
+
+        Location spawnLocation = schematicInformation.spawnLocation()
+                .add(mine.mineSpawnLocation().toVector())
+                .toLocation(minesWorld);
 
         RegionOrchestrator regionOrchestrator = HookHandler.getHookHandler()
                 .get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
                 .getRegionOrchestrator();
 
-        regionOrchestrator.addRegion(mineRegionName, mineRegion);
-        regionOrchestrator.addRegion(fullRegionName, schematicRegion);
+        regionOrchestrator.removeMineRegions(mine);
 
-        MineStructure mineStructure = new MineStructure(
-                mineRegion,
-                schematicRegion,
-                mineData.getMineStructure().mineLocation(),
-                spawn
-        );
+        MineStructure newMineStructure = new MineStructure(mineRegion, schematicRegion, spawnLocation);
 
-        mineData.setMineStructure(mineStructure);
+        mineData.setMineStructure(newMineStructure);
+        regionOrchestrator.createRegionsThenSetFlagsForMine(mine);
         handleReset(mine);
-
-        spawn.getBlock().setType(Material.AIR);
     }
 
     public void handleReset(Mine mine) {
@@ -307,55 +277,45 @@ public class MineService {
 
         MineData mineData = mine.getMineData();
         MineStructure mineStructure = mineData.getMineStructure();
-        BoundingBox originalMineBoundingBox = mineStructure.mineBoundingBox();
-
-        BoundingBox airFillRegion = originalMineBoundingBox.clone();
-        BoundingBox wallsRegion = originalMineBoundingBox.clone();
-        BoundingBox mineBoundingBox = originalMineBoundingBox.clone();
+        BoundingBox mineBoundingBox = mineStructure.mineBoundingBox();
+        BoundingBox airFillRegion = mineStructure.mineBoundingBox().expand(1, 1, 1);
+        BoundingBox wallsRegion = mineStructure.mineBoundingBox().expand(1);
 
         mineBoundingBox.expand(1);
-        wallsRegion.expand(1);
+        wallsRegion.expand(-1, wallsGoUp ? 1 : 0, wallsGoUp ? 1 : -1);
 
-        if (wallsGoUp) {
-            wallsRegion.expand(-1);
-        } else {
-            wallsRegion.expand(-1, 0, -1);
-        }
+        PrivateMineExpandEvent expandEvent = new PrivateMineExpandEvent(mine, mineBoundingBox);
+        Bukkit.getPluginManager().callEvent(expandEvent);
+        if (expandEvent.isCancelled()) return;
 
-        airFillRegion.expand(1, 1, 1);
-
-        PrivateMineExpandEvent privateMineExpandEvent = new PrivateMineExpandEvent(mine, mineBoundingBox);
-        Bukkit.getPluginManager().callEvent(privateMineExpandEvent);
-        if (privateMineExpandEvent.isCancelled()) return;
-
-        WorldEditHook.WorldEditWorldIO worldEditWorldWriter = HookHandler.getHookHandler()
+        WorldEditHook.WorldEditWorldIO worldEditor = HookHandler.getHookHandler()
                 .get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
                 .getWorldEditWorldIO();
 
-        worldEditWorldWriter.fill(wallsRegion, 0, WeightedCollection.single(Material.AIR.name(), 1d));
-        worldEditWorldWriter.fill(airFillRegion, 0, WeightedCollection.single(Material.AIR.name(), 1d));
+        worldEditor.fill(wallsRegion, 0, WeightedCollection.single(Material.AIR.name(), 1d));
+        worldEditor.fill(airFillRegion, 0, WeightedCollection.single(Material.AIR.name(), 1d));
 
-        BoundingBox schematicBoundingBox = mineStructure.schematicBoundingBox().clone();
-        schematicBoundingBox.expand(1, 1, 1);
+        BoundingBox schematicBoundingBox = mineStructure.schematicBoundingBox().expand(1, 1, 1);
 
-        MineStructure newMineStructure = new MineStructure(
+        MineStructure newStructure = new MineStructure(
                 mineBoundingBox,
                 schematicBoundingBox,
-                mineStructure.mineLocation(),
                 mineStructure.spawnLocation()
         );
 
-        WeightedCollection<String> materials = mineData.getMineType().materialChance();
-        String mineRegionName = String.format("mineRegion-%s", mineData.getMineOwner());
-        HookHandler.getHookHandler()
-                .get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
-                .getRegionOrchestrator()
-                .addRegion(mineRegionName, mineBoundingBox);
+        // todo handle after
+//        String mineRegionName = String.format("mineRegion-%s", mineData.getMineOwner());
+//        HookHandler.getHookHandler()
+//                .get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
+//                .getRegionOrchestrator()
+//                .addRegion(mineRegionName, mineBoundingBox);
 
-        mineData.setMineStructure(newMineStructure);
+        // Aggiorna i dati della miniera e gestisce il reset
+        mineData.setMineStructure(newStructure);
         handleReset(mine);
-//        SQLUtils.update(this);
+        // SQLUtils.update(this);
     }
+
 
     public boolean canExpand(Mine mine, int amount) {
         MineStructure structure = mine.getMineData().getMineStructure();

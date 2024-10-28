@@ -1,4 +1,4 @@
-package me.untouchedodin0.privatemines.utils.world;
+package me.untouchedodin0.privatemines.mine.world;
 
 import java.util.Random;
 

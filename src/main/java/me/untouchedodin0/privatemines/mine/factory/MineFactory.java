@@ -1,4 +1,4 @@
-package me.untouchedodin0.privatemines.mine;
+package me.untouchedodin0.privatemines.mine.factory;
 
 import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
@@ -10,11 +10,14 @@ import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
 import me.untouchedodin0.privatemines.hook.WorldIO;
 import me.untouchedodin0.privatemines.hook.plugin.WorldEditHook;
 import me.untouchedodin0.privatemines.hook.plugin.WorldGuardHook;
-import me.untouchedodin0.privatemines.storage.SchematicStorage;
+import me.untouchedodin0.privatemines.mine.*;
+import me.untouchedodin0.privatemines.utils.SerializationUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.util.BoundingBox;
+import org.bukkit.util.Vector;
 
 import java.io.File;
 import java.util.UUID;
@@ -31,6 +34,7 @@ public class MineFactory {
     }
 
     public Mine create(UUID uuid, Location location, MineType mineType) {
+        LoggerUtil.info("Free location is at %s", SerializationUtil.locationToString(location));
         File schematicFile = mineType.schematicFile();
 
         if (!schematicFile.exists()) {
@@ -43,21 +47,24 @@ public class MineFactory {
                 .getWorldEditWorldIO();
 
         BoundingBox schematicArea = worldIO.placeSchematic(schematicFile, location);
-        Location spawn = location.clone().add(0, 0, 1);
 
-        MineBlocks mineBlocks = schematicStorage.get(schematicFile);
-        BoundingBox mineArea = mineBlocks.miningArea();
-        MineStructure mineStructure = new MineStructure(mineArea, schematicArea, location, spawn);
+        SchematicInformation schematicInformation = schematicStorage.get(schematicFile);
+        BoundingBox mineArea = schematicInformation.miningArea().shift(location.toVector());
+        Vector spawnLocation = schematicInformation.spawnLocation().add(location.toVector());
 
-        return createMineWithRegionConfiguration(uuid, mineType, mineStructure);
-    }
+        MineStructure mineStructure = new MineStructure(
+                mineArea,
+                schematicArea,
+                spawnLocation.toLocation(location.getWorld())
+        );
 
-
-    private Mine createMineWithRegionConfiguration(UUID uuid, MineType mineType, MineStructure mineStructure) {
         MineData mineData = new MineData(uuid, mineStructure, mineType);
+
         Mine mine = new Mine(mineData);
         mineData.setOpen(!defaultClosed);
-        mineStructure.spawnLocation().getBlock().setType(Material.AIR);
+
+        Block spawnBlock = mineStructure.spawnLocation().getBlock();
+        spawnBlock.setType(Material.AIR);
 
         PrivateMineCreationEvent creationEvent = new PrivateMineCreationEvent(mine);
         Bukkit.getPluginManager().callEvent(creationEvent);

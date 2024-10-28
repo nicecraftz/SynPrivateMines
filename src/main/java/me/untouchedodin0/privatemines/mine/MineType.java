@@ -2,7 +2,6 @@ package me.untouchedodin0.privatemines.mine;
 
 import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.PrivateMines;
-import me.untouchedodin0.privatemines.hook.MineBlockHandler;
 import me.untouchedodin0.privatemines.storage.WeightedCollection;
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -10,15 +9,16 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+// todo: embed schematicinformation inside.
 public record MineType(
         String name,
         File schematicFile,
+
         int resetTime,
         double resetPercentage,
         double upgradeCost,
         int expand,
-        Map<String, MineBlockHandler> pluginSupport,
-        WeightedCollection<String> materialChance,
+        WeightedCollection<String> materials,
         Map<String, Boolean> mineFlags,
         Map<String, Boolean> schematicAreaFlags,
         Map<String, Double> prices
@@ -32,10 +32,6 @@ public record MineType(
 
     public boolean isDefault() {
         return name.equalsIgnoreCase("default");
-    }
-
-    public boolean supportsPlugin(String pluginName) {
-        return pluginSupport.containsKey(pluginName.toLowerCase());
     }
 
     public static MineType fromConfigurationSection(ConfigurationSection configurationSection) {
@@ -81,8 +77,6 @@ public record MineType(
             priceMap.put(key, prices.getDouble(key));
         }
 
-        Map<String, MineBlockHandler> pluginHooks = new HashMap<>();
-
         return new MineType(
                 identifier,
                 schematicFile,
@@ -90,7 +84,6 @@ public record MineType(
                 resetPercentage,
                 upgradeCost,
                 expand,
-                pluginHooks,
                 materialChances,
                 mineFlags,
                 schematicFlags,

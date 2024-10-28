@@ -1,6 +1,6 @@
 package me.untouchedodin0.privatemines.hook;
 
-import me.untouchedodin0.privatemines.mine.MineBlocks;
+import me.untouchedodin0.privatemines.mine.SchematicInformation;
 import me.untouchedodin0.privatemines.storage.WeightedCollection;
 import org.bukkit.Location;
 import org.bukkit.util.BoundingBox;
@@ -13,6 +13,6 @@ public interface WorldIO {
 
     void fill(BoundingBox boundingBox, int gap, WeightedCollection<String> materials);
 
-    MineBlocks findRelativePoints(File schematicFile);
+    SchematicInformation findRelativePoints(File schematicFile);
 
 }

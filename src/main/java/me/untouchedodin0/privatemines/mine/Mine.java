@@ -48,12 +48,8 @@ public class Mine {
 //        SQLUtils.update(this);
     }
 
-    public Location getSpawnLocation() {
+    public @NotNull Location mineSpawnLocation() {
         return mineData.getMineStructure().spawnLocation();
-    }
-
-    public @NotNull Location getMineLocation() {
-        return mineData.getMineStructure().mineLocation();
     }
 }
 

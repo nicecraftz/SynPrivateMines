@@ -23,9 +23,13 @@ import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistr
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.hook.WorldIO;
-import me.untouchedodin0.privatemines.mine.MineBlocks;
+import me.untouchedodin0.privatemines.mine.SchematicInformation;
 import me.untouchedodin0.privatemines.storage.WeightedCollection;
-import org.bukkit.*;
+import me.untouchedodin0.privatemines.utils.SerializationUtil;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Registry;
+import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
@@ -37,8 +41,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.bukkit.NamespacedKey.minecraft;
+
 public class WorldEditHook extends Hook {
-    public static final WeightedCollection<String> EMPTY = new WeightedCollection<>();
+    public static final WeightedCollection<String> EMPTY = WeightedCollection.single("air", 1d);
     public static final String PLUGIN_NAME = "WorldEdit";
     private static final World MINES_WORLD = PLUGIN_INSTANCE.getMineService().getMinesWorld();
 
@@ -84,7 +90,7 @@ public class WorldEditHook extends Hook {
 
         @Override
         public BoundingBox placeSchematic(File schematicFile, Location location) {
-            BlockVector3 adaptedLocation = BukkitAdapter.asBlockVector(location);
+            LoggerUtil.info("Free location found: " + SerializationUtil.locationToString(location));
             com.sk89q.worldedit.world.World worldEditWorld = BukkitAdapter.adapt(location.getWorld());
 
             try (
@@ -94,12 +100,19 @@ public class WorldEditHook extends Hook {
                     .build()
             ) {
                 Region region = clipboard.getRegion();
+                clipboard.setOrigin(BlockVector3.ZERO);
+
                 Location min = BukkitAdapter.adapt(MINES_WORLD, region.getMinimumPoint());
                 Location max = BukkitAdapter.adapt(MINES_WORLD, region.getMaximumPoint());
-                BoundingBox boundingBox = BoundingBox.of(min, max);
+
+                LoggerUtil.info("Min Location: " + SerializationUtil.locationToString(min));
+                LoggerUtil.info("Max Location: " + SerializationUtil.locationToString(max));
+
+                BoundingBox boundingBox = BoundingBox.of(min, max).shift(location.toVector());
+                LoggerUtil.info("Adapted BoundingBox: " + boundingBox);
 
                 Operation operation = new ClipboardHolder(clipboard).createPaste(editSession)
-                        .to(adaptedLocation)
+                        .to(BukkitAdapter.asBlockVector(location))
                         .copyBiomes(false)
                         .copyEntities(false)
                         .ignoreAirBlocks(true)
@@ -107,8 +120,6 @@ public class WorldEditHook extends Hook {
 
                 Operations.complete(operation);
                 return boundingBox;
-
-                // todo: remember to remove the mineblocks from the pasted schematic.
             }
         }
 
@@ -118,10 +129,8 @@ public class WorldEditHook extends Hook {
             boundingBox.expand(-Math.abs(gap));
 
             for (Map.Entry<Double, String> materialDoubleEntry : materials.entrySet()) {
-                Material material = Registry.MATERIAL.get(NamespacedKey.minecraft(materialDoubleEntry.getValue()
-                        .toString()));
+                Material material = Registry.MATERIAL.get(minecraft(materialDoubleEntry.getValue().toString()));
                 if (material == null) continue;
-
                 BlockData blockData = material.createBlockData();
                 double chance = materialDoubleEntry.getKey();
                 randomPattern.add(BukkitAdapter.adapt(blockData), chance);
@@ -137,42 +146,50 @@ public class WorldEditHook extends Hook {
                 BlockVector3 min = BukkitAdapter.asBlockVector(boundingBox.getMin().toLocation(MINES_WORLD));
                 BlockVector3 max = BukkitAdapter.asBlockVector(boundingBox.getMax().toLocation(MINES_WORLD));
                 Region region = new CuboidRegion(BukkitAdapter.adapt(MINES_WORLD), min, max);
+
                 editSession.setBlocks(region, randomPattern);
             }
         }
 
         @Override
-        public MineBlocks findRelativePoints(File schematicFile) {
+        public SchematicInformation findRelativePoints(File schematicFile) {
             setupBlockTypesAndFilter();
 
             Vector spawn = null;
-            Vector cornerMin = null;
-            Vector cornerMax = null;
+            Vector mineCornerMin = null;
+            Vector mineCornerMax = null;
+            BoundingBox schematicArea = null;
 
             try (
                     Clipboard clipboard = getClipboard(schematicFile)
             ) {
                 Region region = clipboard.getRegion();
+                clipboard.setOrigin(BlockVector3.ZERO);
+
+                BlockVector3 min = region.getMinimumPoint();
+                BlockVector3 max = region.getMaximumPoint();
+                schematicArea = BoundingBox.of(adapt(min), adapt(max));
+
                 for (BlockVector3 currentVec : region) {
-                    if (cornerMin != null && cornerMax != null && spawn != null) break;
+                    if (mineCornerMin != null && mineCornerMax != null && spawn != null) break;
                     BlockType blockType = clipboard.getBlock(currentVec).getBlockType();
                     if (!filter.contains(blockType)) continue;
-                    if (blockType.equals(cornerBlockType) && (cornerMin == null || cornerMax == null)) {
-                        if (cornerMin == null) cornerMin = adapt(currentVec);
-                        else cornerMax = adapt(currentVec);
+                    if (blockType.equals(cornerBlockType) && (mineCornerMin == null || mineCornerMax == null)) {
+                        if (mineCornerMin == null) mineCornerMin = adapt(currentVec);
+                        else mineCornerMax = adapt(currentVec);
                     }
                     if (blockType.equals(spawnBlockType)) spawn = adapt(currentVec);
                 }
             }
 
-            if (spawn == null || cornerMin == null || cornerMax == null) {
+            if (spawn == null || mineCornerMin == null || mineCornerMax == null || schematicArea == null) {
                 LoggerUtil.severe("Schematic %s is missing either spawn or corners.", schematicFile.getName());
                 return null;
             }
 
-            BoundingBox mineArea = BoundingBox.of(cornerMin, cornerMax);
-            MineBlocks mineBlocks = new MineBlocks(spawn, mineArea);
-            return mineBlocks;
+            BoundingBox mineArea = BoundingBox.of(mineCornerMin, mineCornerMax);
+            SchematicInformation schematicInformation = new SchematicInformation(spawn, mineArea, schematicArea);
+            return schematicInformation;
         }
 
         private Vector adapt(BlockVector3 currentVec) {
@@ -194,7 +211,8 @@ public class WorldEditHook extends Hook {
                 Clipboard clipboard = reader.read(
                         UUID.randomUUID(),
                         // Thanks Pierre for the boost tip!
-                        dimensions -> new CPUOptimizedClipboard(new CuboidRegion(null,
+                        dimensions -> new CPUOptimizedClipboard(new CuboidRegion(
+                                null,
                                 BlockVector3.ZERO,
                                 dimensions.subtract(BlockVector3.ONE),
                                 false
