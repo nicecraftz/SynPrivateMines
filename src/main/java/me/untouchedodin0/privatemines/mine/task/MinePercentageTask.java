@@ -24,7 +24,8 @@ public class MinePercentageTask extends BukkitRunnable {
         for (int x = (int) Math.floor(boundingBox.getMinX()); x < Math.ceil(boundingBox.getMaxX()); x++) {
             for (int y = (int) Math.floor(boundingBox.getMinX()); y < Math.ceil(boundingBox.getMaxX()); y++) {
                 for (int z = (int) Math.floor(boundingBox.getMinX()); z < Math.ceil(boundingBox.getMaxX()); z++) {
-                    Location location = new Location(PrivateMines.inst().getMineWorldManager().getMinesWorld(),
+                    Location location = new Location(
+                            PrivateMines.inst().getMineWorldManager().getMinesWorld(),
                             x,
                             y,
                             z

@@ -1,6 +1,5 @@
 package me.untouchedodin0.privatemines.listener;
 
-import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
@@ -19,8 +18,8 @@ public class ConnectionListener implements Listener {
     @ConfigurationEntry(key = "first-join-creation", section = "mine", value = "true", type = ConfigurationValueType.BOOLEAN)
     private boolean giveMineOnFirstJoin;
 
-    public ConnectionListener(PrivateMines privateMines) {
-        this.mineService = privateMines.getMineService();
+    public ConnectionListener(MineService mineService) {
+        this.mineService = mineService;
         ConfigurationInstanceRegistry.registerInstance(this);
     }
 
@@ -28,11 +27,7 @@ public class ConnectionListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         UUID playerUniqueId = player.getUniqueId();
-
-        if (giveMineOnFirstJoin && !player.hasPlayedBefore()) {
-            mineService.create(playerUniqueId);
-            return;
-        }
-        
+        if (!giveMineOnFirstJoin || player.hasPlayedBefore()) return;
+        mineService.create(playerUniqueId);
     }
 }

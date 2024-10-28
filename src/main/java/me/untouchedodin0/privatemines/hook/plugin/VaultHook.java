@@ -1,5 +1,6 @@
 package me.untouchedodin0.privatemines.hook.plugin;
 
+import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.hook.Hook;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -18,7 +19,7 @@ public class VaultHook extends Hook {
     public void hook() {
         RegisteredServiceProvider registeredServiceProvider = getRegisteredServiceProvider();
         if (registeredServiceProvider == null) {
-            PLUGIN_INSTANCE.logError(
+            LoggerUtil.severe(
                     "Couldn't find a suitable plugin to handle economy. Maybe install Essentials?",
                     new IllegalStateException("Economy Not Found.")
             );

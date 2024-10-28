@@ -4,14 +4,9 @@ import me.untouchedodin0.privatemines.commands.AddonsCommand;
 import me.untouchedodin0.privatemines.commands.PrivateMinesCommand;
 import me.untouchedodin0.privatemines.commands.PublicMinesCommand;
 import me.untouchedodin0.privatemines.configuration.ConfigurationProcessor;
-import me.untouchedodin0.privatemines.factory.MineFactory;
 import me.untouchedodin0.privatemines.hook.HookHandler;
-import me.untouchedodin0.privatemines.hook.plugin.WorldEditHook;
 import me.untouchedodin0.privatemines.listener.ConnectionListener;
-import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineService;
-import me.untouchedodin0.privatemines.mine.MineType;
-import me.untouchedodin0.privatemines.mine.MineTypeRegistry;
+import me.untouchedodin0.privatemines.mine.*;
 import me.untouchedodin0.privatemines.storage.SchematicStorage;
 import me.untouchedodin0.privatemines.utils.UpdateChecker;
 import me.untouchedodin0.privatemines.utils.addon.AddonManager;
@@ -52,35 +47,33 @@ public class PrivateMines extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        logInfo("Loading Private Mines v" + getPluginMeta().getVersion());
-
         instance = this;
-        configurationProcessor = new ConfigurationProcessor(this);
+        LoggerUtil.info("Loading Private Mines v" + getPluginMeta().getVersion());
+
         saveDefaultConfig();
         esnureDirectoriesCreation();
 
+        configurationProcessor = new ConfigurationProcessor(this);
         mineWorldManager = new MineWorldManager();
-        mineFactory = new MineFactory(this);
-        mineService = new MineService(this);
 
-        registerListeners();
         HookHandler.getHookHandler().registerHooks();
 
-        schematicStorage = new SchematicStorage(HookHandler.getHookHandler()
-                .get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
-                .getWorldEditWorldIO());
-
-        minesAPI = new PrivateMinesAPIImpl(mineService);
+        schematicStorage = new SchematicStorage();
         mineTypeRegistry = new MineTypeRegistry(schematicStorage);
 
-        addonManager = new AddonManager(this);
-        // todo: register mine types.
+        mineFactory = new MineFactory(schematicStorage);
+        mineService = new MineService(this);
 
+        minesAPI = new PrivateMinesAPIImpl(mineService);
+        addonManager = new AddonManager(this);
+        
         registerMineTypes();
 
         new AddonsCommand(this).registerCommands();
         new PublicMinesCommand().registerCommands();
         new PrivateMinesCommand(this).registerCommands();
+
+        getServer().getPluginManager().registerEvents(new ConnectionListener(mineService), this);
 
 //        MineConfig.getMineTypes().forEach((s, mineType) -> mineTypeManager.registerMineType(mineType));
 //        MineConfig.mineTypes.forEach((name, mineType) -> {
@@ -178,7 +171,7 @@ public class PrivateMines extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        logInfo("PrivateMines is disabling..");
+        LoggerUtil.info("PrivateMines is disabling..");
         saveMines();
     }
 
@@ -193,18 +186,6 @@ public class PrivateMines extends JavaPlugin {
 //            }
 //        }
 //    }
-
-    public void logError(String message) {
-        getLogger().severe(message);
-    }
-
-    public void logError(String message, Exception ex) {
-        getLogger().severe(message + ex.getMessage());
-    }
-
-    private void registerListeners() {
-        getServer().getPluginManager().registerEvents(new ConnectionListener(this), this);
-    }
 
 //    public void loadSQLMines() {
 //        SQLHelper sqlHelper = getSqlHelper();
@@ -324,16 +305,8 @@ public class PrivateMines extends JavaPlugin {
         return economy;
     }
 
-    public void logInfo(String message) {
-        getLogger().info(message);
-    }
-
     public File getAddonsDirectory() {
         return addonsDirectory;
-    }
-
-    public void logWarn(String message) {
-        getLogger().warning(message);
     }
 
     public File getSchematicsDirectory() {

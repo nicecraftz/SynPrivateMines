@@ -1,6 +1,7 @@
 package me.untouchedodin0.privatemines.hook.plugin;
 
 import dev.lone.itemsadder.api.CustomBlock;
+import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
@@ -42,11 +43,11 @@ public class ItemsAdderHook extends Hook {
     @Override
     public void hook() {
         String itemsAdderVersion = getPlugin().getPluginMeta().getVersion();
-        PLUGIN_INSTANCE.logInfo(String.format("""
+        LoggerUtil.info("""
                 Found ItemsAdder v%s installed,
                 make sure to list the materials under the itemsadder section
                 within each mine type if you want to use itemsadder
-                blocks or it won't load correctly!""", itemsAdderVersion));
+                blocks or it won't load correctly!""", itemsAdderVersion);
         blockHandler = new ItemsAdderBlockHandler();
     }
 
@@ -61,8 +62,10 @@ public class ItemsAdderHook extends Hook {
 
         BoundingBox boundingBox = mineStructure.mineBoundingBox();
         if (shouldCreateWallGap) boundingBox.expand(-Math.abs(wallsGap));
-        HookHandler.getHookHandler().get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
-                .getWorldEditWorldIO().fill(boundingBox, 0, WorldEditHook.EMPTY);
+        HookHandler.getHookHandler()
+                .get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
+                .getWorldEditWorldIO()
+                .fill(boundingBox, 0, WorldEditHook.EMPTY);
 
         for (Player online : Bukkit.getOnlinePlayers()) {
             Location location = online.getLocation();

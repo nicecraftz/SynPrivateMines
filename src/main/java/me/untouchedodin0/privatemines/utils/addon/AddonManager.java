@@ -1,5 +1,6 @@
 package me.untouchedodin0.privatemines.utils.addon;
 
+import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.PrivateMines;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +12,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+
+import static me.untouchedodin0.privatemines.LoggerUtil.*;
 
 public class AddonManager {
     private final PrivateMines privateMines;
@@ -26,14 +29,10 @@ public class AddonManager {
             try {
                 Class<? extends Addon> addonClass = FileUtil.findClass(file, Addon.class);
                 if (addonClass != null) return addonClass;
-                privateMines.logWarn(String.format("Failed to load addon %s, as it does not have a class which extends Addon",
-                        file.getName()
-                ));
+                warning("Failed to load addon %s, as it does not have a class which extends Addon", file.getName());
                 return null;
             } catch (VerifyError | NoClassDefFoundError e) {
-                privateMines.logWarn(String.format("Failed to load addon %s, as it has a linkage error",
-                        file.getName()
-                ));
+                warning("Failed to load addon %s, as it has a linkage error", file.getName());
                 return null;
             } catch (Exception e) {
                 throw new CompletionException(e.getMessage() + " (addon file: " + file.getAbsolutePath() + ")", e);
@@ -49,11 +48,7 @@ public class AddonManager {
         } catch (LinkageError | NullPointerException ex) {
             String reason = ex instanceof LinkageError ? " (Is a dependency missing?)" : " - One of its properties is null which is not allowed!";
             try {
-                privateMines.getLogger()
-                        .warning(String.format("Failed to load addon class %s %s",
-                                clazz.get().getSimpleName(),
-                                reason
-                        ));
+                warning("Failed to load addon class %s %s", clazz.get().getSimpleName(), reason);
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }

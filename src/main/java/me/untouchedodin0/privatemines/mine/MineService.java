@@ -9,7 +9,6 @@ import me.untouchedodin0.privatemines.events.PrivateMineDeleteEvent;
 import me.untouchedodin0.privatemines.events.PrivateMineExpandEvent;
 import me.untouchedodin0.privatemines.events.PrivateMineResetEvent;
 import me.untouchedodin0.privatemines.events.PrivateMineUpgradeEvent;
-import me.untouchedodin0.privatemines.factory.MineFactory;
 import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
 import me.untouchedodin0.privatemines.hook.WorldIO;
@@ -174,7 +173,7 @@ public class MineService {
         BoundingBox schematicRegion = worldIO.placeSchematic(schematicFile, mine.getMineLocation());
 
         SchematicStorage schematicStorage = privateMines.getSchematicStorage();
-        WorldIO.MineBlocks mineBlocks = schematicStorage.get(schematicFile);
+        MineBlocks mineBlocks = schematicStorage.get(schematicFile);
 
         Location spawn = mine.getMineLocation().clone().add(0, 0, 1);
         BoundingBox mineRegion = mineBlocks.miningArea();

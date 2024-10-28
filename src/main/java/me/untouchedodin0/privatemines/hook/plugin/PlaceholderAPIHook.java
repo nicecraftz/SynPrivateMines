@@ -1,6 +1,7 @@
 package me.untouchedodin0.privatemines.hook.plugin;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.mine.Mine;
@@ -29,7 +30,6 @@ public class PlaceholderAPIHook extends Hook {
     @Override
     public void hook() {
         new PlaceholderAPIHookExpansion().register();
-        PLUGIN_INSTANCE.logInfo("PlaceholderAPI Hooked successfully!");
     }
 
     private class PlaceholderAPIHookExpansion extends PlaceholderExpansion {

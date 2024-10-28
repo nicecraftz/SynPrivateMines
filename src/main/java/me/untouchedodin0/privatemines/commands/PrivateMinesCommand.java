@@ -12,7 +12,7 @@ import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
-import me.untouchedodin0.privatemines.factory.MineFactory;
+import me.untouchedodin0.privatemines.mine.MineFactory;
 import me.untouchedodin0.privatemines.mine.*;
 import me.untouchedodin0.privatemines.utils.Cooldowns;
 import me.untouchedodin0.privatemines.utils.world.MineWorldManager;

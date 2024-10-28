@@ -1,5 +1,6 @@
 package me.untouchedodin0.privatemines.hook;
 
+import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.PrivateMines;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -10,9 +11,10 @@ public abstract class Hook {
     public abstract String getPluginName();
 
     public void tryHook() {
-        PrivateMines privateMines = PrivateMines.inst();
-        if (canHook()) hook();
-        else privateMines.logInfo("Tried to hook into " + getPluginName() + " but it wasn't found!");
+        if (canHook()) {
+            hook();
+            LoggerUtil.info("Hooked into " + getPluginName() + " successfully!");
+        } else LoggerUtil.warning("Could not hook into " + getPluginName() + " because it is not enabled.");
     }
 
     private boolean canHook() {
@@ -21,8 +23,7 @@ public abstract class Hook {
     }
 
     protected Plugin getPlugin() {
-        PrivateMines privateMines = PrivateMines.inst();
-        PluginManager pluginManager = privateMines.getServer().getPluginManager();
+        PluginManager pluginManager = PLUGIN_INSTANCE.getServer().getPluginManager();
         Plugin plugin = pluginManager.getPlugin(getPluginName());
         return plugin;
     }

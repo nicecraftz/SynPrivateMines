@@ -25,7 +25,6 @@ public class ConfigurationProcessor {
                 String constructedPath = entry.section() + "." + entry.key();
 
                 Object value = bridge.get(javaPlugin, constructedPath);
-
                 if (value == null) value = bridge.fallback(entry.value());
 
                 try {

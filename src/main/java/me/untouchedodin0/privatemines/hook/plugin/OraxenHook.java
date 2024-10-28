@@ -1,6 +1,7 @@
 package me.untouchedodin0.privatemines.hook.plugin;
 
 import io.th0rgal.oraxen.api.OraxenBlocks;
+import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
@@ -38,11 +39,11 @@ public class OraxenHook extends Hook {
     @Override
     public void hook() {
         String oraxenVersion = getPlugin().getPluginMeta().getVersion();
-        PLUGIN_INSTANCE.logInfo(String.format("""
+        LoggerUtil.info("""
                 Found Oraxen v%s installed,
                 make sure to list the materials under the oraxen section
                 within each mine type if you want to use oraxen
-                blocks or it won't load correctly!""", oraxenVersion));
+                blocks or it won't load correctly!""", oraxenVersion);
         oraxenBlockHandler = new OraxenBlockHandler();
     }
 

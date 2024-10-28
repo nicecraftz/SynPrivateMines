@@ -19,9 +19,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package me.untouchedodin0.privatemines.factory;
+package me.untouchedodin0.privatemines.mine;
 
-import me.untouchedodin0.privatemines.PrivateMines;
+import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
@@ -31,10 +31,7 @@ import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
 import me.untouchedodin0.privatemines.hook.WorldIO;
 import me.untouchedodin0.privatemines.hook.plugin.WorldEditHook;
 import me.untouchedodin0.privatemines.hook.plugin.WorldGuardHook;
-import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineData;
-import me.untouchedodin0.privatemines.mine.MineStructure;
-import me.untouchedodin0.privatemines.mine.MineType;
+import me.untouchedodin0.privatemines.storage.SchematicStorage;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -44,29 +41,23 @@ import java.io.File;
 import java.util.UUID;
 
 public class MineFactory {
-    private final PrivateMines privateMines;
-    private static final RegionOrchestrator regionOrchestrator = HookHandler.getHookHandler()
-            .get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
-            .getRegionOrchestrator();
+    private final SchematicStorage schematicStorage;
 
     @ConfigurationEntry(key = "is-closed-by-default", section = "mine", type = ConfigurationValueType.BOOLEAN, value = "true")
     private boolean defaultClosed;
 
-    public MineFactory(PrivateMines privateMines) {
-        this.privateMines = privateMines;
+    public MineFactory(SchematicStorage schematicStorage) {
         ConfigurationInstanceRegistry.registerInstance(this);
+        this.schematicStorage = schematicStorage;
     }
 
     public Mine create(UUID uuid, Location location, MineType mineType) {
         File schematicFile = mineType.schematicFile();
 
         if (!schematicFile.exists()) {
-            privateMines.logWarn("Schematic file does not exists: " + schematicFile.getName());
+            LoggerUtil.warning("Schematic file does not exists: " + schematicFile.getName());
             return null;
         }
-
-        String mineRegionName = String.format("mine-%s", uuid.toString());
-        String fullRegionName = String.format("full-mine-%s", uuid);
 
         WorldIO worldIO = HookHandler.getHookHandler()
                 .get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
@@ -74,34 +65,29 @@ public class MineFactory {
 
         BoundingBox schematicArea = worldIO.placeSchematic(schematicFile, location);
         Location spawn = location.clone().add(0, 0, 1);
-        WorldIO.MineBlocks mineBlocks = privateMines.getSchematicStorage().get(schematicFile);
+
+        MineBlocks mineBlocks = schematicStorage.get(schematicFile);
         BoundingBox mineArea = mineBlocks.miningArea();
+        MineStructure mineStructure = new MineStructure(mineArea, schematicArea, location, spawn);
+
+        return createMineWithRegionConfiguration(uuid, mineType, mineStructure);
+    }
+
+
+    private Mine createMineWithRegionConfiguration(UUID uuid, MineType mineType, MineStructure mineStructure) {
+        MineData mineData = new MineData(uuid, mineStructure, mineType);
+        Mine mine = new Mine(mineData);
+        mineData.setOpen(!defaultClosed);
+        mineStructure.spawnLocation().getBlock().setType(Material.AIR);
+
+        PrivateMineCreationEvent creationEvent = new PrivateMineCreationEvent(mine);
+        Bukkit.getPluginManager().callEvent(creationEvent);
 
         RegionOrchestrator regionOrchestrator = HookHandler.getHookHandler()
                 .get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
                 .getRegionOrchestrator();
 
-        regionOrchestrator.addRegion(fullRegionName, schematicArea);
-        regionOrchestrator.addRegion(mineRegionName, mineArea);
-
-        return createMineWithRegionConfiguration(uuid, mineType, mineArea, schematicArea, location, spawn);
-    }
-
-
-    private Mine createMineWithRegionConfiguration(UUID uuid, MineType mineType, BoundingBox mineArea, BoundingBox schematicArea, Location mineLocation, Location spawnLocation) {
-        MineStructure mineStructure = new MineStructure(mineArea, schematicArea, mineLocation, spawnLocation);
-        MineData mineData = new MineData(uuid, mineStructure, mineType);
-        Mine mine = new Mine(mineData);
-        mineData.setOpen(!defaultClosed);
-
-        // todo: Handle this
-//        SQLUtils.insert(mine);
-
-        spawnLocation.getBlock().setType(Material.AIR);
-        PrivateMineCreationEvent creationEvent = new PrivateMineCreationEvent(mine);
-        Bukkit.getPluginManager().callEvent(creationEvent);
-
-        regionOrchestrator.setFlagsForMine(mine);
+        regionOrchestrator.createRegionsThenSetFlagsForMine(mine);
         return mine;
     }
 }

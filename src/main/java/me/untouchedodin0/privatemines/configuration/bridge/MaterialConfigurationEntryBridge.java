@@ -10,7 +10,7 @@ public class MaterialConfigurationEntryBridge implements ConfigurationEntryBridg
     @Override
     public Material get(JavaPlugin javaPlugin, String path) {
         String materialName = javaPlugin.getConfig().getString(path);
-        if (materialName == null || materialName.isEmpty()) return Material.STONE;
+        if (materialName == null || materialName.isEmpty()) return null;
         return Registry.MATERIAL.get(NamespacedKey.minecraft(materialName.toLowerCase()));
     }
 

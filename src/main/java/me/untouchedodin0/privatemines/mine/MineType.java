@@ -1,5 +1,6 @@
 package me.untouchedodin0.privatemines.mine;
 
+import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.hook.MineBlockHandler;
 import org.bukkit.configuration.ConfigurationSection;
@@ -43,8 +44,7 @@ public record MineType(
         File schematicFile = new File(PrivateMines.inst().getSchematicsDirectory(), fileName);
 
         if (!schematicFile.exists()) {
-            PrivateMines.inst()
-                    .logError("Schematic file " + fileName + " does not exist for mine type " + identifier);
+            LoggerUtil.severe("Schematic file " + fileName + " does not exist for mine type " + identifier);
             return null;
         }
 
@@ -52,6 +52,7 @@ public record MineType(
         double resetPercentage = configurationSection.getDouble("reset.percentage");
         int expand = configurationSection.getInt("expand");
         double upgradeCost = configurationSection.getDouble("upgradeCost");
+
         ConfigurationSection materials = configurationSection.getConfigurationSection("materials");
         WeightedCollection<String> materialChances = new WeightedCollection<>();
         for (String key : materials.getKeys(false)) {
