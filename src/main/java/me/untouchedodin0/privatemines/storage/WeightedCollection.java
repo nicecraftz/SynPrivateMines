@@ -1,4 +1,4 @@
-package me.untouchedodin0.privatemines.mine;
+package me.untouchedodin0.privatemines.storage;
 
 
 import java.util.Map;

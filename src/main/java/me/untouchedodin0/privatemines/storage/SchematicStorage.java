@@ -25,7 +25,6 @@ public class SchematicStorage {
     }
 
     public MineBlocks get(File file) {
-        System.out.println("Getting schematic: " + file.getName());
         return mineBlocksMap.get(file.getName().toLowerCase());
     }
 }

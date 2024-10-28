@@ -1,7 +1,6 @@
 package me.untouchedodin0.privatemines.hook.plugin;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.mine.Mine;

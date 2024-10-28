@@ -12,12 +12,13 @@ import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
-import me.untouchedodin0.privatemines.mine.MineFactory;
 import me.untouchedodin0.privatemines.mine.*;
 import me.untouchedodin0.privatemines.utils.Cooldowns;
-import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -33,10 +34,9 @@ import static io.papermc.paper.command.brigadier.Commands.literal;
 public class PrivateMinesCommand {
     private final PrivateMines privateMines;
     private final Economy economy;
-    private final MineService mineService;
+    
     private final MineTypeRegistry mineTypeRegistry;
-    private final MineWorldManager mineWorldManager;
-    private final MineFactory mineFactory;
+    private final MineService mineService;
 
     @ConfigurationEntry(key = "reset-cooldown", section = "mine", value = "15", type = ConfigurationValueType.INT)
     private int resetCooldown;
@@ -44,10 +44,8 @@ public class PrivateMinesCommand {
     public PrivateMinesCommand(PrivateMines privateMines) {
         this.privateMines = privateMines;
         this.economy = privateMines.getEconomy();
-        this.mineService = privateMines.getMineService();
         this.mineTypeRegistry = privateMines.getMineTypeRegistry();
-        this.mineWorldManager = privateMines.getMineWorldManager();
-        this.mineFactory = privateMines.getMineFactory();
+        this.mineService = privateMines.getMineService();
 
         ConfigurationInstanceRegistry.registerInstance(this);
     }
@@ -104,21 +102,20 @@ public class PrivateMinesCommand {
                         return SINGLE_SUCCESS;
                     }
 
-                    Location location = mineWorldManager.getNextFreeLocation();
+
                     if (!mineTypeRegistry.isDefaultMineSet()) {
                         commandSender.sendRichMessage("<red>Default mine type is not set!");
                         return SINGLE_SUCCESS;
                     }
 
                     MineType defaultMineType = mineTypeRegistry.getDefaultMineType();
-
                     UUID targetUniqueId = target.getUniqueId();
                     if (mineService.has(targetUniqueId)) {
                         commandSender.sendRichMessage("<red>The specified player already owns a mine!");
                         return SINGLE_SUCCESS;
                     }
 
-                    mineFactory.create(targetUniqueId, location, defaultMineType);
+                    mineService.create(targetUniqueId, defaultMineType);
                     commandSender.sendRichMessage("<green>Gave " + target.getName() + " a mine!");
                     return SINGLE_SUCCESS;
                 }))
@@ -225,7 +222,7 @@ public class PrivateMinesCommand {
             BoundingBox schematicArea = mineStructure.schematicBoundingBox();
 
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                if (schematicArea.contains(onlinePlayer.getLocation().toVector()) && mineWorldManager.getMinesWorld()
+                if (schematicArea.contains(onlinePlayer.getLocation().toVector()) && mineService.getMinesWorld()
                         .equals(onlinePlayer.getWorld())) {
                     Bukkit.dispatchCommand(onlinePlayer, "spawn"); //todo: change this since command may not exist.
                 }

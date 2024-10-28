@@ -45,7 +45,7 @@ public class WorldGuardHook extends Hook {
 
     @Override
     public void hook() {
-        bukkitMinesWorld = PLUGIN_INSTANCE.getMineWorldManager().getMinesWorld();
+        bukkitMinesWorld = PLUGIN_INSTANCE.getMineService().getMinesWorld();
         worldGuardMinesWorld = BukkitAdapter.adapt(bukkitMinesWorld);
 
         regionContainer = WorldGuard.getInstance().getPlatform().getRegionContainer();

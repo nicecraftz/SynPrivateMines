@@ -2,6 +2,7 @@ package me.untouchedodin0.privatemines.mine;
 
 import com.google.common.collect.ImmutableSet;
 import me.untouchedodin0.privatemines.playershops.Shop;
+import me.untouchedodin0.privatemines.storage.WeightedCollection;
 import org.bukkit.Material;
 
 import java.util.HashSet;

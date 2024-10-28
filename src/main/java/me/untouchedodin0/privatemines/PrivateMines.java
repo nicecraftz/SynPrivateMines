@@ -10,7 +10,6 @@ import me.untouchedodin0.privatemines.mine.*;
 import me.untouchedodin0.privatemines.storage.SchematicStorage;
 import me.untouchedodin0.privatemines.utils.UpdateChecker;
 import me.untouchedodin0.privatemines.utils.addon.AddonManager;
-import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -29,16 +28,14 @@ public class PrivateMines extends JavaPlugin {
     private File addonsDirectory;
 
     private ConfigurationProcessor configurationProcessor;
-    private SchematicStorage schematicStorage;
 
-    private MineFactory mineFactory;
-    private MineService mineService;
+    private MineFactory mineFactory = null;
+    private MineTypeRegistry mineTypeRegistry = null;
+    private SchematicStorage schematicStorage = null;
 
-    private MineWorldManager mineWorldManager;
-    private MineTypeRegistry mineTypeRegistry;
+    private MineService mineService = null;
 
     private AddonManager addonManager;
-
     private Economy economy = null;
 
     public static PrivateMines inst() {
@@ -49,24 +46,20 @@ public class PrivateMines extends JavaPlugin {
     public void onEnable() {
         instance = this;
         LoggerUtil.info("Loading Private Mines v" + getPluginMeta().getVersion());
-
         saveDefaultConfig();
         esnureDirectoriesCreation();
-
         configurationProcessor = new ConfigurationProcessor(this);
-        mineWorldManager = new MineWorldManager();
-
-        HookHandler.getHookHandler().registerHooks();
 
         schematicStorage = new SchematicStorage();
         mineTypeRegistry = new MineTypeRegistry(schematicStorage);
-
         mineFactory = new MineFactory(schematicStorage);
         mineService = new MineService(this);
 
+        HookHandler.getHookHandler().registerHooks();
+
         minesAPI = new PrivateMinesAPIImpl(mineService);
         addonManager = new AddonManager(this);
-        
+
         registerMineTypes();
 
         new AddonsCommand(this).registerCommands();
@@ -287,10 +280,6 @@ public class PrivateMines extends JavaPlugin {
 
     public MineService getMineService() {
         return mineService;
-    }
-
-    public MineWorldManager getMineWorldManager() {
-        return mineWorldManager;
     }
 
     public MineTypeRegistry getMineTypeRegistry() {

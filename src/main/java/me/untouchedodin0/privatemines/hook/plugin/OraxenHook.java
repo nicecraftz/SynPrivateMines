@@ -19,7 +19,7 @@ import org.bukkit.util.BoundingBox;
 
 public class OraxenHook extends Hook {
     public static final String PLUGIN_NAME = "Oraxen";
-    private static final World MINES_WORLD = PLUGIN_INSTANCE.getMineWorldManager().getMinesWorld();
+    private static final World MINES_WORLD = PLUGIN_INSTANCE.getMineService().getMinesWorld();
     private OraxenBlockHandler oraxenBlockHandler;
 
     @ConfigurationEntry(key = "should-create-wall-gap", section = "mine.configuration", value = "true", type = ConfigurationValueType.BOOLEAN)

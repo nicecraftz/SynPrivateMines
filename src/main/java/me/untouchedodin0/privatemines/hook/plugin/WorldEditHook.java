@@ -24,7 +24,7 @@ import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.hook.WorldIO;
 import me.untouchedodin0.privatemines.mine.MineBlocks;
-import me.untouchedodin0.privatemines.mine.WeightedCollection;
+import me.untouchedodin0.privatemines.storage.WeightedCollection;
 import org.bukkit.*;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.util.BoundingBox;
@@ -40,7 +40,7 @@ import java.util.UUID;
 public class WorldEditHook extends Hook {
     public static final WeightedCollection<String> EMPTY = new WeightedCollection<>();
     public static final String PLUGIN_NAME = "WorldEdit";
-    private static final World MINES_WORLD = PLUGIN_INSTANCE.getMineWorldManager().getMinesWorld();
+    private static final World MINES_WORLD = PLUGIN_INSTANCE.getMineService().getMinesWorld();
 
     private final List<BlockType> filter = Lists.newArrayList();
 
@@ -145,34 +145,38 @@ public class WorldEditHook extends Hook {
         public MineBlocks findRelativePoints(File schematicFile) {
             setupBlockTypesAndFilter();
 
-            Vector spawnVec = null;
-            Vector cornerMinVec = null;
-            Vector cornerMaxVec = null;
+            Vector spawn = null;
+            Vector cornerMin = null;
+            Vector cornerMax = null;
 
             try (
                     Clipboard clipboard = getClipboard(schematicFile)
             ) {
                 Region region = clipboard.getRegion();
                 for (BlockVector3 currentVec : region) {
-                    if (cornerMinVec != null && cornerMaxVec != null && spawnVec != null) break;
+                    if (cornerMin != null && cornerMax != null && spawn != null) break;
                     BlockType blockType = clipboard.getBlock(currentVec).getBlockType();
                     if (!filter.contains(blockType)) continue;
-                    if (blockType.equals(cornerBlockType) && (cornerMinVec == null || cornerMaxVec == null)) {
-                        if (cornerMinVec == null) cornerMinVec = fromBlockVector3(currentVec);
-                        else cornerMaxVec = fromBlockVector3(currentVec);
+                    if (blockType.equals(cornerBlockType) && (cornerMin == null || cornerMax == null)) {
+                        if (cornerMin == null) cornerMin = adapt(currentVec);
+                        else cornerMax = adapt(currentVec);
                     }
-                    if (blockType.equals(spawnBlockType)) spawnVec = fromBlockVector3(currentVec);
+                    if (blockType.equals(spawnBlockType)) spawn = adapt(currentVec);
                 }
             }
 
-            if (spawnVec == null || cornerMinVec == null || cornerMaxVec == null) {
+            if (spawn == null || cornerMin == null || cornerMax == null) {
                 LoggerUtil.severe("Schematic %s is missing either spawn or corners.", schematicFile.getName());
                 return null;
             }
 
-            BoundingBox mineArea = BoundingBox.of(cornerMinVec, cornerMaxVec);
-            MineBlocks mineBlocks = new MineBlocks(spawnVec, mineArea);
+            BoundingBox mineArea = BoundingBox.of(cornerMin, cornerMax);
+            MineBlocks mineBlocks = new MineBlocks(spawn, mineArea);
             return mineBlocks;
+        }
+
+        private Vector adapt(BlockVector3 currentVec) {
+            return BukkitAdapter.adapt(MINES_WORLD, currentVec).toVector();
         }
 
         private void setupBlockTypesAndFilter() {
@@ -184,18 +188,13 @@ public class WorldEditHook extends Hook {
             filter.addAll(List.of(spawnBlockType, cornerBlockType, npcBlockType, quarryBlockType));
         }
 
-        private Vector fromBlockVector3(BlockVector3 blockVector3) {
-            return new Vector(blockVector3.getX(), blockVector3.getY(), blockVector3.getZ());
-        }
-
         private Clipboard getClipboard(File schematicFile) {
             ClipboardFormat format = ClipboardFormats.findByFile(schematicFile);
             try (ClipboardReader reader = format.getReader(new FileInputStream(schematicFile))) {
                 Clipboard clipboard = reader.read(
                         UUID.randomUUID(),
                         // Thanks Pierre for the boost tip!
-                        dimensions -> new CPUOptimizedClipboard(new CuboidRegion(
-                                null,
+                        dimensions -> new CPUOptimizedClipboard(new CuboidRegion(null,
                                 BlockVector3.ZERO,
                                 dimensions.subtract(BlockVector3.ONE),
                                 false

@@ -3,6 +3,7 @@ package me.untouchedodin0.privatemines.mine;
 import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.hook.MineBlockHandler;
+import me.untouchedodin0.privatemines.storage.WeightedCollection;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.io.File;

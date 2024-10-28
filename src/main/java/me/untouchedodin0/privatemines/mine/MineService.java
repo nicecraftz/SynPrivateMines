@@ -1,6 +1,7 @@
 package me.untouchedodin0.privatemines.mine;
 
 import com.google.common.collect.Maps;
+import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
@@ -16,13 +17,13 @@ import me.untouchedodin0.privatemines.hook.plugin.ItemsAdderHook;
 import me.untouchedodin0.privatemines.hook.plugin.WorldEditHook;
 import me.untouchedodin0.privatemines.hook.plugin.WorldGuardHook;
 import me.untouchedodin0.privatemines.storage.SchematicStorage;
-import me.untouchedodin0.privatemines.utils.world.MineWorldManager;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import me.untouchedodin0.privatemines.storage.WeightedCollection;
+import me.untouchedodin0.privatemines.utils.world.Direction;
+import me.untouchedodin0.privatemines.utils.world.EmptyWorldGenerator;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BoundingBox;
+import org.bukkit.util.Vector;
 
 import java.io.File;
 import java.util.HashMap;
@@ -30,33 +31,53 @@ import java.util.Map;
 import java.util.UUID;
 
 import static me.untouchedodin0.privatemines.hook.HookHandler.getHookHandler;
+import static me.untouchedodin0.privatemines.utils.world.Direction.NORTH;
 
 public class MineService {
+    private static final int MAX_MINES_PER_LINE = 100;
+
+    private final HashMap<UUID, Mine> mines = Maps.newHashMap();
     private final PrivateMines privateMines;
     private final MineFactory mineFactory;
-    private final MineWorldManager mineWorldManager;
-    private final HashMap<UUID, Mine> mines = Maps.newHashMap();
+
+    private final Location defaultLocation;
+    private final World minesWorld;
+
+
+    private Location nextLocation;
+    private Direction direction;
+
+
+    @ConfigurationEntry(key = "distance", section = "mine", value = "150", type = ConfigurationValueType.INT)
+    private int borderDistance;
+
+    @ConfigurationEntry(key = "y-level", section = "mine", value = "50", type = ConfigurationValueType.INT)
+    private int yLevel;
 
     @ConfigurationEntry(key = "should-create-wall-gap", section = "mine.configuration", value = "true", type = ConfigurationValueType.BOOLEAN)
-    boolean shouldCreateWallGap;
+    private boolean shouldCreateWallGap;
 
     @ConfigurationEntry(key = "border-upgrade", section = "mine", value = "true", type = ConfigurationValueType.BOOLEAN)
-    boolean borderUpgrade;
+    private boolean borderUpgrade;
 
     @ConfigurationEntry(key = "upgrade", section = "materialChance", value = "obsidian", type = ConfigurationValueType.MATERIAL)
-    Material upgradeMaterial;
+    private Material upgradeMaterial;
 
     @ConfigurationEntry(key = "gap", section = "mine.configuration", value = "1", type = ConfigurationValueType.INT)
-    int wallsGap;
+    private int wallsGap;
 
     @ConfigurationEntry(key = "walls-go-up", section = "mine.configuration", value = "false", type = ConfigurationValueType.BOOLEAN)
-    boolean wallsGoUp;
+    private boolean wallsGoUp;
 
     public MineService(PrivateMines privateMines) {
+        ConfigurationInstanceRegistry.registerInstance(this);
         this.privateMines = privateMines;
         this.mineFactory = privateMines.getMineFactory();
-        this.mineWorldManager = privateMines.getMineWorldManager();
-        ConfigurationInstanceRegistry.registerInstance(this);
+
+        minesWorld = initializeWorld();
+        defaultLocation = new Location(minesWorld, 0, yLevel, 0);
+        this.nextLocation = defaultLocation;
+        this.direction = NORTH;
     }
 
     public void cache(Mine mine) {
@@ -72,20 +93,88 @@ public class MineService {
         return mine != null;
     }
 
+    public void delete(Mine mine) {
+        uncache(mine);
+    }
+
+    public boolean has(UUID uuid) {
+        return mines.containsKey(uuid);
+    }
+
+    public Mine get(UUID uuid) {
+        return mines.get(uuid);
+    }
+
+
+    public Map<UUID, Mine> getMines() {
+        return Map.copyOf(mines);
+    }
+
+    public int getMinesCount() {
+        return mines.size();
+    }
+
+    private World initializeWorld() {
+        World world = Bukkit.getWorld("privatemines");
+        if (world == null) world = Bukkit.createWorld(new WorldCreator("privatemines").type(WorldType.FLAT)
+                .generator(new EmptyWorldGenerator()));
+
+        return world;
+    }
+
+    public Location getNextFreeLocation() {
+        int minesCount = getMinesCount();
+        if (++minesCount % MAX_MINES_PER_LINE == 0) moveToNextLine();
+        else moveToNextSlot();
+        return nextLocation.clone();
+    }
+
+
+    private void moveToNextLine() {
+        nextLocation = direction.addTo(defaultLocation, (getMinesCount() / MAX_MINES_PER_LINE) * borderDistance);
+    }
+
+    private void moveToNextSlot() {
+        switch (direction) {
+            case NORTH -> nextLocation.add(0, 0, -borderDistance);
+            case EAST -> nextLocation.add(borderDistance, 0, 0);
+            case SOUTH -> nextLocation.add(0, 0, borderDistance);
+            case WEST -> nextLocation.add(-borderDistance, 0, 0);
+        }
+    }
+
+    public World getMinesWorld() {
+        return minesWorld;
+    }
+
+    public Mine getNearest(Location location) {
+        if (!minesWorld.equals(location.getWorld()))
+            throw new RuntimeException("Invalid world fetching");
+
+        Mine nearest = null;
+        for (Mine mine : mines.values()) {
+            if (nearest == null || distanceToMine(location, mine) < distanceToMine(location, nearest)) {
+                nearest = mine;
+            }
+        }
+
+        return nearest;
+    }
+
+    private double distanceToMine(Location location, Mine mine) {
+        return location.distance(mine.getMineLocation());
+    }
+
     public void create(UUID uuid) {
         create(uuid, privateMines.getMineTypeRegistry().getDefaultMineType());
     }
 
     public void create(UUID uuid, MineType mineType) {
-        Mine mine = mineFactory.create(uuid, mineWorldManager.getNextFreeLocation(), mineType);
+        Mine mine = mineFactory.create(uuid, getNextFreeLocation(), mineType);
+        Vector mineLocation = mine.getMineLocation().toVector();
         cache(mine);
-        // todo handle mine creation
-    }
 
-    public void delete(Mine mine) {
-        uncache(mine);
-        handleMineDeletion(mine);
-        // todo handle mine deletion
+        LoggerUtil.info("Creating mine for %s at %s", uuid, mineLocation);
     }
 
     public void reset(Mine mine) {
@@ -95,9 +184,6 @@ public class MineService {
 
         // todo: handle oraxen/itemsadder blocks too.
         WeightedCollection<String> materials = mineType.materialChance();
-
-        // todo: handle better
-        // WeightedCollection<String> personalBlocks = mineType.personalBlocks();
 
         PrivateMineResetEvent privateMineResetEvent = new PrivateMineResetEvent(mine);
         Bukkit.getPluginManager().callEvent(privateMineResetEvent);
@@ -112,7 +198,7 @@ public class MineService {
         worldEditWorldWriter.fill(boundingBox, wallsGap, materials);
     }
 
-    private void handleMineDeletion(Mine mine) {
+    public void handleMineDeletion(Mine mine) {
         MineData mineData = mine.getMineData();
         PrivateMineDeleteEvent privateMineDeleteEvent = new PrivateMineDeleteEvent(mine);
         Bukkit.getPluginManager().callEvent(privateMineDeleteEvent);
@@ -135,10 +221,6 @@ public class MineService {
             getHookHandler().get(ItemsAdderHook.PLUGIN_NAME, ItemsAdderHook.class)
                     .removeItemsAdderBlocksFromBoundingBox(mineBoundingBox);
         }
-
-//        todo: make this better
-//        databaseSomething.delete(mine);
-//        SQLUtils.delete(mine);
     }
 
     public void upgrade(Mine mine) {
@@ -192,11 +274,8 @@ public class MineService {
                 spawn
         );
 
-
         mineData.setMineStructure(mineStructure);
         handleReset(mine);
-
-//        Task.asyncDelayed(() -> SQLUtils.update(mine));
 
         spawn.getBlock().setType(Material.AIR);
     }
@@ -208,7 +287,7 @@ public class MineService {
 
     private void teleportToSafety(Mine mine) {
         MineData mineData = mine.getMineData();
-        World minesWorld = PrivateMines.inst().getMineWorldManager().getMinesWorld();
+        World minesWorld = PrivateMines.inst().getMineService().getMinesWorld();
         BoundingBox mineBoundingBox = mineData.getMineStructure().mineBoundingBox();
 
         for (Player online : Bukkit.getOnlinePlayers()) {
@@ -283,7 +362,7 @@ public class MineService {
         for (int x = (int) Math.floor(mineBoundingBox.getMinX()); x < Math.ceil(mineBoundingBox.getMaxX()); x++) {
             for (int y = (int) Math.floor(mineBoundingBox.getMinX()); y < Math.ceil(mineBoundingBox.getMaxX()); y++) {
                 for (int z = (int) Math.floor(mineBoundingBox.getMinX()); z < Math.ceil(mineBoundingBox.getMaxX()); z++) {
-                    Location location = new Location(mineWorldManager.getMinesWorld(), x, y, z);
+                    Location location = new Location(minesWorld, x, y, z);
                     Material material = location.getBlock().getType();
                     if (material != upgradeMaterial) continue;
                     canExpand = false;
@@ -294,40 +373,4 @@ public class MineService {
 
         return canExpand;
     }
-
-    public boolean has(UUID uuid) {
-        return mines.containsKey(uuid);
-    }
-
-    public Mine get(UUID uuid) {
-        return mines.get(uuid);
-    }
-
-    public Mine getNearest(Location location) {
-        if (!mineWorldManager.getMinesWorld().equals(location.getWorld())) {
-            throw new RuntimeException("Invalid world fetching");
-        }
-
-        Mine nearest = null;
-        for (Mine mine : mines.values()) {
-            if (nearest == null || distanceToMine(location, mine) < distanceToMine(location, nearest)) {
-                nearest = mine;
-            }
-        }
-
-        return nearest;
-    }
-
-    private double distanceToMine(Location location, Mine mine) {
-        return location.distance(mine.getMineLocation());
-    }
-
-    public Map<UUID, Mine> getMines() {
-        return Map.copyOf(mines);
-    }
-
-    public int getMinesCount() {
-        return mines.size();
-    }
-
 }
