@@ -2,6 +2,7 @@ package me.untouchedodin0.privatemines.hook;
 
 import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.PrivateMines;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
@@ -11,10 +12,18 @@ public abstract class Hook {
     public abstract String getPluginName();
 
     public void tryHook() {
-        if (canHook()) {
+        boolean canHook = canHook();
+        if (canHook) {
             hook();
             LoggerUtil.info("Hooked into " + getPluginName() + " successfully!");
-        } else LoggerUtil.warning("Could not hook into " + getPluginName() + " because it is not enabled.");
+            return;
+        }
+
+        LoggerUtil.warning("Could not hook into " + getPluginName() + " because it is not enabled.");
+
+        if (!canHook && required()) {
+            Bukkit.getServer().getPluginManager().disablePlugin(PLUGIN_INSTANCE);
+        }
     }
 
     private boolean canHook() {
@@ -29,4 +38,8 @@ public abstract class Hook {
     }
 
     public abstract void hook();
+
+    public boolean required() {
+        return false;
+    }
 }

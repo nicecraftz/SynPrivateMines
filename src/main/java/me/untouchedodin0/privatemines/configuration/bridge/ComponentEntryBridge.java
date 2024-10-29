@@ -3,9 +3,9 @@ package me.untouchedodin0.privatemines.configuration.bridge;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.plugin.java.JavaPlugin;
-import me.untouchedodin0.privatemines.configuration.ConfigurationEntryBridge;
+import me.untouchedodin0.privatemines.configuration.EntryBridge;
 
-public class ComponentConfigurationEntryBridge implements ConfigurationEntryBridge<Component> {
+public class ComponentEntryBridge implements EntryBridge<Component> {
 
     @Override
     public Component get(JavaPlugin javaPlugin, String path) {

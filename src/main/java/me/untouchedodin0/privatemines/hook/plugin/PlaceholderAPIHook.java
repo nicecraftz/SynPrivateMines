@@ -4,7 +4,6 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineData;
 import me.untouchedodin0.privatemines.mine.MineService;
 import me.untouchedodin0.privatemines.utils.SerializationUtil;
 import org.bukkit.Location;
@@ -17,6 +16,7 @@ import java.util.UUID;
 
 public class PlaceholderAPIHook extends Hook {
     private static final String NO_RESULT = "";
+    private static final String SIZE_FORMAT = "%s,%s,%s";
 
     private static final PrivateMines PLUGIN_INSTANCE = PrivateMines.inst();
     private static final MineService MINE_SERVICE = PLUGIN_INSTANCE.getMineService();
@@ -70,8 +70,6 @@ public class PlaceholderAPIHook extends Hook {
                     return handleMineLocationPlaceholder(playerUniqueId);
                 case "spawn":
                     return handleSpawnPlaceholder(playerUniqueId);
-//                case "inqueue":
-//                    return String.valueOf(QUEUE_UTILS.isInQueue(playerUniqueId));
                 case "hasmine":
                     return String.valueOf(MINE_SERVICE.has(playerUniqueId));
             }
@@ -82,27 +80,28 @@ public class PlaceholderAPIHook extends Hook {
         private String handleSpawnPlaceholder(UUID playerUUID) {
             Mine mine = MINE_SERVICE.get(playerUUID);
             if (mine == null) return NO_RESULT;
-            return SerializationUtil.locationToString(mine.mineSpawnLocation());
+            return SerializationUtil.locationToString(mine.getSpawnLocation());
         }
 
         private String handleMineLocationPlaceholder(UUID playerUUID) {
             Mine mine = MINE_SERVICE.get(playerUUID);
             if (mine == null) return NO_RESULT;
-            return mine.mineSpawnLocation().toString();
+            return SerializationUtil.locationToString(mine.getLocation());
         }
 
         private String handleOwnerPlaceholder(Location location) {
             Mine closest = MINE_SERVICE.getNearest(location);
             if (closest == null) return NO_RESULT;
-
-            MineData mineData = closest.getMineData();
-            return mineData.getMineOwner().toString();
+            return closest.getOwner().toString();
         }
 
         private String handleSizePlaceholder(Mine mine) {
-            MineData mineData = mine.getMineData();
-            BoundingBox boundingBox = mineData.getMineStructure().mineBoundingBox();
-            return (boundingBox.getMaxZ() - boundingBox.getMinZ()) + "";
+            BoundingBox boundingBox = mine.getSchematicPoints().schematicArea();
+            return String.format(SIZE_FORMAT,
+                    boundingBox.getWidthX(),
+                    boundingBox.getHeight(),
+                    boundingBox.getWidthZ()
+            );
         }
     }
 }

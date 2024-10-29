@@ -1,6 +1,6 @@
 package me.untouchedodin0.privatemines.listener;
 
-import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
+import me.untouchedodin0.privatemines.configuration.Entry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.mine.MineService;
@@ -15,7 +15,7 @@ import java.util.UUID;
 public class ConnectionListener implements Listener {
     private final MineService mineService;
 
-    @ConfigurationEntry(key = "first-join-creation", section = "mine", value = "true", type = ConfigurationValueType.BOOLEAN)
+    @Entry(key = "first-join-creation", section = "mine", value = "true", type = ConfigurationValueType.BOOLEAN)
     private boolean giveMineOnFirstJoin;
 
     public ConnectionListener(MineService mineService) {

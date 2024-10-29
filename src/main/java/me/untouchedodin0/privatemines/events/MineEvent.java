@@ -19,7 +19,7 @@ public abstract class MineEvent extends Event implements Cancellable {
     }
 
     public UUID getOwner() {
-        return mine.getMineData().getMineOwner();
+        return mine.getOwner();
     }
 
     @Override

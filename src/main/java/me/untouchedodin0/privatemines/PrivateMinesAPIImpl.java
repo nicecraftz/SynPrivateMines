@@ -2,15 +2,16 @@ package me.untouchedodin0.privatemines;
 
 import me.untouchedodin0.privatemines.mine.Mine;
 import me.untouchedodin0.privatemines.mine.MineService;
-import me.untouchedodin0.privatemines.mine.MineType;
 import org.bukkit.Location;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class PrivateMinesAPIImpl implements PrivateMinesAPI {
     private final MineService mineService;
 
-    public PrivateMinesAPIImpl(MineService mineService) {
+    public PrivateMinesAPIImpl( MineService mineService) {
         this.mineService = mineService;
     }
 
@@ -20,13 +21,13 @@ public class PrivateMinesAPIImpl implements PrivateMinesAPI {
     }
 
     @Override
-    public void createMine(UUID uuid, MineType mineType) {
-        mineService.create(uuid, mineType);
+    public void createMine(UUID ownerUUID) {
+        mineService.create(ownerUUID);
     }
 
     @Override
-    public Mine getPlayerMine(UUID uuid) {
-        return mineService.get(uuid);
+    public Mine getMine(UUID ownerUUID) {
+        return mineService.get(ownerUUID);
     }
 
     @Override

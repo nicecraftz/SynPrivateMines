@@ -1,6 +1,9 @@
 package me.untouchedodin0.privatemines.hook;
 
 import org.bukkit.Location;
+import org.bukkit.util.BoundingBox;
+
+import java.util.Map;
 
 public interface MineBlockHandler {
     String getPrefix();
@@ -9,6 +12,7 @@ public interface MineBlockHandler {
 
     void remove(Location location);
 
-    // todo: implement this feature to support multiple blocks of different type in the mine.
-//    void resetMine(Mine mine);
+    void removeFromArea(BoundingBox boundingBox);
+
+    void placeInAreaWithChance(Map<String, Double> blocks, BoundingBox boundingBox);
 }

@@ -9,7 +9,6 @@ import static org.bukkit.Bukkit.getServer;
 
 public class VaultHook extends Hook {
 
-
     @Override
     public String getPluginName() {
         return "Vault";
@@ -17,12 +16,11 @@ public class VaultHook extends Hook {
 
     @Override
     public void hook() {
-        RegisteredServiceProvider registeredServiceProvider = getRegisteredServiceProvider();
+        RegisteredServiceProvider registeredServiceProvider = getServer().getServicesManager()
+                .getRegistration(Economy.class);
+
         if (registeredServiceProvider == null) {
-            LoggerUtil.severe(
-                    "Couldn't find a suitable plugin to handle economy. Maybe install Essentials?",
-                    new IllegalStateException("Economy Not Found.")
-            );
+            LoggerUtil.severe("Couldn't find a suitable plugin to handle economy. Maybe install Essentials?");
             return;
         }
 
@@ -30,7 +28,8 @@ public class VaultHook extends Hook {
         PLUGIN_INSTANCE.setEconomy(economy);
     }
 
-    private RegisteredServiceProvider<Economy> getRegisteredServiceProvider() {
-        return getServer().getServicesManager().getRegistration(Economy.class);
+    @Override
+    public boolean required() {
+        return true;
     }
 }

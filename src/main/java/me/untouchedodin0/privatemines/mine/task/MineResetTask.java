@@ -14,7 +14,7 @@ public class MineResetTask extends BukkitRunnable {
     @Override
     public void run() {
         for (Mine mine : mineService.getMines().values()) {
-            if (mine.getAirPercentage() < mine.getMineData().getMineType().resetPercentage()) continue;
+            if (mine.getAirPercentage() < mine.getMineTemplate().resetPercentage()) continue;
             mineService.reset(mine);
         }
     }

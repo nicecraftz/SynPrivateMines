@@ -1,9 +1,9 @@
 package me.untouchedodin0.privatemines.configuration.bridge;
 
 import org.bukkit.plugin.java.JavaPlugin;
-import me.untouchedodin0.privatemines.configuration.ConfigurationEntryBridge;
+import me.untouchedodin0.privatemines.configuration.EntryBridge;
 
-public class StringConfigurationEntryBridge implements ConfigurationEntryBridge<String> {
+public class StringEntryBridge implements EntryBridge<String> {
 
     @Override
     public String get(JavaPlugin javaPlugin, String path) {

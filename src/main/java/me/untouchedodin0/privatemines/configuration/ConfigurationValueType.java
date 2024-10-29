@@ -3,27 +3,27 @@ package me.untouchedodin0.privatemines.configuration;
 import me.untouchedodin0.privatemines.configuration.bridge.*;
 
 public enum ConfigurationValueType {
-    STRING(new StringConfigurationEntryBridge()),
-    INT(new IntConfigurationEntryBridge()),
-    BOOLEAN(new BooleanConfigurationEntryBridge()),
-    DOUBLE(new DoubleConfigurationEntryBridge()),
-    LONG(new LongConfigurationEntryBridge()),
-    MATERIAL(new MaterialConfigurationEntryBridge()),
-    STRING_LIST(new StringListConfigurationEntryBridge()),
-    PARTICLE(new ParticleConfigurationEntryBridge()),
-    COMPONENT(new ComponentConfigurationEntryBridge());
+    STRING(new StringEntryBridge()),
+    INT(new IntEntryBridge()),
+    BOOLEAN(new BooleanEntryBridge()),
+    DOUBLE(new DoubleEntryBridge()),
+    LONG(new LongEntryBridge()),
+    MATERIAL(new MaterialEntryBridge()),
+    STRING_LIST(new StringListEntryBridge()),
+    PARTICLE(new ParticleEntryBridge()),
+    COMPONENT(new ComponentEntryBridge());
 
-    private final ConfigurationEntryBridge<?> bridge;
+    private final EntryBridge<?> bridge;
 
-    ConfigurationValueType(ConfigurationEntryBridge<?> bridge) {
+    ConfigurationValueType(EntryBridge<?> bridge) {
         this.bridge = bridge;
     }
 
-    public <T extends ConfigurationEntryBridge> ConfigurationEntryBridge<T> getBridge(Class<T> clazz) {
+    public <T extends EntryBridge> EntryBridge<T> getBridge(Class<T> clazz) {
         return clazz.cast(bridge);
     }
 
-    public ConfigurationEntryBridge<?> getBridge() {
+    public EntryBridge<?> getBridge() {
         return bridge;
     }
 }

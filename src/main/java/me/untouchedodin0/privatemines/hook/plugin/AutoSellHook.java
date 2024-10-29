@@ -4,7 +4,6 @@ import me.clip.autosell.events.AutoSellEvent;
 import me.clip.autosell.events.SellAllEvent;
 import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineData;
 import me.untouchedodin0.privatemines.mine.MineService;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -33,11 +32,11 @@ public class AutoSellHook extends Hook implements Listener {
                 .equals(MINE_WORLD_MANAGER.getMinesWorld()) && MINE_WORLD_MANAGER.getNearest(location) != null;
     }
 
-    private double applyTax(Player eventPlayer, MineData mineData, double totalCost) {
-        double tax = (totalCost / 100.0) * mineData.getTax();
+    private double applyTax(Player eventPlayer, Mine mine, double totalCost) {
+        double tax = (totalCost / 100.0) * mine.getTax();
         double afterTax = totalCost - tax;
 
-        OfflinePlayer ownerOfflinePlayer = Bukkit.getOfflinePlayer(mineData.getMineOwner());
+        OfflinePlayer ownerOfflinePlayer = Bukkit.getOfflinePlayer(mine.getOwner());
         if (eventPlayer.getUniqueId().equals(ownerOfflinePlayer.getUniqueId())) return afterTax;
 
         ECONOMY.depositPlayer(ownerOfflinePlayer, tax);
@@ -56,7 +55,7 @@ public class AutoSellHook extends Hook implements Listener {
 
         Mine mine = MINE_WORLD_MANAGER.getNearest(location);
         double totalCost = sellAllEvent.getTotalCost();
-        double afterTax = applyTax(eventPlayer, mine.getMineData(), totalCost);
+        double afterTax = applyTax(eventPlayer, mine, totalCost);
         sellAllEvent.setTotalCost(afterTax);
     }
 
@@ -69,7 +68,7 @@ public class AutoSellHook extends Hook implements Listener {
 
         Mine mine = MINE_WORLD_MANAGER.getNearest(location);
         double price = autoSellEvent.getPrice();
-        double afterTax = applyTax(eventPlayer, mine.getMineData(), price);
+        double afterTax = applyTax(eventPlayer, mine, price);
         autoSellEvent.setMultiplier(afterTax);
     }
 }

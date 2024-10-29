@@ -1,55 +1,109 @@
 package me.untouchedodin0.privatemines.mine;
 
-import me.untouchedodin0.privatemines.mine.task.MinePercentageTask;
+import me.untouchedodin0.privatemines.template.MineTemplate;
+import me.untouchedodin0.privatemines.template.SchematicPoints;
 import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
-import org.jetbrains.annotations.NotNull;
+import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class Mine {
-    private final MineData mineData;
-    private final MinePercentageTask percentageTask;
+    private final List<UUID> bannedPlayers = new ArrayList<>();
+    private final UUID owner;
+    private final UUID uuid;
 
-    public Mine(MineData mineData) {
-        this.mineData = mineData;
-        percentageTask = new MinePercentageTask(mineData);
+    private MineTemplate mineTemplate;
+
+    private Location location; // internal use.
+    private SchematicPoints schematicPoints;
+
+    private double airPercentage;
+    private boolean open;
+    private double tax;
+
+    public Mine(UUID owner, Location location, MineTemplate mineTemplate) {
+        this.owner = owner;
+        this.uuid = UUID.randomUUID();
+        this.mineTemplate = mineTemplate;
+
+        this.location = location;
+        schematicPoints = mineTemplate.schematicTemplate().computedPoints().shift(location.toVector());
     }
 
-    public MineData getMineData() {
-        return mineData;
+    public void setLocation(Location location) {
+        this.location = location;
+        schematicPoints = mineTemplate.schematicTemplate().computedPoints().shift(location.toVector());
     }
 
-    public int getAirPercentage() {
-        return (int) percentageTask.getAirPercentage();
+    public void teleport(Player player) {
+        player.teleportAsync(getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
     }
 
-    public void teleport(Entity entity) {
-        Location spawnLocation = mineData.getMineStructure().spawnLocation();
-        Block block = spawnLocation.getBlock();
-        if (!block.getType().isBlock()) return;
-        block.setType(Material.AIR, false);
-        entity.teleportAsync(spawnLocation);
+    public boolean isOpen() {
+        return open;
+    }
+
+    public void setOpen(boolean open) {
+        this.open = open;
+    }
+
+    public Location getLocation() {
+        return location.clone();
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public UUID getOwner() {
+        return owner;
     }
 
     public boolean isBanned(UUID uuid) {
-        return mineData.isBanned(uuid);
+        return bannedPlayers.contains(uuid);
     }
 
     public void ban(UUID uuid) {
-        mineData.addBannedPlayer(uuid);
-//        SQLUtils.update(this);
+        if (uuid.equals(owner)) return;
+        bannedPlayers.add(uuid);
     }
 
-    public void unban(UUID uuid) {
-        mineData.removeBannedPlayer(uuid);
-//        SQLUtils.update(this);
+    public boolean unban(UUID uuid) {
+        return bannedPlayers.remove(uuid);
     }
 
-    public @NotNull Location mineSpawnLocation() {
-        return mineData.getMineStructure().spawnLocation();
+    public MineTemplate getMineTemplate() {
+        return mineTemplate;
+    }
+
+    public SchematicPoints getSchematicPoints() {
+        return schematicPoints;
+    }
+
+    public double getAirPercentage() {
+        return airPercentage;
+    }
+
+    public void setAirPercentage(double airPercentage) {
+        this.airPercentage = airPercentage;
+    }
+
+    public void setSchematicPoints(SchematicPoints schematicPoints) {
+        this.schematicPoints = schematicPoints;
+    }
+
+    public double getTax() {
+        return tax;
+    }
+
+    public void setTax(double tax) {
+        this.tax = tax;
+    }
+
+    public Location getSpawnLocation() {
+        return schematicPoints.spawn().toLocation(location.getWorld()).clone();
     }
 }
-

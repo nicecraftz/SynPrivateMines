@@ -16,12 +16,12 @@ public class ConfigurationProcessor {
             Class<?> clazz = registeredInstance.getClass();
 
             for (Field field : clazz.getDeclaredFields()) {
-                if (!field.isAnnotationPresent(ConfigurationEntry.class)) continue;
-                ConfigurationEntry entry = field.getAnnotation(ConfigurationEntry.class);
+                if (!field.isAnnotationPresent(Entry.class)) continue;
+                Entry entry = field.getAnnotation(Entry.class);
 
                 field.setAccessible(true);
 
-                ConfigurationEntryBridge bridge = entry.type().getBridge();
+                EntryBridge bridge = entry.type().getBridge();
                 String constructedPath = entry.section() + "." + entry.key();
 
                 Object value = bridge.get(javaPlugin, constructedPath);

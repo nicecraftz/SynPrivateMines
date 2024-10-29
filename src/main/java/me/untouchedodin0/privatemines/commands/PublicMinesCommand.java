@@ -12,7 +12,6 @@ import io.papermc.paper.plugin.lifecycle.event.LifecycleEventManager;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineData;
 import me.untouchedodin0.privatemines.mine.MineService;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -63,14 +62,13 @@ public class PublicMinesCommand {
 
             int count = 0;
             for (Mine mine : MINE_SERVICE.getMines().values()) {
-                MineData mineData = mine.getMineData();
-                if (!mineData.isOpen()) continue;
+                if (!mine.isOpen()) continue;
 
                 count++;
 
-                String ownerName = Bukkit.getOfflinePlayer(mineData.getMineOwner()).getName();
+                String ownerName = Bukkit.getOfflinePlayer(mine.getOwner()).getName();
                 if (ownerName == null || ownerName.isEmpty()) continue;
-                String formattedTax = String.format(TAX_STRING_FORMAT, mineData.getTax());
+                String formattedTax = String.format(TAX_STRING_FORMAT, mine.getTax());
 
                 GuiItem guiItem = ItemBuilder.from(Material.EMERALD)
                         .name(Component.text(ownerName).color(NamedTextColor.GREEN))

@@ -18,14 +18,13 @@ import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.world.block.BlockType;
 import me.untouchedodin0.privatemines.LoggerUtil;
-import me.untouchedodin0.privatemines.configuration.ConfigurationEntry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
+import me.untouchedodin0.privatemines.configuration.Entry;
 import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.hook.WorldIO;
-import me.untouchedodin0.privatemines.mine.SchematicInformation;
 import me.untouchedodin0.privatemines.storage.WeightedCollection;
-import me.untouchedodin0.privatemines.utils.SerializationUtil;
+import me.untouchedodin0.privatemines.template.SchematicPoints;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Registry;
@@ -44,7 +43,6 @@ import java.util.UUID;
 import static org.bukkit.NamespacedKey.minecraft;
 
 public class WorldEditHook extends Hook {
-    public static final WeightedCollection<String> EMPTY = WeightedCollection.single("air", 1d);
     public static final String PLUGIN_NAME = "WorldEdit";
     private static final World MINES_WORLD = PLUGIN_INSTANCE.getMineService().getMinesWorld();
 
@@ -53,16 +51,16 @@ public class WorldEditHook extends Hook {
     private WorldEdit worldEdit;
     private WorldEditWorldIO worldEditWorldWriter;
 
-    @ConfigurationEntry(key = "spawn-point", section = "materials", type = ConfigurationValueType.MATERIAL, value = "SPONGE")
+    @Entry(key = "spawn-point", section = "materials", type = ConfigurationValueType.MATERIAL, value = "SPONGE")
     private Material spawnMaterial;
 
-    @ConfigurationEntry(key = "mine-corner", section = "materials", type = ConfigurationValueType.MATERIAL, value = "POWERED_RAIL")
+    @Entry(key = "mine-corner", section = "materials", type = ConfigurationValueType.MATERIAL, value = "POWERED_RAIL")
     private Material cornerMaterial;
 
-    @ConfigurationEntry(key = "sell-npc", section = "materials", type = ConfigurationValueType.MATERIAL, value = "WHITE_WOOL")
+    @Entry(key = "sell-npc", section = "materials", type = ConfigurationValueType.MATERIAL, value = "WHITE_WOOL")
     private Material npcMaterial;
 
-    @ConfigurationEntry(key = "quarry", section = "materials", type = ConfigurationValueType.MATERIAL, value = "SHULKER_BOX")
+    @Entry(key = "quarry", section = "materials", type = ConfigurationValueType.MATERIAL, value = "SHULKER_BOX")
     private Material quarryMaterial;
 
     private BlockType spawnBlockType;
@@ -82,6 +80,11 @@ public class WorldEditHook extends Hook {
         worldEditWorldWriter = new WorldEditWorldIO();
     }
 
+    @Override
+    public boolean required() {
+        return true;
+    }
+
     public WorldEditWorldIO getWorldEditWorldIO() {
         return worldEditWorldWriter;
     }
@@ -89,8 +92,7 @@ public class WorldEditHook extends Hook {
     public class WorldEditWorldIO implements WorldIO {
 
         @Override
-        public BoundingBox placeSchematic(File schematicFile, Location location) {
-            LoggerUtil.info("Free location found: " + SerializationUtil.locationToString(location));
+        public void placeSchematic(File schematicFile, Location location) {
             com.sk89q.worldedit.world.World worldEditWorld = BukkitAdapter.adapt(location.getWorld());
 
             try (
@@ -99,27 +101,14 @@ public class WorldEditHook extends Hook {
                     .fastMode(true)
                     .build()
             ) {
-                Region region = clipboard.getRegion();
                 clipboard.setOrigin(BlockVector3.ZERO);
-
-                Location min = BukkitAdapter.adapt(MINES_WORLD, region.getMinimumPoint());
-                Location max = BukkitAdapter.adapt(MINES_WORLD, region.getMaximumPoint());
-
-                LoggerUtil.info("Min Location: " + SerializationUtil.locationToString(min));
-                LoggerUtil.info("Max Location: " + SerializationUtil.locationToString(max));
-
-                BoundingBox boundingBox = BoundingBox.of(min, max).shift(location.toVector());
-                LoggerUtil.info("Adapted BoundingBox: " + boundingBox);
-
                 Operation operation = new ClipboardHolder(clipboard).createPaste(editSession)
                         .to(BukkitAdapter.asBlockVector(location))
                         .copyBiomes(false)
                         .copyEntities(false)
                         .ignoreAirBlocks(true)
                         .build();
-
                 Operations.complete(operation);
-                return boundingBox;
             }
         }
 
@@ -152,13 +141,13 @@ public class WorldEditHook extends Hook {
         }
 
         @Override
-        public SchematicInformation findRelativePoints(File schematicFile) {
+        public SchematicPoints computeSchematicPoints(File schematicFile) {
             setupBlockTypesAndFilter();
 
             Vector spawn = null;
             Vector mineCornerMin = null;
             Vector mineCornerMax = null;
-            BoundingBox schematicArea = null;
+            BoundingBox schematicArea;
 
             try (
                     Clipboard clipboard = getClipboard(schematicFile)
@@ -188,8 +177,8 @@ public class WorldEditHook extends Hook {
             }
 
             BoundingBox mineArea = BoundingBox.of(mineCornerMin, mineCornerMax);
-            SchematicInformation schematicInformation = new SchematicInformation(spawn, mineArea, schematicArea);
-            return schematicInformation;
+            SchematicPoints schematicPoints = new SchematicPoints(spawn, mineArea, schematicArea);
+            return schematicPoints;
         }
 
         private Vector adapt(BlockVector3 currentVec) {
