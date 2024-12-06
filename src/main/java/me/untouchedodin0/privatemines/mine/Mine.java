@@ -1,7 +1,9 @@
 package me.untouchedodin0.privatemines.mine;
 
+import lombok.Getter;
+import lombok.Setter;
+import me.untouchedodin0.privatemines.template.MineStructure;
 import me.untouchedodin0.privatemines.template.MineTemplate;
-import me.untouchedodin0.privatemines.template.SchematicPoints;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -12,17 +14,18 @@ import java.util.UUID;
 
 public class Mine {
     private final List<UUID> bannedPlayers = new ArrayList<>();
-    private final UUID owner;
-    private final UUID uuid;
 
-    private MineTemplate mineTemplate;
+    @Getter private final UUID uuid;
+    @Getter private final UUID owner;
+    private Location location;
 
-    private Location location; // internal use.
-    private SchematicPoints schematicPoints;
+    @Getter private final MineTemplate mineTemplate;
+    @Setter @Getter private MineStructure mineStructure;
+    @Getter private final MineSettings mineSettings;
 
+    @Setter
+    @Getter
     private double airPercentage;
-    private boolean open;
-    private double tax;
 
     public Mine(UUID owner, Location location, MineTemplate mineTemplate) {
         this.owner = owner;
@@ -30,36 +33,21 @@ public class Mine {
         this.mineTemplate = mineTemplate;
 
         this.location = location;
-        schematicPoints = mineTemplate.schematicTemplate().computedPoints().shift(location.toVector());
+        mineStructure = mineTemplate.getShiftedPoints(location.toVector());
+        mineSettings = new MineSettings();
     }
 
     public void setLocation(Location location) {
         this.location = location;
-        schematicPoints = mineTemplate.schematicTemplate().computedPoints().shift(location.toVector());
+        mineStructure = mineTemplate.getShiftedPoints(location.toVector());
     }
 
     public void teleport(Player player) {
         player.teleportAsync(getSpawnLocation(), PlayerTeleportEvent.TeleportCause.PLUGIN);
     }
 
-    public boolean isOpen() {
-        return open;
-    }
-
-    public void setOpen(boolean open) {
-        this.open = open;
-    }
-
     public Location getLocation() {
         return location.clone();
-    }
-
-    public UUID getUuid() {
-        return uuid;
-    }
-
-    public UUID getOwner() {
-        return owner;
     }
 
     public boolean isBanned(UUID uuid) {
@@ -75,35 +63,7 @@ public class Mine {
         return bannedPlayers.remove(uuid);
     }
 
-    public MineTemplate getMineTemplate() {
-        return mineTemplate;
-    }
-
-    public SchematicPoints getSchematicPoints() {
-        return schematicPoints;
-    }
-
-    public double getAirPercentage() {
-        return airPercentage;
-    }
-
-    public void setAirPercentage(double airPercentage) {
-        this.airPercentage = airPercentage;
-    }
-
-    public void setSchematicPoints(SchematicPoints schematicPoints) {
-        this.schematicPoints = schematicPoints;
-    }
-
-    public double getTax() {
-        return tax;
-    }
-
-    public void setTax(double tax) {
-        this.tax = tax;
-    }
-
     public Location getSpawnLocation() {
-        return schematicPoints.spawn().toLocation(location.getWorld()).clone();
+        return mineStructure.getSpawnLocation(location);
     }
 }

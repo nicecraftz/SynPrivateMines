@@ -14,7 +14,7 @@ import com.sk89q.worldguard.protection.regions.RegionContainer;
 import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.hook.RegionOrchestrator;
 import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.template.SchematicPoints;
+import me.untouchedodin0.privatemines.template.MineStructure;
 import me.untouchedodin0.privatemines.template.SchematicTemplate;
 import org.bukkit.Location;
 import org.bukkit.util.BoundingBox;
@@ -61,18 +61,18 @@ public class WorldGuardHook extends Hook {
         public void createMineFlaggedRegions(Mine mine) {
             String ownerUUIDString = mine.getOwner().toString();
             SchematicTemplate schematicTemplate = mine.getMineTemplate().schematicTemplate();
-            SchematicPoints schematicPoints = mine.getSchematicPoints();
+            MineStructure mineStructure = mine.getMineStructure();
 
             createRegionWithFlags(
                     format(MINE_REGION_FORMAT, ownerUUIDString),
-                    schematicPoints.mineArea(),
-                    schematicTemplate.mineAreaFlags()
+                    mineStructure.mineArea(),
+                    schematicTemplate.getMineAreaFlags()
             );
 
             createRegionWithFlags(
                     format(FULL_MINE_REGION_FORMAT, ownerUUIDString),
-                    schematicPoints.schematicArea(),
-                    schematicTemplate.schematicAreaFlags()
+                    mineStructure.schematicArea(),
+                    schematicTemplate.getSchematicAreaFlags()
             );
         }
 

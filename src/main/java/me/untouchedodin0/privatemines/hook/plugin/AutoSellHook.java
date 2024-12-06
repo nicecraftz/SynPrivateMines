@@ -33,7 +33,7 @@ public class AutoSellHook extends Hook implements Listener {
     }
 
     private double applyTax(Player eventPlayer, Mine mine, double totalCost) {
-        double tax = (totalCost / 100.0) * mine.getTax();
+        double tax = (totalCost / 100.0) * mine.getMineSettings().getTax();
         double afterTax = totalCost - tax;
 
         OfflinePlayer ownerOfflinePlayer = Bukkit.getOfflinePlayer(mine.getOwner());

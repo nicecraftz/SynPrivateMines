@@ -1,8 +1,9 @@
 package me.untouchedodin0.privatemines.template;
 
 import me.untouchedodin0.privatemines.PrivateMines;
-import me.untouchedodin0.privatemines.storage.WeightedCollection;
+import me.untouchedodin0.privatemines.utils.WeightedCollection;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.util.Vector;
 
 public record MineTemplate(
         String id,
@@ -21,6 +22,11 @@ public record MineTemplate(
     public boolean isDefault() {
         return id.equalsIgnoreCase("default");
     }
+
+    public MineStructure getShiftedPoints(Vector vector) {
+        return schematicTemplate.getComputedPoints().shift(vector);
+    }
+
 
     public static MineTemplate fromConfigurationSection(ConfigurationSection configurationSection) {
         WeightedCollection<String> materials = new WeightedCollection<>();

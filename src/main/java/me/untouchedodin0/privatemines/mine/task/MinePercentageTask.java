@@ -16,7 +16,7 @@ public class MinePercentageTask extends BukkitRunnable {
     @Override
     public void run() {
         for (Mine mine : mineService.getMines().values()) {
-            BoundingBox boundingBox = mine.getSchematicPoints().mineArea();
+            BoundingBox boundingBox = mine.getMineStructure().mineArea();
             int totalBlocks = 0;
             for (int x = (int) Math.floor(boundingBox.getMinX()); x < Math.ceil(boundingBox.getMaxX()); x++) {
                 for (int y = (int) Math.floor(boundingBox.getMinX()); y < Math.ceil(boundingBox.getMaxX()); y++) {

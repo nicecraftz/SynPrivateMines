@@ -14,7 +14,6 @@ public class HookHandler {
         add(new VaultHook());
         add(new WorldGuardHook());
         add(new WorldEditHook());
-        add(new OraxenHook());
         add(new AutoSellHook());
         add(new ItemsAdderHook());
     }

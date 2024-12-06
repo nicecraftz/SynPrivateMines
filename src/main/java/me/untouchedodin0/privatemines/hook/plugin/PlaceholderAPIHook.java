@@ -96,7 +96,7 @@ public class PlaceholderAPIHook extends Hook {
         }
 
         private String handleSizePlaceholder(Mine mine) {
-            BoundingBox boundingBox = mine.getSchematicPoints().schematicArea();
+            BoundingBox boundingBox = mine.getMineStructure().schematicArea();
             return String.format(SIZE_FORMAT,
                     boundingBox.getWidthX(),
                     boundingBox.getHeight(),

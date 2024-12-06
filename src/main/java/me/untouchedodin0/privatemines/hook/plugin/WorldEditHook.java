@@ -23,8 +23,8 @@ import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
 import me.untouchedodin0.privatemines.configuration.Entry;
 import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.hook.WorldIO;
-import me.untouchedodin0.privatemines.storage.WeightedCollection;
-import me.untouchedodin0.privatemines.template.SchematicPoints;
+import me.untouchedodin0.privatemines.utils.WeightedCollection;
+import me.untouchedodin0.privatemines.template.MineStructure;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Registry;
@@ -141,7 +141,7 @@ public class WorldEditHook extends Hook {
         }
 
         @Override
-        public SchematicPoints computeSchematicPoints(File schematicFile) {
+        public MineStructure computeSchematicPoints(File schematicFile) {
             setupBlockTypesAndFilter();
 
             Vector spawn = null;
@@ -177,8 +177,8 @@ public class WorldEditHook extends Hook {
             }
 
             BoundingBox mineArea = BoundingBox.of(mineCornerMin, mineCornerMax);
-            SchematicPoints schematicPoints = new SchematicPoints(spawn, mineArea, schematicArea);
-            return schematicPoints;
+            MineStructure mineStructure = new MineStructure(spawn, mineArea, schematicArea);
+            return mineStructure;
         }
 
         private Vector adapt(BlockVector3 currentVec) {

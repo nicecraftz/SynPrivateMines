@@ -17,14 +17,14 @@ public class SchematicTemplateRegistry {
     }
 
     public void register(SchematicTemplate template) {
-        if (!template.schematicFile().exists()) {
-            LoggerUtil.warning("Schematic file for template " + template.id() + " does not exist.");
+        if (!template.getSchematicFile().exists()) {
+            LoggerUtil.warning("Schematic file for template " + template.getId() + " does not exist.");
             return;
         }
         
         computeSchematicPoints(template);
         if (!template.hasComputedPoints()) return;
-        templates.put(template.id().toLowerCase(), template);
+        templates.put(template.getId().toLowerCase(), template);
     }
 
     public Optional<SchematicTemplate> get(String id) {
@@ -32,11 +32,11 @@ public class SchematicTemplateRegistry {
     }
 
     private void computeSchematicPoints(SchematicTemplate template) {
-        SchematicPoints schematicPoints = HookHandler.getHookHandler()
+        MineStructure mineStructure = HookHandler.getHookHandler()
                 .get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
                 .getWorldEditWorldIO()
-                .computeSchematicPoints(template.schematicFile());
-        template.setComputedPoints(schematicPoints);
+                .computeSchematicPoints(template.getSchematicFile());
+        template.setComputedPoints(mineStructure);
     }
 
     public void loadAllTemplatesFromConfig(ConfigurationSection templatesSection) {

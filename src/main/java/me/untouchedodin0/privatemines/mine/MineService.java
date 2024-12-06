@@ -1,5 +1,6 @@
 package me.untouchedodin0.privatemines.mine;
 
+import lombok.Getter;
 import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
 import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
@@ -14,11 +15,11 @@ import me.untouchedodin0.privatemines.hook.WorldIO;
 import me.untouchedodin0.privatemines.hook.plugin.WorldEditHook;
 import me.untouchedodin0.privatemines.hook.plugin.WorldGuardHook;
 import me.untouchedodin0.privatemines.mine.world.EmptyWorldGenerator;
-import me.untouchedodin0.privatemines.storage.WeightedCollection;
+import me.untouchedodin0.privatemines.template.MineStructure;
 import me.untouchedodin0.privatemines.template.MineTemplate;
 import me.untouchedodin0.privatemines.template.MineTemplateRegistry;
-import me.untouchedodin0.privatemines.template.SchematicPoints;
 import me.untouchedodin0.privatemines.template.SchematicTemplate;
+import me.untouchedodin0.privatemines.utils.WeightedCollection;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -33,25 +34,19 @@ import static me.untouchedodin0.privatemines.hook.HookHandler.getHookHandler;
 public class MineService {
     private final Map<UUID, Mine> mines = new HashMap<>();
     private final MineTemplateRegistry mineTemplateRegistry;
-    private final World minesWorld;
+    @Getter private final World minesWorld;
 
-    @Entry(key = "distance", section = "mine", value = "150", type = ConfigurationValueType.INT)
-    private int borderDistance;
+    @Entry(key = "distance", section = "mine", value = "150", type = ConfigurationValueType.INT) private int borderDistance;
 
-    @Entry(key = "y-level", section = "mine", value = "50", type = ConfigurationValueType.INT)
-    private int yLevel;
+    @Entry(key = "y-level", section = "mine", value = "50", type = ConfigurationValueType.INT) private int yLevel;
 
-    @Entry(key = "border-upgrade", section = "mine", value = "true", type = ConfigurationValueType.BOOLEAN)
-    private boolean borderUpgrade;
+    @Entry(key = "border-upgrade", section = "mine", value = "true", type = ConfigurationValueType.BOOLEAN) private boolean borderUpgrade;
 
-    @Entry(key = "upgrade", section = "materials", value = "obsidian", type = ConfigurationValueType.MATERIAL)
-    private Material upgradeMaterial;
+    @Entry(key = "upgrade", section = "materials", value = "obsidian", type = ConfigurationValueType.MATERIAL) private Material upgradeMaterial;
 
-    @Entry(key = "walls-go-up", section = "mine", value = "false", type = ConfigurationValueType.BOOLEAN)
-    private boolean wallsGoUp;
+    @Entry(key = "walls-go-up", section = "mine", value = "false", type = ConfigurationValueType.BOOLEAN) private boolean wallsGoUp;
 
-    @Entry(key = "is-closed-by-default", section = "mine", value = "false", type = ConfigurationValueType.BOOLEAN)
-    private boolean defaultClosed;
+    @Entry(key = "is-closed-by-default", section = "mine", value = "false", type = ConfigurationValueType.BOOLEAN) private boolean defaultClosed;
 
     public MineService(MineTemplateRegistry mineTemplateRegistry) {
         this.mineTemplateRegistry = mineTemplateRegistry;
@@ -94,10 +89,6 @@ public class MineService {
         return location;
     }
 
-    public World getMinesWorld() {
-        return minesWorld;
-    }
-
     public Mine getNearest(Location location) {
         if (!minesWorld.equals(location.getWorld())) throw new RuntimeException("Invalid world fetching");
 
@@ -123,13 +114,13 @@ public class MineService {
 
         Location location = getNextFreeLocation();
         SchematicTemplate schematicTemplate = template.schematicTemplate();
-        worldIO.placeSchematic(schematicTemplate.schematicFile(), location);
+        worldIO.placeSchematic(schematicTemplate.getSchematicFile(), location);
         Mine mine = new Mine(uuid, location, template);
 
-        SchematicPoints schematicPoints = mine.getSchematicPoints();
-        mine.setOpen(!defaultClosed);
+        MineStructure mineStructure = mine.getMineStructure();
+        mine.getMineSettings().setOpen(!defaultClosed);
 
-        Block spawnBlock = schematicPoints.spawn().toLocation(minesWorld).getBlock();
+        Block spawnBlock = mineStructure.spawn().toLocation(minesWorld).getBlock();
         spawnBlock.setType(Material.AIR);
 
         PrivateMineCreationEvent creationEvent = new PrivateMineCreationEvent(mine);
@@ -147,7 +138,7 @@ public class MineService {
     public void reset(Mine mine) {
         teleportToSafety(mine);
 
-        SchematicPoints schematicPoints = mine.getSchematicPoints();
+        MineStructure mineStructure = mine.getMineStructure();
         WeightedCollection<String> materials = mine.getMineTemplate().materials();
         if (materials != null && materials.isEmpty()) return;
 
@@ -159,7 +150,7 @@ public class MineService {
                 .get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
                 .getWorldEditWorldIO();
 
-        worldIO.fill(schematicPoints.mineArea(), 0, materials);
+        worldIO.fill(mineStructure.mineArea(), 0, materials);
     }
 
     public void delete(Mine mine) {
@@ -173,11 +164,11 @@ public class MineService {
     public void expand(Mine mine, int amount) {
         if (!canExpand(mine, amount)) return;
 
-        SchematicPoints schematicPoints = mine.getSchematicPoints();
+        MineStructure mineStructure = mine.getMineStructure();
 
-        BoundingBox mineBoundingBox = schematicPoints.mineArea();
-        BoundingBox airFillRegion = schematicPoints.mineArea().expand(1, 1, 1);
-        BoundingBox wallsRegion = schematicPoints.mineArea().expand(1);
+        BoundingBox mineBoundingBox = mineStructure.mineArea();
+        BoundingBox airFillRegion = mineStructure.mineArea().expand(1, 1, 1);
+        BoundingBox wallsRegion = mineStructure.mineArea().expand(1);
 
         mineBoundingBox.expand(1);
         wallsRegion.expand(-1, wallsGoUp ? 1 : 0, wallsGoUp ? 1 : -1);
@@ -193,20 +184,20 @@ public class MineService {
         worldEditor.fill(wallsRegion, 0, WeightedCollection.single(Material.AIR.name(), 1d));
         worldEditor.fill(airFillRegion, 0, WeightedCollection.single(Material.AIR.name(), 1d));
 
-        BoundingBox schematicBoundingBox = schematicPoints.schematicArea().expand(1, 1, 1);
+        BoundingBox schematicBoundingBox = mineStructure.schematicArea().expand(1, 1, 1);
 
-        SchematicPoints newSchematicPoints = new SchematicPoints(
-                schematicPoints.spawn(),
+        MineStructure newMineStructure = new MineStructure(
+                mineStructure.spawn(),
                 mineBoundingBox,
                 schematicBoundingBox
         );
 
-        mine.setSchematicPoints(newSchematicPoints);
+        mine.setMineStructure(newMineStructure);
         reset(mine);
     }
 
     public boolean canExpand(Mine mine, int amount) {
-        BoundingBox mineBoundingBox = mine.getSchematicPoints().mineArea();
+        BoundingBox mineBoundingBox = mine.getMineStructure().mineArea();
         mineBoundingBox.expand(amount);
         boolean canExpand = true;
 
@@ -233,18 +224,18 @@ public class MineService {
     }
 
     private void deleteMineFromWorld(Mine mine) {
-        SchematicPoints schematicPoints = mine.getSchematicPoints();
+        MineStructure mineStructure = mine.getMineStructure();
         getHookHandler().get(WorldGuardHook.PLUGIN_NAME, WorldGuardHook.class)
                 .getRegionOrchestrator()
                 .removeMineRegions(mine);
 
         getHookHandler().get(WorldEditHook.PLUGIN_NAME, WorldEditHook.class)
                 .getWorldEditWorldIO()
-                .fill(schematicPoints.schematicArea(), 0, WorldIO.EMPTY);
+                .fill(mineStructure.schematicArea(), 0, WorldIO.EMPTY);
     }
 
     private void teleportToSafety(Mine mine) {
-        BoundingBox mineBoundingBox = mine.getSchematicPoints().mineArea();
+        BoundingBox mineBoundingBox = mine.getMineStructure().mineArea();
         for (Player online : Bukkit.getOnlinePlayers()) {
             boolean isPlayerInRegion = mineBoundingBox.contains(online.getLocation().toVector());
             boolean inWorld = online.getWorld().equals(minesWorld);

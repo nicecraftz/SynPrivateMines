@@ -1,10 +1,9 @@
 package me.untouchedodin0.privatemines.hook.plugin;
 
 import dev.lone.itemsadder.api.CustomBlock;
+import lombok.Getter;
 import me.untouchedodin0.privatemines.LoggerUtil;
 import me.untouchedodin0.privatemines.configuration.ConfigurationInstanceRegistry;
-import me.untouchedodin0.privatemines.configuration.ConfigurationValueType;
-import me.untouchedodin0.privatemines.configuration.Entry;
 import me.untouchedodin0.privatemines.hook.Hook;
 import me.untouchedodin0.privatemines.hook.MineBlockHandler;
 import org.bukkit.Location;
@@ -14,6 +13,7 @@ import org.bukkit.util.BoundingBox;
 
 import java.util.Map;
 
+@Getter
 public class ItemsAdderHook extends Hook {
     public static final String PLUGIN_NAME = "ItemsAdder";
     private static final World MINES_WORLD = PLUGIN_INSTANCE.getMineService().getMinesWorld();
@@ -32,16 +32,14 @@ public class ItemsAdderHook extends Hook {
     @Override
     public void hook() {
         String itemsAdderVersion = getPlugin().getPluginMeta().getVersion();
-        LoggerUtil.info("""
-                Found ItemsAdder v%s installed,
-                make sure to list the materials under the itemsadder section
-                within each mine type if you want to use itemsadder
-                blocks or it won't load correctly!""", itemsAdderVersion);
+        LoggerUtil.info(
+                """
+                        Found ItemsAdder v%s installed,
+                        make sure to list the materials under the itemsadder section
+                        within each mine type if you want to use itemsadder
+                        blocks or it won't load correctly!""", itemsAdderVersion
+        );
         blockHandler = new ItemsAdderBlockHandler();
-    }
-
-    public ItemsAdderBlockHandler getBlockHandler() {
-        return blockHandler;
     }
 
     public static class ItemsAdderBlockHandler implements MineBlockHandler {

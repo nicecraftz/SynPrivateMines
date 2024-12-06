@@ -2,8 +2,10 @@ package me.untouchedodin0.privatemines;
 
 import me.untouchedodin0.privatemines.commands.AddonsCommand;
 import me.untouchedodin0.privatemines.commands.PrivateMinesCommand;
-import me.untouchedodin0.privatemines.commands.PublicMinesCommand;
 import me.untouchedodin0.privatemines.configuration.ConfigurationProcessor;
+import me.untouchedodin0.privatemines.data.database.Credentials;
+import me.untouchedodin0.privatemines.data.database.Database;
+import me.untouchedodin0.privatemines.data.database.MySQL;
 import me.untouchedodin0.privatemines.hook.HookHandler;
 import me.untouchedodin0.privatemines.listener.ConnectionListener;
 import me.untouchedodin0.privatemines.mine.MineService;
@@ -33,6 +35,8 @@ public class PrivateMines extends JavaPlugin {
     private AddonManager addonManager;
     private Economy economy = null;
 
+    private Database database;
+
     public static PrivateMines inst() {
         return instance;
     }
@@ -47,6 +51,9 @@ public class PrivateMines extends JavaPlugin {
         schematicTemplateRegistry = new SchematicTemplateRegistry();
         mineTemplateRegistry = new MineTemplateRegistry();
         mineService = new MineService(mineTemplateRegistry);
+
+        Credentials credentials = Credentials.fromConfig(getConfig().getConfigurationSection("database"));
+        database = new MySQL();
 
         HookHandler.getHookHandler().registerHooks();
 
