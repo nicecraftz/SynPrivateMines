@@ -17,8 +17,7 @@ import static io.papermc.paper.command.brigadier.Commands.literal;
 public class ResetMineLogic extends CommandLogic {
     private final int resetCooldown;
 
-    public ResetMineLogic(MineService mineService, int resetCooldown) {
-        super(mineService);
+    public ResetMineLogic(int resetCooldown) {
         this.resetCooldown = resetCooldown;
     }
 

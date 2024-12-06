@@ -12,14 +12,18 @@ import org.bukkit.entity.Player;
 
 import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
 import static io.papermc.paper.command.brigadier.Commands.argument;
+import static io.papermc.paper.command.brigadier.Commands.literal;
 
-@RequiredArgsConstructor
-public class TaxLogic implements CommandLogic {
-    private final MineService mineService;
+public class TaxLogic extends CommandLogic {
+
+    @Override
+    public String name() {
+        return "tax";
+    }
 
     @Override
     public CommandNode<CommandSourceStack> logic() {
-        return name("tax").requires(commandSourceStack -> {
+        return literal(name()).requires(commandSourceStack -> {
             CommandSender commandSender = commandSourceStack.getSender();
             return commandSender.hasPermission("privatemines.tax") && commandSender instanceof Player;
         }).then(argument("tax", IntegerArgumentType.integer(0, 100)).executes(context -> {

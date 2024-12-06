@@ -6,7 +6,6 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
 import me.untouchedodin0.privatemines.commands.CommandLogic;
 import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineService;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
@@ -16,10 +15,6 @@ import static io.papermc.paper.command.brigadier.Commands.argument;
 import static io.papermc.paper.command.brigadier.Commands.literal;
 
 public class BanLogic extends CommandLogic {
-
-    public BanLogic(MineService mineService) {
-        super(mineService);
-    }
 
     @Override
     public String name() {

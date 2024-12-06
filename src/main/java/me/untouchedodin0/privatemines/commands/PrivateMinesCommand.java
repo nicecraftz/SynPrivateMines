@@ -37,19 +37,11 @@ public class PrivateMinesCommand {
     }
 
     private LiteralCommandNode<CommandSourceStack> buildCommand() {
-        CommandLogic[] logics = {new BanLogic(mineService), new UnbanLogic(mineService), new DeleteMineLogic(mineService), new ExpandMineLogic(
-                mineService), new ForceResetMineLogic(mineService), new ResetMineLogic(
-                mineService,
-                resetCooldown
-        ), new GiveLogic(
-                mineService,
-                privateMines.getMineTemplateRegistry()
-        ), new GoMineLogic(mineService), new OpenCloseMineLogic(mineService, "open", true), new OpenCloseMineLogic(
-                mineService,
-                "close",
-                false
-        ), new TaxLogic(mineService), new VersionLogic(privateMines.getDescription()
-                .getVersion())};
+        CommandLogic[] logics = {new BanLogic(), new UnbanLogic(), new DeleteMineLogic(), new ExpandMineLogic(), new ForceResetMineLogic(
+                mineService), new ResetMineLogic(resetCooldown), new GiveLogic(), new GoMineLogic(), new OpenCloseMineLogic(
+                "open",
+                true
+        ), new OpenCloseMineLogic("close", false), new TaxLogic(), new VersionLogic()};
 
         LiteralArgumentBuilder<CommandSourceStack> privatemine = literal("privatemine");
 

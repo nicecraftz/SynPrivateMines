@@ -15,14 +15,17 @@ import java.util.UUID;
 
 import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
 import static io.papermc.paper.command.brigadier.Commands.argument;
+import static io.papermc.paper.command.brigadier.Commands.literal;
 
-@RequiredArgsConstructor
-public class UnbanLogic implements CommandLogic {
-    private final MineService mineService;
+public class UnbanLogic extends CommandLogic {
+    @Override
+    public String name() {
+        return "unban";
+    }
 
     @Override
     public CommandNode<CommandSourceStack> logic() {
-        return name("unban").requires(commandSourceStack -> {
+        return literal(name()).requires(commandSourceStack -> {
             CommandSender commandSender = commandSourceStack.getSender();
             return commandSender.hasPermission("privatemines.unban") && commandSender instanceof Player;
         }).then(argument("player", ArgumentTypes.player()).executes(context -> {

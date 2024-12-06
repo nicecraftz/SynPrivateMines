@@ -16,10 +16,6 @@ import static io.papermc.paper.command.brigadier.Commands.literal;
 
 public class DeleteMineLogic extends CommandLogic {
 
-    public DeleteMineLogic(MineService mineService) {
-        super(mineService);
-    }
-
     @Override
     public String name() {
         return "delete";

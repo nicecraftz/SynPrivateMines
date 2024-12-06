@@ -4,23 +4,25 @@ import com.mojang.brigadier.tree.CommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
-import lombok.RequiredArgsConstructor;
 import me.untouchedodin0.privatemines.commands.CommandLogic;
 import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineService;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
 import static io.papermc.paper.command.brigadier.Commands.argument;
+import static io.papermc.paper.command.brigadier.Commands.literal;
 
-@RequiredArgsConstructor
-public class GoMineLogic implements CommandLogic {
-    private final MineService mineService;
+public class GoMineLogic extends CommandLogic {
+
+    @Override
+    public String name() {
+        return "go";
+    }
 
     @Override
     public CommandNode<CommandSourceStack> logic() {
-        return name("go").requires(commandSourceStack -> {
+        return literal(name()).requires(commandSourceStack -> {
             CommandSender commandSender = commandSourceStack.getSender();
             return commandSender.hasPermission("privatemines.go") && commandSender instanceof Player;
         }).then(argument("player", ArgumentTypes.player()).executes(context -> {

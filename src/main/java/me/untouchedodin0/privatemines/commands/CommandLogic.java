@@ -4,6 +4,7 @@ import com.mojang.brigadier.tree.CommandNode;
 import com.sk89q.worldedit.entity.Player;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import lombok.RequiredArgsConstructor;
+import me.untouchedodin0.privatemines.PrivateMines;
 import me.untouchedodin0.privatemines.mine.MineService;
 
 import java.util.UUID;
@@ -11,7 +12,8 @@ import java.util.function.Predicate;
 
 @RequiredArgsConstructor
 public abstract class CommandLogic {
-    protected final MineService mineService;
+    protected final PrivateMines privateMines = PrivateMines.inst();
+    protected final MineService mineService = privateMines.getMineService();
 
     public abstract String name();
 

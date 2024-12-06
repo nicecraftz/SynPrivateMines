@@ -5,20 +5,24 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import lombok.RequiredArgsConstructor;
 import me.untouchedodin0.privatemines.commands.CommandLogic;
 import me.untouchedodin0.privatemines.mine.Mine;
-import me.untouchedodin0.privatemines.mine.MineService;
 import org.bukkit.entity.Player;
 
 import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
+import static io.papermc.paper.command.brigadier.Commands.literal;
 
 @RequiredArgsConstructor
-public class OpenCloseMineLogic implements CommandLogic {
-    private final MineService mineService;
+public class OpenCloseMineLogic extends CommandLogic {
     private final String literal;
     private final boolean state;
 
     @Override
+    public String name() {
+        return literal;
+    }
+
+    @Override
     public CommandNode<CommandSourceStack> logic() {
-        return name(literal).requires(commandSourceStack -> {
+        return literal(name()).requires(commandSourceStack -> {
             return commandSourceStack.getSender().hasPermission("privatemines." + literal);
         }).executes(context -> {
             Player player = (Player) context.getSource().getSender();
