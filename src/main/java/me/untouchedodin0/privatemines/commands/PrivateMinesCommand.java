@@ -37,8 +37,7 @@ public class PrivateMinesCommand {
     }
 
     private LiteralCommandNode<CommandSourceStack> buildCommand() {
-        CommandLogic[] logics = {new BanLogic(), new UnbanLogic(), new DeleteMineLogic(), new ExpandMineLogic(), new ForceResetMineLogic(
-                mineService), new ResetMineLogic(resetCooldown), new GiveLogic(), new GoMineLogic(), new OpenCloseMineLogic(
+        CommandLogic[] logics = {new BanLogic(), new UnbanLogic(), new DeleteMineLogic(), new ExpandMineLogic(), new ForceResetMineLogic(), new ResetMineLogic(resetCooldown), new GiveLogic(), new GoMineLogic(), new OpenCloseMineLogic(
                 "open",
                 true
         ), new OpenCloseMineLogic("close", false), new TaxLogic(), new VersionLogic()};
